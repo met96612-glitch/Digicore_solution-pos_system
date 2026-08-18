@@ -6,11 +6,42 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+:root, [data-theme="blue"] {
+  --app-bg: #070a14;
+  --app-card: #0c1224;
+  --app-primary: #3b82f6;
+}
+
+[data-theme="violet"] {
+  --app-bg: #090614;
+  --app-card: #100b22;
+  --app-primary: #8b5cf6;
+}
+
+[data-theme="emerald"] {
+  --app-bg: #04120a;
+  --app-card: #081d12;
+  --app-primary: #10b981;
+}
+
+[data-theme="amber"] {
+  --app-bg: #140d04;
+  --app-card: #1f1408;
+  --app-primary: #f59e0b;
+}
+
+[data-theme="rose"] {
+  --app-bg: #140508;
+  --app-card: #20090e;
+  --app-primary: #f43f5e;
+}
+
 body {
   font-family: var(--font-sans);
-  background-color: #070a14;
+  background-color: var(--app-bg, #070a14);
   color: #f1f5f9;
   -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease;
 }
 
 /* ==========================================================================

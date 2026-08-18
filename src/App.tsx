@@ -56,7 +56,8 @@ import {
   Receipt,
   Trash2,
   Plus,
-  CreditCard
+  CreditCard,
+  Palette
 } from 'lucide-react';
 
 export default function App() {
@@ -73,6 +74,21 @@ export default function App() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [appLoading, setAppLoading] = useState(true);
+
+  // Active Theme Color State ('blue' | 'violet' | 'emerald' | 'amber' | 'rose')
+  const [activeTheme, setActiveTheme] = useState<'blue' | 'violet' | 'emerald' | 'amber' | 'rose'>(() => {
+    try {
+      return (localStorage.getItem('kulubadu_active_theme') as any) || 'blue';
+    } catch {
+      return 'blue';
+    }
+  });
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', activeTheme);
+    localStorage.setItem('kulubadu_active_theme', activeTheme);
+  }, [activeTheme]);
 
   // Core Data sets
   const [products, setProducts] = useState<Product[]>([]);
@@ -1696,6 +1712,59 @@ export default function App() {
                 </span>
               </div>
             </button>
+
+            {/* Theme Selector Palette Button */}
+            <div className="relative shrink-0">
+              <button
+                onClick={() => setShowThemeMenu(!showThemeMenu)}
+                className="px-2 sm:px-2.5 py-1.5 bg-[#10172a] hover:bg-[#1e293b] border border-slate-800 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all text-slate-300"
+                title="Change System Theme Color (තීම් වර්ණය වෙනස් කරන්න)"
+              >
+                <Palette size={14} className="text-violet-400 shrink-0" />
+                <span className="text-[10px] font-bold hidden md:inline uppercase tracking-wider">Theme</span>
+                <span className={`w-2.5 h-2.5 rounded-full ${
+                  activeTheme === 'blue' ? 'bg-blue-500' :
+                  activeTheme === 'violet' ? 'bg-violet-500' :
+                  activeTheme === 'emerald' ? 'bg-emerald-500' :
+                  activeTheme === 'amber' ? 'bg-amber-500' : 'bg-rose-500'
+                }`}></span>
+              </button>
+
+              {showThemeMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95">
+                  <div className="text-[10px] font-black text-slate-400 px-3 py-1.5 uppercase tracking-wider border-b border-slate-800/60 mb-1">
+                    🎨 Theme Color (තීම් වර්ණය)
+                  </div>
+                  {[
+                    { id: 'blue', label: 'Sapphire Blue', colorClass: 'bg-blue-500' },
+                    { id: 'violet', label: 'Royal Violet', colorClass: 'bg-violet-500' },
+                    { id: 'emerald', label: 'Emerald Cyber', colorClass: 'bg-emerald-500' },
+                    { id: 'amber', label: 'Amber Gold', colorClass: 'bg-amber-500' },
+                    { id: 'rose', label: 'Crimson Rose', colorClass: 'bg-rose-500' },
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setActiveTheme(t.id as any);
+                        setShowThemeMenu(false);
+                        triggerToast(`System theme changed to ${t.label}!`, 'success');
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        activeTheme === t.id
+                          ? 'bg-slate-800 text-white'
+                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`w-3 h-3 rounded-full ${t.colorClass} shadow-sm`}></span>
+                        <span>{t.label}</span>
+                      </div>
+                      {activeTheme === t.id && <span className="text-[10px] text-emerald-400">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Quick Refresh System Button */}
             <button
