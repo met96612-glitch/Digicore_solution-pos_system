@@ -125,17 +125,17 @@ export const INITIAL_PRODUCTS: Product[] = [];
 // Admin: admin / 123
 // Cashier: cashier / 123
 export const INITIAL_USERS: User[] = [
-  { id: 'u0', name: 'Lahiya Super', username: 'superuser', password: '123', role: 'superuser' as const, shop_name: 'Lahiya Spices Center', phone_number: '074 0050211 / 076 0808246', invoice_prefix: 'L' },
-  { id: 'u1', name: 'Saman Kumara', username: 'admin', password: '123', role: 'admin' as const, shop_name: 'Lahiya Spices Center', phone_number: '074 0050211', invoice_prefix: 'L' },
-  { id: 'u2', name: 'Nimali Silva', username: 'cashier', password: '123', role: 'cashier' as const, shop_name: 'Lahiya Spices Center', phone_number: '074 0050211', invoice_prefix: 'L' },
-  { id: 'u3', name: 'Lahiru Kumara', username: 'lahiru', password: '123', role: 'cashier' as const, shop_name: 'Lahiya Spices Center', phone_number: '074 0050211 / 076 0808246', invoice_prefix: 'L' },
-  { id: 'u4', name: 'Jayantha De Silva', username: 'jayantha', password: '123', role: 'cashier' as const, shop_name: 'Jayantha Spices Center', phone_number: '077 602 1831', invoice_prefix: 'J' }
+  { id: 'u0', name: 'Lahiya Super', username: 'superuser', password: '123', role: 'superuser' as const, shop_name: 'Lahiya Spice Collectors', phone_number: '074 0050211 / 076 0808246', invoice_prefix: 'L' },
+  { id: 'u1', name: 'Saman Kumara', username: 'admin', password: '123', role: 'admin' as const, shop_name: 'Lahiya Spice Collectors', phone_number: '074 0050211', invoice_prefix: 'L' },
+  { id: 'u2', name: 'Nimali Silva', username: 'cashier', password: '123', role: 'cashier' as const, shop_name: 'Lahiya Spice Collectors', phone_number: '074 0050211', invoice_prefix: 'L' },
+  { id: 'u3', name: 'Lahiru Kumara', username: 'lahiru', password: '123', role: 'cashier' as const, shop_name: 'Lahiya Spice Collectors', phone_number: '074 0050211 / 076 0808246', invoice_prefix: 'L' },
+  { id: 'u4', name: 'Jayantha De Silva', username: 'jayantha', password: '123', role: 'cashier' as const, shop_name: 'Jayantha Spice Collectors', phone_number: '077 602 1831', invoice_prefix: 'J' }
 ];
 
 export const INITIAL_TRANSACTIONS: Transaction[] = [];
 
 export const DEFAULT_SHOP_PROFILE: ShopProfile = {
-  shopName: 'LAHIYA SPICES CENTER',
+  shopName: 'LAHIYA SPICE COLLECTORS',
   shopSinhalaName: 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය',
   address: 'Wewalwatta, Rathnapura',
   phone1: '074 0050211',

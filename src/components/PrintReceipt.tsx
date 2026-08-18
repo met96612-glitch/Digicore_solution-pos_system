@@ -61,12 +61,12 @@ export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?:
   const isJayanthaTx = transaction.id.startsWith('J') || transaction.createdBy === 'jayantha' || transaction.user_id === 'u4';
   const isLahiruTx = transaction.id.startsWith('L') || transaction.createdBy === 'lahiru' || transaction.user_id === 'u3';
 
-  const defaultLahiruName = 'LAHIYA SPICES CENTER';
+  const defaultLahiruName = 'LAHIYA SPICE COLLECTORS';
   const defaultLahiruSinhala = 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
   const defaultLahiruAddress = 'Wewalwatta, Rathnapura';
   const defaultLahiruPhone = '074 0050211 / 076 0808246';
 
-  const defaultJayanthaName = 'JAYANTHA SPICES CENTER';
+  const defaultJayanthaName = 'JAYANTHA SPICE COLLECTORS';
   const defaultJayanthaSinhala = 'ජයන්ත කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
   const defaultJayanthaAddress = 'Wewalwatta, Rathnapura';
   const defaultJayanthaPhone = '077 602 1831';
@@ -80,8 +80,11 @@ export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?:
 
   // Check if profile was changed to something custom (not the standard Lahiru or Jayantha presets)
   const isCustomStore = configuredName &&
+    configuredName !== 'LAHIRU SPICE COLLECTORS' &&
+    configuredName !== 'LAHIYA SPICE COLLECTORS' &&
     configuredName !== 'LAHIRU SPICES CENTER' &&
     configuredName !== 'LAHIYA SPICES CENTER' &&
+    configuredName !== 'JAYANTHA SPICE COLLECTORS' &&
     configuredName !== 'JAYANTHA SPICES CENTER';
 
   let shopName = defaultLahiruName;

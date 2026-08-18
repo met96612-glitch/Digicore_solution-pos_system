@@ -318,6 +318,7 @@ export default function App() {
   });
   const [showDrawerModal, setShowDrawerModal] = useState(false);
   const [depositInputVal, setDepositInputVal] = useState<string>('');
+  const [drawerUserFilter, setDrawerUserFilter] = useState<'my' | 'lahiru' | 'jayantha'>('my');
 
   // Supabase status and credentials states
   const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'disconnected' | 'not_configured'>('checking');
@@ -487,13 +488,13 @@ export default function App() {
 
   const todayCashSales = useMemo(() => {
     // 1. Regular sales where payment_method is Cash
-    const directCashSales = transactions
+    const directCashSales = filteredTransactions
       .filter(tx => tx.type === 'sell' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
       .reduce((sum, tx) => sum + tx.total, 0);
 
     // 2. Down payments or credit recoveries received in Cash today
     let creditCashRecovered = 0;
-    transactions.forEach(tx => {
+    filteredTransactions.forEach(tx => {
       if (tx.type === 'sell' && tx.credit_payments) {
         tx.credit_payments.forEach(pay => {
           if (isToday(pay.date) && pay.payment_method === 'Cash') {
@@ -504,16 +505,16 @@ export default function App() {
     });
 
     return directCashSales + creditCashRecovered;
-  }, [transactions, todayDateString]);
+  }, [filteredTransactions, todayDateString]);
 
   const todayBuysTotal = useMemo(() => {
     // 1. Regular purchases paid in Cash today
-    let cashSpentOnBuys = transactions
+    let cashSpentOnBuys = filteredTransactions
       .filter(tx => tx.type === 'buy' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
       .reduce((sum, tx) => sum + tx.total, 0);
 
     // 2. Down payments or supplier credit payments made in Cash today
-    transactions.forEach(tx => {
+    filteredTransactions.forEach(tx => {
       if (tx.type === 'buy' && tx.credit_payments) {
         tx.credit_payments.forEach(pay => {
           if (isToday(pay.date) && pay.payment_method === 'Cash') {
@@ -524,20 +525,94 @@ export default function App() {
     });
 
     return cashSpentOnBuys;
-  }, [transactions, todayDateString]);
+  }, [filteredTransactions, todayDateString]);
 
   const todayExpensesTotal = useMemo(() => {
-    return expenses
+    return filteredExpenses
       .filter(exp => isToday(exp.date))
       .reduce((sum, exp) => sum + exp.amount, 0);
-  }, [expenses, todayDateString]);
+  }, [filteredExpenses, todayDateString]);
 
   const todayOpeningCashTotal = useMemo(() => {
-    const todayLogs = openingCashLogs.filter(l => isToday(l.date));
+    const todayLogs = filteredOpeningCashLogs.filter(l => isToday(l.date));
     return todayLogs.reduce((sum, l) => sum + l.amount, 0);
-  }, [openingCashLogs, todayDateString]);
+  }, [filteredOpeningCashLogs, todayDateString]);
 
   const currentDrawerBalance = todayOpeningCashTotal + todayCashSales - todayExpensesTotal - todayBuysTotal;
+
+  const activeModalDrawerData = useMemo(() => {
+    let targetLogs = filteredOpeningCashLogs;
+    let targetTx = filteredTransactions;
+    let targetExp = filteredExpenses;
+    let username = sessionUser?.username || 'user';
+    let name = sessionUser?.name || 'User';
+
+    if ((sessionUser?.role === 'superuser' || sessionUser?.role === 'admin') && drawerUserFilter !== 'my') {
+      if (drawerUserFilter === 'lahiru') {
+        username = 'lahiru';
+        name = 'Lahiru Spices';
+        targetLogs = openingCashLogs.filter(l => l.addedBy === 'lahiru');
+        targetTx = transactions.filter(tx => tx.id.startsWith('L-') || tx.createdBy === 'lahiru');
+        targetExp = expenses.filter(e => e.addedBy === 'lahiru');
+      } else if (drawerUserFilter === 'jayantha') {
+        username = 'jayantha';
+        name = 'Jayantha Spices';
+        targetLogs = openingCashLogs.filter(l => l.addedBy === 'jayantha');
+        targetTx = transactions.filter(tx => tx.id.startsWith('J-') || tx.createdBy === 'jayantha');
+        targetExp = expenses.filter(e => e.addedBy === 'jayantha');
+      }
+    }
+
+    const logs = targetLogs.filter(l => isToday(l.date));
+    const openingTotal = logs.reduce((sum, l) => sum + l.amount, 0);
+
+    const directSales = targetTx
+      .filter(tx => tx.type === 'sell' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
+      .reduce((sum, tx) => sum + tx.total, 0);
+
+    let creditRecovered = 0;
+    targetTx.forEach(tx => {
+      if (tx.type === 'sell' && tx.credit_payments) {
+        tx.credit_payments.forEach(pay => {
+          if (isToday(pay.date) && pay.payment_method === 'Cash') {
+            creditRecovered += pay.amount;
+          }
+        });
+      }
+    });
+    const cashSales = directSales + creditRecovered;
+
+    let cashSpentBuys = targetTx
+      .filter(tx => tx.type === 'buy' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
+      .reduce((sum, tx) => sum + tx.total, 0);
+    targetTx.forEach(tx => {
+      if (tx.type === 'buy' && tx.credit_payments) {
+        tx.credit_payments.forEach(pay => {
+          if (isToday(pay.date) && pay.payment_method === 'Cash') {
+            cashSpentBuys += pay.amount;
+          }
+        });
+      }
+    });
+
+    const expTotal = targetExp
+      .filter(exp => isToday(exp.date))
+      .reduce((sum, exp) => sum + exp.amount, 0);
+
+    const balance = openingTotal + cashSales - expTotal - cashSpentBuys;
+
+    return {
+      username,
+      name,
+      logs,
+      openingTotal,
+      cashSales,
+      cashSpentBuys,
+      expTotal,
+      balance,
+      todayBuysList: targetTx.filter(tx => tx.type === 'buy' && isToday(tx.date))
+    };
+  }, [sessionUser, drawerUserFilter, openingCashLogs, transactions, expenses, filteredOpeningCashLogs, filteredTransactions, filteredExpenses, todayDateString]);
 
   // Initial local initialization
   useEffect(() => {
@@ -645,13 +720,13 @@ export default function App() {
                 }
               });
               merged.forEach(u => {
-                if (!u.shop_name) {
+                if (!u.shop_name || u.shop_name.includes('Center')) {
                   if (u.username === 'jayantha') {
-                    u.shop_name = 'Jayantha Spices Center';
+                    u.shop_name = 'Jayantha Spice Collectors';
                     u.phone_number = '077 602 1831';
                     u.invoice_prefix = 'J';
                   } else {
-                    u.shop_name = 'Lahiya Spices Center';
+                    u.shop_name = 'Lahiya Spice Collectors';
                     u.phone_number = '074 0050211 / 076 0808246';
                     u.invoice_prefix = 'L';
                   }
@@ -661,13 +736,13 @@ export default function App() {
               setRegisteredUsers(merged);
             } else {
               loadedUsers.forEach(u => {
-                if (!u.shop_name) {
+                if (!u.shop_name || u.shop_name.includes('Center')) {
                   if (u.username === 'jayantha') {
-                    u.shop_name = 'Jayantha Spices Center';
+                    u.shop_name = 'Jayantha Spice Collectors';
                     u.phone_number = '077 602 1831';
                     u.invoice_prefix = 'J';
                   } else {
-                    u.shop_name = 'Lahiya Spices Center';
+                    u.shop_name = 'Lahiya Spice Collectors';
                     u.phone_number = '074 0050211 / 076 0808246';
                     u.invoice_prefix = 'L';
                   }
@@ -1894,7 +1969,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Shared Cash Drawer (ලච්චුව) Manage Modal */}
+      {/* Isolated Cash Drawer (ලච්චුව) Manage Modal */}
       {showDrawerModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
           <div className="bg-[#0b0f19] border border-slate-800 rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-5 relative my-auto max-h-[90dvh] overflow-y-auto animate-in fade-in zoom-in duration-150">
@@ -1908,45 +1983,75 @@ export default function App() {
             <div>
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
                 <Banknote size={20} className="text-emerald-400" />
-                <span>Shared Cash Drawer (ලච්චුව)</span>
+                <span>{activeModalDrawerData.name}'s Cash Drawer (ලච්චුව)</span>
               </h3>
               <p className="text-xs text-slate-400 mt-1">
-                The morning cash placed in the register drawer is shared between both accounts to cover purchases and expenses today.
+                එක් එක් ගිණුම සඳහා වෙන් වෙන් වශයෙන් Cash Drawer පවත්වාගෙන යනු ලබයි (@{activeModalDrawerData.username}).
               </p>
             </div>
+
+            {/* Admin / Superuser Account Selector Pills */}
+            {(sessionUser?.role === 'superuser' || sessionUser?.role === 'admin') && (
+              <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
+                <button
+                  onClick={() => setDrawerUserFilter('my')}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    drawerUserFilter === 'my' ? 'bg-violet-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  👤 My Drawer
+                </button>
+                <button
+                  onClick={() => setDrawerUserFilter('lahiru')}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    drawerUserFilter === 'lahiru' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🌿 Lahiru
+                </button>
+                <button
+                  onClick={() => setDrawerUserFilter('jayantha')}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    drawerUserFilter === 'jayantha' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🍃 Jayantha
+                </button>
+              </div>
+            )}
 
             {/* Calculations Dashboard */}
             <div className="bg-slate-950/50 border border-slate-900/80 rounded-xl p-4 space-y-3">
               <div className="flex justify-between items-center border-b border-slate-900/60 pb-2">
-                <span className="text-xs text-slate-400">Total Opening Cash Today (ආරම්භක මුදල් එකතුව):</span>
+                <span className="text-xs text-slate-400">Opening Cash Today (ආරම්භක මුදල් එකතුව):</span>
                 <span className="text-xs font-bold text-emerald-400 font-mono">
-                  + Rs. {todayOpeningCashTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  + Rs. {activeModalDrawerData.openingTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-900/60 pb-2">
                 <span className="text-xs text-slate-400">Cash Sales Today (අද මුදල් අලෙවි එකතුව):</span>
                 <span className="text-xs font-bold text-emerald-400 font-mono">
-                  + Rs. {todayCashSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  + Rs. {activeModalDrawerData.cashSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-900/60 pb-2">
                 <span className="text-xs text-slate-400">Shop Extra Expenses (අද අමතර වියදම්):</span>
                 <span className="text-xs font-bold text-rose-400 font-mono">
-                  - Rs. {todayExpensesTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  - Rs. {activeModalDrawerData.expTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center border-b border-slate-900/60 pb-2">
                 <span className="text-xs text-slate-400">Stock Purchases (තොග මිලදී ගැනීම්):</span>
                 <span className="text-xs font-bold text-amber-500 font-mono">
-                  - Rs. {todayBuysTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  - Rs. {activeModalDrawerData.cashSpentBuys.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-1">
                 <span className="text-xs font-bold text-slate-300">Remaining Drawer Balance (ලච්චුවේ ශේෂය):</span>
                 <span className={`text-sm font-extrabold font-mono ${
-                  currentDrawerBalance < 0 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'
+                  activeModalDrawerData.balance < 0 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'
                 }`}>
-                  Rs. {currentDrawerBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  Rs. {activeModalDrawerData.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
@@ -1959,21 +2064,17 @@ export default function App() {
                   <span>Today's Opening Cash Deposits (ආරම්භක මුදල් තැන්පතු)</span>
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">
-                  Active Logged In: <strong className="text-violet-400">@{sessionUser.username}</strong>
+                  Drawer User: <strong className="text-violet-400">@{activeModalDrawerData.username}</strong>
                 </span>
               </div>
 
               <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
-                {(() => {
-                  const todayLogs = openingCashLogs.filter(l => l.date === todayDateString);
-                  if (todayLogs.length === 0) {
-                    return (
-                      <p className="text-[10px] text-slate-500 py-3 text-center bg-slate-950/40 rounded-xl border border-slate-900">
-                        No opening cash entries logged for today yet.
-                      </p>
-                    );
-                  }
-                  return todayLogs.map(log => (
+                {activeModalDrawerData.logs.length === 0 ? (
+                  <p className="text-[10px] text-slate-500 py-3 text-center bg-slate-950/40 rounded-xl border border-slate-900">
+                    No opening cash entries logged for @{activeModalDrawerData.username} today yet.
+                  </p>
+                ) : (
+                  activeModalDrawerData.logs.map(log => (
                     <div key={log.id} className="p-2.5 bg-slate-950/80 border border-slate-800/80 rounded-xl flex items-center justify-between text-xs">
                       <div>
                         <div className="flex items-center gap-1.5">
@@ -1998,15 +2099,15 @@ export default function App() {
                         </button>
                       </div>
                     </div>
-                  ));
-                })()}
+                  ))
+                )}
               </div>
             </div>
 
             {/* Form to Deposit / Add Opening Cash */}
             <div className="space-y-3 border-t border-slate-900 pt-3">
               <label className="text-xs font-bold text-slate-300 block">
-                Deposit Cash into Drawer / ආරම්භක මුදලක් තැන්පත් කරන්න:
+                Deposit Cash into @{activeModalDrawerData.username}'s Drawer / ආරම්භක මුදලක් තැන්පත් කරන්න:
               </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -2023,9 +2124,9 @@ export default function App() {
                   onClick={() => {
                     const val = Number(depositInputVal);
                     if (!isNaN(val) && val > 0) {
-                      addOpeningCash(val);
+                      addOpeningCash(val, activeModalDrawerData.username);
                       setDepositInputVal('');
-                      triggerToast(`Rs. ${val} deposit logged for @${sessionUser.username}!`, 'success');
+                      triggerToast(`Rs. ${val} deposit logged for @${activeModalDrawerData.username}!`, 'success');
                     }
                   }}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
@@ -2041,8 +2142,8 @@ export default function App() {
                   <button
                     key={amount}
                     onClick={() => {
-                      addOpeningCash(amount);
-                      triggerToast(`Rs. ${amount} deposit logged for @${sessionUser.username}!`, 'success');
+                      addOpeningCash(amount, activeModalDrawerData.username);
+                      triggerToast(`Rs. ${amount} deposit logged for @${activeModalDrawerData.username}!`, 'success');
                     }}
                     className="py-1.5 px-1 text-[10px] font-bold rounded-lg border border-slate-800/80 bg-slate-950/60 hover:bg-emerald-950/40 hover:border-emerald-500/50 hover:text-emerald-300 text-slate-300 transition-all cursor-pointer text-center font-mono"
                   >
@@ -2054,18 +2155,14 @@ export default function App() {
 
             {/* Today's buys list */}
             <div className="space-y-2 border-t border-slate-900 pt-4">
-              <span className="text-xs font-bold text-slate-300 block">Today's Purchase Logs (වියදම් විස්තර):</span>
+              <span className="text-xs font-bold text-slate-300 block">Today's Purchase Logs for @{activeModalDrawerData.username}:</span>
               <div className="max-h-32 overflow-y-auto divide-y divide-slate-900/60 pr-1">
-                {(() => {
-                  const todayBuys = transactions.filter(tx => tx.type === 'buy' && tx.date.startsWith(todayDateString));
-                  if (todayBuys.length === 0) {
-                    return (
-                      <p className="text-[10px] text-slate-500 py-3 text-center">
-                        No purchase/expense transactions recorded today.
-                      </p>
-                    );
-                  }
-                  return todayBuys.map(tx => (
+                {activeModalDrawerData.todayBuysList.length === 0 ? (
+                  <p className="text-[10px] text-slate-500 py-3 text-center">
+                    No purchase transactions recorded for @{activeModalDrawerData.username} today.
+                  </p>
+                ) : (
+                  activeModalDrawerData.todayBuysList.map(tx => (
                     <div key={tx.id} className="py-2 flex items-center justify-between text-[11px]">
                       <div>
                         <span className="font-semibold text-slate-200 block">{tx.contactName || 'Local Supplier'}</span>
@@ -2075,8 +2172,8 @@ export default function App() {
                         - Rs. {tx.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
-                  ));
-                })()}
+                  ))
+                )}
               </div>
             </div>
 

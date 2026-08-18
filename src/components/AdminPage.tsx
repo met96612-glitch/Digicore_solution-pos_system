@@ -56,7 +56,7 @@ export default function AdminPage({
   const handleApplyTemplate = (type: 'lahiru' | 'jayantha' | 'custom') => {
     if (type === 'lahiru') {
       const p: ShopProfile = {
-        shopName: 'LAHIYA SPICES CENTER',
+        shopName: 'LAHIYA SPICE COLLECTORS',
         shopSinhalaName: 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය',
         address: 'Wewalwatta, Rathnapura',
         phone1: '074 0050211',
@@ -69,7 +69,7 @@ export default function AdminPage({
       onToast('ළහියා කුළුබඩු Default Template එක load කර සාර්ථකව සුරකින ලදී.', 'success');
     } else if (type === 'jayantha') {
       const p: ShopProfile = {
-        shopName: 'JAYANTHA SPICES CENTER',
+        shopName: 'JAYANTHA SPICE COLLECTORS',
         shopSinhalaName: 'ජයන්ත කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය',
         address: 'Wewalwatta, Rathnapura',
         phone1: '077 602 1831',

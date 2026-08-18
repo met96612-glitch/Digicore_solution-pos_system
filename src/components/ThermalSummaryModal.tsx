@@ -213,22 +213,22 @@ export function generateSummaryThermalCanvas(
   const isLahiru = data.entityType === 'lahiru';
   const isCombined = data.entityType === 'combined';
 
-  let shopName = 'LAHIYA SPICES CENTER';
+  let shopName = 'LAHIYA SPICE COLLECTORS';
   let shopSinhala = 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
   let shopAddress = 'Wewalwatta, Rathnapura';
   let shopPhone = '074 0050211 / 076 0808246';
 
   if (isJayantha) {
-    shopName = 'JAYANTHA SPICES CENTER';
+    shopName = 'JAYANTHA SPICE COLLECTORS';
     shopSinhala = 'ජයන්ත කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
     shopPhone = '077 602 1831';
   } else if (isCombined) {
     shopName = 'KULUBADU ENTERPRISE';
     shopSinhala = 'සමස්ත කුළුබඩු මධ්‍යස්ථාන සාරාංශය';
-    if (data.shopProfile?.shopName && data.shopProfile.shopName !== 'LAHIRU SPICES CENTER' && data.shopProfile.shopName !== 'LAHIYA SPICES CENTER') {
+    if (data.shopProfile?.shopName && data.shopProfile.shopName !== 'LAHIRU SPICE COLLECTORS' && data.shopProfile.shopName !== 'LAHIYA SPICE COLLECTORS' && data.shopProfile.shopName !== 'LAHIRU SPICES CENTER' && data.shopProfile.shopName !== 'LAHIYA SPICES CENTER') {
       shopName = data.shopProfile.shopName;
     }
-  } else if (data.shopProfile?.shopName && data.shopProfile.shopName !== 'JAYANTHA SPICES CENTER' && data.shopProfile.shopName !== 'LAHIRU SPICES CENTER' && data.shopProfile.shopName !== 'LAHIYA SPICES CENTER') {
+  } else if (data.shopProfile?.shopName && data.shopProfile.shopName !== 'JAYANTHA SPICE COLLECTORS' && data.shopProfile.shopName !== 'JAYANTHA SPICES CENTER' && data.shopProfile.shopName !== 'LAHIRU SPICE COLLECTORS' && data.shopProfile.shopName !== 'LAHIRU SPICES CENTER' && data.shopProfile.shopName !== 'LAHIYA SPICE COLLECTORS' && data.shopProfile.shopName !== 'LAHIYA SPICES CENTER') {
     shopName = data.shopProfile.shopName;
     if (data.shopProfile.shopSinhalaName) shopSinhala = data.shopProfile.shopSinhalaName;
   }

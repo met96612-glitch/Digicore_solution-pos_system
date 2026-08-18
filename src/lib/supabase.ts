@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Get keys from either import.meta.env or localStorage (allows live setup directly inside preview UI)
+export const DEFAULT_SUPABASE_URL = 'https://vmwjofihygzmcurumvsq.supabase.co';
+export const DEFAULT_SUPABASE_KEY = 'sb_publishable_3OTfY2AkPnWIVgalizjKag_w9JPyUVP';
+
+// Get keys from either import.meta.env, localStorage, or default fallback
 export function getSupabaseKeys() {
   const customUrl = localStorage.getItem('lahiya_supabase_url') || '';
   const customKey = localStorage.getItem('lahiya_supabase_key') || '';
@@ -9,9 +12,12 @@ export function getSupabaseKeys() {
   const envUrl = metaEnv.VITE_SUPABASE_URL || '';
   const envKey = metaEnv.VITE_SUPABASE_ANON_KEY || '';
 
+  const url = customUrl || envUrl || DEFAULT_SUPABASE_URL;
+  const key = customKey || envKey || DEFAULT_SUPABASE_KEY;
+
   return {
-    url: customUrl || envUrl,
-    key: customKey || envKey,
+    url,
+    key,
     isCustom: !!customUrl
   };
 }
