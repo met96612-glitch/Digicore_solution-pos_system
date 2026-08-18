@@ -57,7 +57,7 @@ export default function AdminPage({
     if (type === 'lahiru') {
       const p: ShopProfile = {
         shopName: 'LAHIYA SPICE COLLECTORS',
-        shopSinhalaName: 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය',
+        shopSinhalaName: 'ළහියා කුළුබඩු එකතු කිරීම්',
         address: 'Wewalwatta, Rathnapura',
         phone1: '074 0050211',
         phone2: '076 0808246',
@@ -70,7 +70,7 @@ export default function AdminPage({
     } else if (type === 'jayantha') {
       const p: ShopProfile = {
         shopName: 'JAYANTHA SPICE COLLECTORS',
-        shopSinhalaName: 'ජයන්ත කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය',
+        shopSinhalaName: 'ජයන්ත කුළුබඩු එකතු කිරීම්',
         address: 'Wewalwatta, Rathnapura',
         phone1: '077 602 1831',
         phone2: '',

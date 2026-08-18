@@ -136,7 +136,7 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [];
 
 export const DEFAULT_SHOP_PROFILE: ShopProfile = {
   shopName: 'LAHIYA SPICE COLLECTORS',
-  shopSinhalaName: 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය',
+  shopSinhalaName: 'ළහියා කුළුබඩු එකතු කිරීම්',
   address: 'Wewalwatta, Rathnapura',
   phone1: '074 0050211',
   phone2: '076 0808246',

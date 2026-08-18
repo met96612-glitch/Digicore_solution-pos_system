@@ -214,13 +214,13 @@ export function generateSummaryThermalCanvas(
   const isCombined = data.entityType === 'combined';
 
   let shopName = 'LAHIYA SPICE COLLECTORS';
-  let shopSinhala = 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
+  let shopSinhala = 'ළහියා කුළුබඩු එකතු කිරීම්';
   let shopAddress = 'Wewalwatta, Rathnapura';
   let shopPhone = '074 0050211 / 076 0808246';
 
   if (isJayantha) {
     shopName = 'JAYANTHA SPICE COLLECTORS';
-    shopSinhala = 'ජයන්ත කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
+    shopSinhala = 'ජයන්ත කුළුබඩු එකතු කිරීම්';
     shopPhone = '077 602 1831';
   } else if (isCombined) {
     shopName = 'KULUBADU ENTERPRISE';

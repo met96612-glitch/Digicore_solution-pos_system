@@ -62,12 +62,12 @@ export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?:
   const isLahiruTx = transaction.id.startsWith('L') || transaction.createdBy === 'lahiru' || transaction.user_id === 'u3';
 
   const defaultLahiruName = 'LAHIYA SPICE COLLECTORS';
-  const defaultLahiruSinhala = 'ළහියා කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
+  const defaultLahiruSinhala = 'ළහියා කුළුබඩු එකතු කිරීම්';
   const defaultLahiruAddress = 'Wewalwatta, Rathnapura';
   const defaultLahiruPhone = '074 0050211 / 076 0808246';
 
   const defaultJayanthaName = 'JAYANTHA SPICE COLLECTORS';
-  const defaultJayanthaSinhala = 'ජයන්ත කුළුබඩු එකතු කිරීමේ මධ්‍යස්ථානය';
+  const defaultJayanthaSinhala = 'ජයන්ත කුළුබඩු එකතු කිරීම්';
   const defaultJayanthaAddress = 'Wewalwatta, Rathnapura';
   const defaultJayanthaPhone = '077 602 1831';
 
