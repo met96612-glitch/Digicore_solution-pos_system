@@ -1,0 +1,6 @@
+{
+  "name": "ලහියා spices center",
+  "description": "Smart Spice & Retail Point-of-Sale System with Sales Billing, Stock Purchases, low-stock alerts, financial reports, user management, and receipt previewing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

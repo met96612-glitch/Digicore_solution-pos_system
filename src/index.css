@@ -1,0 +1,253 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Sinhala:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Noto Sans Sinhala", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+:root, [data-theme="blue"] {
+  --app-bg: #070a14;
+  --app-card: #0c1224;
+  --app-primary: #3b82f6;
+}
+
+[data-theme="violet"] {
+  --app-bg: #090614;
+  --app-card: #100b22;
+  --app-primary: #8b5cf6;
+}
+
+[data-theme="emerald"] {
+  --app-bg: #04120a;
+  --app-card: #081d12;
+  --app-primary: #10b981;
+}
+
+[data-theme="amber"] {
+  --app-bg: #140d04;
+  --app-card: #1f1408;
+  --app-primary: #f59e0b;
+}
+
+[data-theme="rose"] {
+  --app-bg: #140508;
+  --app-card: #20090e;
+  --app-primary: #f43f5e;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--app-bg, #070a14);
+  color: #f1f5f9;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.3s ease;
+}
+
+/* ==========================================================================
+   Thermal Receipt (80mm & 58mm) Responsive Flex-Wrap Layout System
+   Prevents overlapping of product names, quantities, unit prices & totals
+   ========================================================================== */
+#thermalReceipt,
+#thermalSummarySlip {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: var(--font-mono), monospace;
+  background-color: #ffffff;
+  color: #000000;
+  overflow: hidden;
+}
+
+#thermalReceipt.receipt-80mm,
+#thermalSummarySlip.receipt-80mm {
+  max-width: 420px;
+  width: 80mm;
+}
+
+#thermalReceipt.receipt-58mm,
+#thermalSummarySlip.receipt-58mm {
+  max-width: 320px;
+  width: 58mm;
+}
+
+/* Responsive Table & Flex Item Grid for 80mm / 58mm POS Paper */
+.thermal-items-table {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.thermal-item-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border-bottom: 1.5px dashed #000000;
+  padding: 4px 0;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  box-sizing: border-box;
+}
+
+.thermal-item-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 0;
+  border-bottom: 1px dotted #e2e8f0;
+  box-sizing: border-box;
+}
+
+.thermal-col-name {
+  flex: 0 0 42%;
+  width: 42%;
+  max-width: 42%;
+  min-width: 0;
+  font-weight: 700;
+  color: #000000;
+  text-align: left;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.25;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+.thermal-col-qty {
+  flex: 0 0 18%;
+  width: 18%;
+  max-width: 18%;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  box-sizing: border-box;
+}
+
+.thermal-col-price {
+  flex: 0 0 20%;
+  width: 20%;
+  max-width: 20%;
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+.thermal-col-total {
+  flex: 0 0 20%;
+  width: 20%;
+  max-width: 20%;
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 800;
+  font-family: var(--font-mono), monospace;
+  font-size: 11.5px;
+  box-sizing: border-box;
+}
+
+/* Key-Value metadata flex rows - prevents horizontal collisions */
+.thermal-meta-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  padding: 2px 0;
+  font-size: 11px;
+  gap: 2px 8px;
+  box-sizing: border-box;
+}
+
+.thermal-meta-label {
+  flex: 1 1 auto;
+  min-width: 110px;
+  max-width: 100%;
+  text-align: left;
+  word-break: break-word;
+}
+
+.thermal-meta-value {
+  flex: 0 0 auto;
+  max-width: 100%;
+  text-align: right;
+  font-weight: 700;
+  word-break: break-word;
+  margin-left: auto;
+}
+
+@media print {
+  /* Force clean white background for all containers during print */
+  html, body, #root, #root > div, main, div {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide elements marked print:hidden or modal backdrops */
+  .print\:hidden,
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .fixed.inset-0 {
+    display: none !important;
+    background: #ffffff !important;
+  }
+
+  /* Show ONLY thermal receipt container */
+  #thermalReceipt,
+  #thermalSummarySlip {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 4mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 9999999 !important;
+    font-size: 11pt !important;
+    line-height: 1.3 !important;
+  }
+
+  #thermalReceipt *,
+  #thermalSummarySlip * {
+    color: #000000 !important;
+    background: transparent !important;
+    visibility: visible !important;
+  }
+
+  .thermal-item-header {
+    border-bottom: 1.5pt dashed #000000 !important;
+  }
+
+  .thermal-item-row {
+    border-bottom: 0.5pt dotted #000000 !important;
+  }
+
+  @page {
+    size: 80mm auto;
+    margin: 0mm;
+  }
+}
+
+
