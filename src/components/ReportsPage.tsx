@@ -934,7 +934,7 @@ export default function ReportsPage({
                   ).map(([username, userTotal]) => (
                     <div key={username} className="px-3 py-1.5 bg-violet-600/20 border border-violet-500/30 rounded-xl flex items-center gap-1.5 text-xs font-mono">
                       <span className="text-violet-300 font-bold">@{username}:</span>
-                      <span className="text-emerald-400 font-extrabold">+ Rs. {userTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-emerald-400 font-extrabold">+ {formatCurrency(Number(userTotal))}</span>
                     </div>
                   ))}
                 </div>
@@ -969,7 +969,7 @@ export default function ReportsPage({
                         )}
                       </div>
                       <span className="text-xs font-extrabold text-emerald-400 font-mono">
-                        + Rs. {(log.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        + {formatCurrency(log.amount || 0)}
                       </span>
                     </div>
                   );
