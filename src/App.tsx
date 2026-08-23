@@ -2143,32 +2143,47 @@ export default function App() {
                     No opening cash entries logged for @{activeModalDrawerData.username} today yet.
                   </p>
                 ) : (
-                  activeModalDrawerData.logs.map(log => (
-                    <div key={log.id} className="p-2.5 bg-slate-950/80 border border-slate-800/80 rounded-xl flex items-center justify-between text-xs">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] bg-violet-500/20 text-violet-300 border border-violet-500/30 font-mono font-bold px-2 py-0.5 rounded-md">
-                            @{log.addedBy}
+                  activeModalDrawerData.logs.map(log => {
+                    let timeStr = '';
+                    if (log.timestamp) {
+                      try {
+                        const d = new Date(log.timestamp);
+                        if (!isNaN(d.getTime())) {
+                          timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                        }
+                      } catch {
+                        timeStr = '';
+                      }
+                    }
+                    return (
+                      <div key={log.id || Math.random().toString()} className="p-2.5 bg-slate-950/80 border border-slate-800/80 rounded-xl flex items-center justify-between text-xs">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] bg-violet-500/20 text-violet-300 border border-violet-500/30 font-mono font-bold px-2 py-0.5 rounded-md">
+                              @{log.addedBy || 'user'}
+                            </span>
+                            {timeStr && (
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {timeStr}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-emerald-400 font-mono">
+                            + Rs. {(log.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </span>
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                          </span>
+                          <button
+                            onClick={() => deleteOpeningCashLog(log.id)}
+                            title="Delete log entry"
+                            className="text-slate-500 hover:text-rose-400 p-1 transition-all cursor-pointer rounded hover:bg-slate-900"
+                          >
+                            <Trash2 size={13} />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-emerald-400 font-mono">
-                          + Rs. {log.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </span>
-                        <button
-                          onClick={() => deleteOpeningCashLog(log.id)}
-                          title="Delete log entry"
-                          className="text-slate-500 hover:text-rose-400 p-1 transition-all cursor-pointer rounded hover:bg-slate-900"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

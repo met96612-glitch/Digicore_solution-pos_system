@@ -892,7 +892,7 @@ export default function ReportsPage({
                   {Object.entries(
                     selectedOpeningCashLogs.reduce((acc, log) => {
                       const u = log.addedBy || 'admin';
-                      acc[u] = (acc[u] || 0) + log.amount;
+                      acc[u] = (acc[u] || 0) + (log.amount || 0);
                       return acc;
                     }, {} as Record<string, number>)
                   ).map(([username, userTotal]) => (
@@ -907,22 +907,37 @@ export default function ReportsPage({
 
             {selectedOpeningCashLogs.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-2 border-t border-slate-900">
-                {selectedOpeningCashLogs.map(log => (
-                  <div key={log.id} className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between text-xs">
-                    <div>
-                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-violet-300 font-mono">
-                        <User size={13} className="text-violet-400" />
-                        <span>@{log.addedBy}</span>
+                {selectedOpeningCashLogs.map(log => {
+                  let timeStr = '';
+                  if (log.timestamp) {
+                    try {
+                      const d = new Date(log.timestamp);
+                      if (!isNaN(d.getTime())) {
+                        timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                      }
+                    } catch {
+                      timeStr = '';
+                    }
+                  }
+                  return (
+                    <div key={log.id || Math.random().toString()} className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                      <div>
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-violet-300 font-mono">
+                          <User size={13} className="text-violet-400" />
+                          <span>@{log.addedBy || 'user'}</span>
+                        </div>
+                        {timeStr && (
+                          <span className="text-[10px] text-slate-500 block font-mono mt-0.5">
+                            {timeStr}
+                          </span>
+                        )}
                       </div>
-                      <span className="text-[10px] text-slate-500 block font-mono mt-0.5">
-                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      <span className="text-xs font-extrabold text-emerald-400 font-mono">
+                        + Rs. {(log.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     </div>
-                    <span className="text-xs font-extrabold text-emerald-400 font-mono">
-                      + Rs. {log.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
