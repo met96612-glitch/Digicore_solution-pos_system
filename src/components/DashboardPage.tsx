@@ -545,7 +545,17 @@ export default function DashboardPage({
       openingCash + sharedCashSales + sharedCreditRecovered - sharedCashPurchases - sharedSupplierCreditPaid - sharedDayExpensesTotal
     );
 
-    const productsBreakdown = Object.values(prodBreakdownMap).sort((a, b) => b.value - a.value);
+    // Opening cash logs breakdown by user
+    const dayOpeningCashLogs = (openingCashLogs || []).filter(l => isDateMatch(l.date));
+    const openingCashUserSummaryMap: Record<string, number> = {};
+    dayOpeningCashLogs.forEach(l => {
+      const u = l.addedBy || 'admin';
+      openingCashUserSummaryMap[u] = (openingCashUserSummaryMap[u] || 0) + l.amount;
+    });
+    const openingCashUserSummary = Object.entries(openingCashUserSummaryMap).map(([addedBy, totalAmount]) => ({
+      addedBy,
+      totalAmount
+    }));
 
     const payload: SummaryReportPayload = {
       entityType,
@@ -621,6 +631,8 @@ export default function DashboardPage({
         pettyCashExpenses: dayExpensesTotal,
         expectedCashInDrawer
       },
+      openingCashLogs: dayOpeningCashLogs,
+      openingCashUserSummary,
       productsBreakdown,
       shopProfile,
       currentUserUsername

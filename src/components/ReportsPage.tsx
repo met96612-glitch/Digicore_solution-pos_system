@@ -717,6 +717,17 @@ export default function ReportsPage({
       periodExpensesTotal
     );
 
+    const dayOpeningCashLogs = selectedOpeningCashLogs;
+    const openingCashUserSummaryMap: Record<string, number> = {};
+    dayOpeningCashLogs.forEach(l => {
+      const u = l.addedBy || 'admin';
+      openingCashUserSummaryMap[u] = (openingCashUserSummaryMap[u] || 0) + l.amount;
+    });
+    const openingCashUserSummary = Object.entries(openingCashUserSummaryMap).map(([addedBy, totalAmount]) => ({
+      addedBy,
+      totalAmount
+    }));
+
     setThermalModalData({
       entityType,
       reportType,
@@ -780,6 +791,8 @@ export default function ReportsPage({
         pettyCashExpenses: periodExpensesTotal,
         expectedCashInDrawer
       },
+      openingCashLogs: dayOpeningCashLogs,
+      openingCashUserSummary,
       productsBreakdown,
       shopProfile,
       currentUserUsername
@@ -788,15 +801,18 @@ export default function ReportsPage({
 
   return (
     <div id="reportsPage" className="space-y-6">
-      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="text-violet-400" size={20} />
-            <h3 className="text-base font-bold text-slate-100">Separated dual desk financials</h3>
+      {/* Top Banner */}
+      <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/60 pb-4">
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
+              <LineChart size={20} className="text-violet-400" />
+              <span>Audit Reports & Ledger Summaries (මුදල් සහ තොග වාර්තා)</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              ළහිරු Spices, ජයන්තා Spices සහ මුළු ආයතනයේම (Consolidated) මූල්‍ය සහ තොග වාර්තා.
+            </p>
           </div>
-          <span className="text-xs bg-violet-600/10 text-violet-400 border border-violet-500/20 px-3 py-1 rounded-full font-mono font-bold uppercase">
-            Active Window: {reportType === 'daily' ? selectedDate : selectedMonth}
-          </span>
         </div>
 
         {/* Filters */}
@@ -869,6 +885,24 @@ export default function ReportsPage({
                   </div>
                 </div>
               </div>
+
+              {/* Per-User Summary Pill Badges */}
+              {selectedOpeningCashLogs.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {Object.entries(
+                    selectedOpeningCashLogs.reduce((acc, log) => {
+                      const u = log.addedBy || 'admin';
+                      acc[u] = (acc[u] || 0) + log.amount;
+                      return acc;
+                    }, {} as Record<string, number>)
+                  ).map(([username, userTotal]) => (
+                    <div key={username} className="px-3 py-1.5 bg-violet-600/20 border border-violet-500/30 rounded-xl flex items-center gap-1.5 text-xs font-mono">
+                      <span className="text-violet-300 font-bold">@{username}:</span>
+                      <span className="text-emerald-400 font-extrabold">+ Rs. {userTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {selectedOpeningCashLogs.length > 0 && (

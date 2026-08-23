@@ -76,6 +76,18 @@ export interface SummaryReportPayload {
     pettyCashExpenses: number;
     expectedCashInDrawer: number;
   };
+  openingCashLogs?: Array<{
+    id: string;
+    date: string;
+    amount: number;
+    addedBy: string;
+    timestamp: number;
+    note?: string;
+  }>;
+  openingCashUserSummary?: Array<{
+    addedBy: string;
+    totalAmount: number;
+  }>;
   productsBreakdown?: Array<{
     id: string;
     name: string;
@@ -251,13 +263,37 @@ export default function ThermalSummaryModal({ data, onClose, onToast }: Props) {
             </div>
           </div>
 
-          {/* Shared Cash Drawer Reconciliation */}
+          {/* Shared Cash Drawer Reconciliation & Opening Cash Breakdown */}
           <div className="space-y-1 pt-1">
             <p className="font-bold text-[10px] text-gray-900 uppercase">--- SHARED CASH DRAWER (පොදු ලච්චුව) ---</p>
-            <div className="flex justify-between text-gray-800">
+            <div className="flex justify-between font-bold text-gray-900">
               <span>Opening Cash Today:</span>
               <span>Rs. {data.drawerReconciliation.openingCash.toFixed(2)}</span>
             </div>
+
+            {/* Who deposited cash and how much */}
+            {data.openingCashLogs && data.openingCashLogs.length > 0 && (
+              <div className="py-1.5 border-t border-b border-black/10 my-1 space-y-1">
+                <p className="text-[9px] font-bold text-gray-700 uppercase">Opening Cash Log (තැන්පත් කළ අය):</p>
+                {data.openingCashLogs.map(l => (
+                  <div key={l.id} className="flex justify-between text-[9px] text-gray-800 font-mono">
+                    <span>· @{l.addedBy} ({new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}):</span>
+                    <span className="font-bold text-emerald-800">+ Rs. {l.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+                {data.openingCashUserSummary && data.openingCashUserSummary.length > 0 && (
+                  <div className="pt-1 border-t border-dashed border-black/20 space-y-0.5">
+                    {data.openingCashUserSummary.map(u => (
+                      <div key={u.addedBy} className="flex justify-between text-[9px] font-bold text-gray-900 font-mono">
+                        <span>  └ Total @{u.addedBy}:</span>
+                        <span className="text-emerald-800">Rs. {u.totalAmount.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex justify-between font-black text-black pt-1 border-t border-black/30">
               <span>EXPECTED CASH IN DRAWER:</span>
               <span>Rs. {data.drawerReconciliation.expectedCashInDrawer.toFixed(2)}</span>
