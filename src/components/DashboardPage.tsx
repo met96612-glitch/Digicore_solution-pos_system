@@ -346,8 +346,8 @@ export default function DashboardPage({
   }, [products, transactions, selectedDate]);
 
   // Ensure activeStats is strictly constrained to standard user's account if not superuser
-  const effectiveAccount = isSuperUser ? selectedAccount : (currentUserUsername.toLowerCase() === 'jayantha' ? 'jayantha' : 'lahiru');
-  const activeStats = statsMap[effectiveAccount];
+  const effectiveAccount = isSuperUser ? selectedAccount : (((currentUserUsername || '').toLowerCase() === 'jayantha') ? 'jayantha' : 'lahiru');
+  const activeStats = statsMap[effectiveAccount] || statsMap['lahiru'];
 
   const recentTransactions = useMemo(() => {
     return [...transactions]
@@ -362,283 +362,292 @@ export default function DashboardPage({
 
   // Open full Z-Report (End of Day Audit)
   const openZReport = (targetAccount: 'lahiru' | 'jayantha' | 'all' = effectiveAccount) => {
-    const isJayantha = targetAccount === 'jayantha';
-    const isLahiru = targetAccount === 'lahiru';
+    try {
+      const isJayantha = targetAccount === 'jayantha';
+      const isLahiru = targetAccount === 'lahiru';
 
-    let brandName = 'Lahiru Spices Center';
-    if (isJayantha) brandName = 'Jayantha Spices Center';
-    else if (targetAccount === 'all') brandName = 'Kulubadu Enterprise Consolidated';
+      let brandName = 'Lahiru Spices Center';
+      if (isJayantha) brandName = 'Jayantha Spices Center';
+      else if (targetAccount === 'all') brandName = 'Kulubadu Enterprise Consolidated';
 
-    const entityType = targetAccount === 'all' ? 'combined' : targetAccount;
-    const timeFrameStr = selectedDate;
+      const entityType = targetAccount === 'all' ? 'combined' : targetAccount;
+      const reportDate = selectedDate || getLocalTodayDateString();
+      const timeFrameStr = reportDate;
 
-    // Filter transactions for this entity and selected date
-    const entityDateTransactions = transactions.filter(tx => {
-      if (!isDateMatch(tx.date)) return false;
-      const isJ = isJayanthaTx(tx);
-      if (isJayantha) return isJ;
-      if (isLahiru) return !isJ;
-      return true;
-    });
+      // Filter transactions for this entity and selected date
+      const entityDateTransactions = (transactions || []).filter(tx => {
+        if (!tx || !isDateMatch(tx.date)) return false;
+        const isJ = isJayanthaTx(tx);
+        if (isJayantha) return isJ;
+        if (isLahiru) return !isJ;
+        return true;
+      });
 
-    let grossSales = 0;
-    let discountsGiven = 0;
-    let netSales = 0;
-    let cardSales = 0;
-    let directCashSales = 0;
-    let creditSales = 0;
-    let customerCreditRecovered = 0;
+      let grossSales = 0;
+      let discountsGiven = 0;
+      let netSales = 0;
+      let cardSales = 0;
+      let directCashSales = 0;
+      let creditSales = 0;
+      let customerCreditRecovered = 0;
 
-    let directCashPurchases = 0;
-    let creditPurchases = 0;
-    let supplierCreditPaid = 0;
+      let directCashPurchases = 0;
+      let creditPurchases = 0;
+      let supplierCreditPaid = 0;
 
-    let totalCostOfGoodsSold = 0;
-    let totalCalculatedProfit = 0;
+      let totalCostOfGoodsSold = 0;
+      let totalCalculatedProfit = 0;
 
-    const prodBreakdownMap: Record<string, { id: string; name: string; unit: string; qty: number; value: number; profit: number }> = {};
+      const prodBreakdownMap: Record<string, { id: string; name: string; unit: string; qty: number; value: number; profit: number }> = {};
 
-    entityDateTransactions.forEach(tx => {
-      if (tx.type === 'sell') {
-        grossSales += (tx.subtotal || tx.total);
-        discountsGiven += (tx.discount || 0);
-        netSales += tx.total;
+      entityDateTransactions.forEach(tx => {
+        if (tx.type === 'sell') {
+          grossSales += (tx.subtotal || tx.total || 0);
+          discountsGiven += (tx.discount || 0);
+          netSales += (tx.total || 0);
 
-        const pm = (tx.payment_method || 'Cash').toLowerCase();
-        if (pm === 'card' || pm === 'bank') {
-          cardSales += tx.total;
-        } else if (pm === 'credit') {
-          creditSales += tx.total;
-        } else {
-          directCashSales += tx.total;
+          const pm = (tx.payment_method || 'Cash').toLowerCase();
+          if (pm === 'card' || pm === 'bank') {
+            cardSales += (tx.total || 0);
+          } else if (pm === 'credit') {
+            creditSales += (tx.total || 0);
+          } else {
+            directCashSales += (tx.total || 0);
+          }
+
+          // Profit and COGS calculation
+          let txCOGS = 0;
+          (tx.items || []).forEach(item => {
+            const prod = products.find(p => p.id === item.productId);
+            const pName = prod ? prod.name : item.productId;
+            const pUnit = prod ? prod.unit : 'kg';
+            const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
+
+            let qtyInBase = item.qty || 0;
+            if (prod && prod.unit === 'kg' && item.unit === 'g') {
+              qtyInBase = (item.qty || 0) * 0.001;
+            }
+
+            const itemCost = bPrice * qtyInBase;
+            txCOGS += itemCost;
+
+            if (!prodBreakdownMap[item.productId]) {
+              prodBreakdownMap[item.productId] = {
+                id: item.productId,
+                name: pName,
+                unit: pUnit,
+                qty: 0,
+                value: 0,
+                profit: 0
+              };
+            }
+
+            prodBreakdownMap[item.productId].qty += qtyInBase;
+            prodBreakdownMap[item.productId].value += (item.total || 0);
+            const itemProfit = Math.max(0, (item.total || 0) - itemCost);
+            prodBreakdownMap[item.productId].profit += itemProfit;
+          });
+
+          totalCostOfGoodsSold += txCOGS;
+
+          if (typeof tx.total_profit === 'number' && tx.total_profit > 0) {
+            totalCalculatedProfit += tx.total_profit;
+          } else {
+            const ratio = tx.subtotal > 0 ? (tx.subtotal - (tx.discount || 0)) / tx.subtotal : 1;
+            totalCalculatedProfit += ((tx.total || 0) - txCOGS) * ratio;
+          }
+        } else if (tx.type === 'buy') {
+          const pm = (tx.payment_method || 'Cash').toLowerCase();
+          if (pm === 'credit') {
+            creditPurchases += (tx.total || 0);
+          } else {
+            directCashPurchases += (tx.total || 0);
+          }
+        } else if (tx.type === 'return') {
+          netSales -= (tx.total || 0);
+          directCashSales -= (tx.total || 0);
         }
+      });
 
-        // Profit and COGS calculation
-        let txCOGS = 0;
-        tx.items.forEach(item => {
-          const prod = products.find(p => p.id === item.productId);
-          const pName = prod ? prod.name : item.productId;
-          const pUnit = prod ? prod.unit : 'kg';
-          const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
+      // Credit payments recovered today (including past bills paid today)
+      (transactions || []).forEach(tx => {
+        if (!tx) return;
+        const isJ = isJayanthaTx(tx);
+        if (isJayantha && !isJ) return;
+        if (isLahiru && isJ) return;
 
-          let qtyInBase = item.qty;
-          if (prod && prod.unit === 'kg' && item.unit === 'g') {
-            qtyInBase = item.qty * 0.001;
-          }
-
-          const itemCost = bPrice * qtyInBase;
-          txCOGS += itemCost;
-
-          if (!prodBreakdownMap[item.productId]) {
-            prodBreakdownMap[item.productId] = {
-              id: item.productId,
-              name: pName,
-              unit: pUnit,
-              qty: 0,
-              value: 0,
-              profit: 0
-            };
-          }
-
-          prodBreakdownMap[item.productId].qty += qtyInBase;
-          prodBreakdownMap[item.productId].value += item.total;
-          const itemProfit = Math.max(0, item.total - itemCost);
-          prodBreakdownMap[item.productId].profit += itemProfit;
-        });
-
-        totalCostOfGoodsSold += txCOGS;
-
-        if (typeof tx.total_profit === 'number' && tx.total_profit > 0) {
-          totalCalculatedProfit += tx.total_profit;
-        } else {
-          const ratio = tx.subtotal > 0 ? (tx.subtotal - (tx.discount || 0)) / tx.subtotal : 1;
-          totalCalculatedProfit += (tx.total - txCOGS) * ratio;
+        if (tx.type === 'sell' && tx.credit_payments) {
+          tx.credit_payments.forEach(pay => {
+            if (pay && isDateMatch(pay.date) && (pay.payment_method === 'Cash' || !pay.payment_method)) {
+              customerCreditRecovered += (pay.amount || 0);
+            }
+          });
+        } else if (tx.type === 'buy' && tx.credit_payments) {
+          tx.credit_payments.forEach(pay => {
+            if (pay && isDateMatch(pay.date) && (pay.payment_method === 'Cash' || !pay.payment_method)) {
+              supplierCreditPaid += (pay.amount || 0);
+            }
+          });
         }
-      } else if (tx.type === 'buy') {
-        const pm = (tx.payment_method || 'Cash').toLowerCase();
-        if (pm === 'credit') {
-          creditPurchases += tx.total;
-        } else {
-          directCashPurchases += tx.total;
+      });
+
+      // Daily Expenses filtered for target account
+      const dayExpensesList = (expenses || []).filter(exp => {
+        if (!exp || !isDateMatch(exp.date)) return false;
+        if (isJayantha) return exp.addedBy === 'jayantha';
+        if (isLahiru) return exp.addedBy !== 'jayantha';
+        return true;
+      });
+      const dayExpensesTotal = dayExpensesList.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+
+      // Wastage / Stock Adjustments
+      const dayAdjustments = (stockAdjustments || []).filter(a => {
+        if (!a || !isDateMatch(a.date)) return false;
+        if (isJayantha && a.desk !== 'jayantha') return false;
+        if (isLahiru && a.desk === 'jayantha') return false;
+        return true;
+      });
+      const wastageLoss = dayAdjustments.reduce((sum, a) => sum + (a.totalLoss || 0), 0);
+
+      // Profit and Loss calculations
+      const grossProfit = Math.max(0, netSales - totalCostOfGoodsSold);
+      const netProfit = Math.max(0, grossProfit - wastageLoss - dayExpensesTotal);
+
+      // Shared Cash Drawer overall totals for physical cash reconciliation
+      const sharedCashSales = (transactions || [])
+        .filter(tx => tx && isDateMatch(tx.date) && tx.type === 'sell' && (tx.payment_method === 'Cash' || !tx.payment_method))
+        .reduce((sum, tx) => sum + (tx.total || 0), 0);
+      let sharedCreditRecovered = 0;
+      (transactions || []).forEach(tx => {
+        if (tx && tx.type === 'sell' && tx.credit_payments) {
+          tx.credit_payments.forEach(p => {
+            if (p && isDateMatch(p.date) && (p.payment_method === 'Cash' || !p.payment_method)) {
+              sharedCreditRecovered += (p.amount || 0);
+            }
+          });
         }
-      } else if (tx.type === 'return') {
-        netSales -= tx.total;
-        directCashSales -= tx.total;
-      }
-    });
+      });
+      const sharedCashPurchases = (transactions || [])
+        .filter(tx => tx && isDateMatch(tx.date) && tx.type === 'buy' && (tx.payment_method === 'Cash' || !tx.payment_method))
+        .reduce((sum, tx) => sum + (tx.total || 0), 0);
+      let sharedSupplierCreditPaid = 0;
+      (transactions || []).forEach(tx => {
+        if (tx && tx.type === 'buy' && tx.credit_payments) {
+          tx.credit_payments.forEach(p => {
+            if (p && isDateMatch(p.date) && (p.payment_method === 'Cash' || !p.payment_method)) {
+              sharedSupplierCreditPaid += (p.amount || 0);
+            }
+          });
+        }
+      });
+      const sharedDayExpensesTotal = (expenses || []).filter(exp => exp && isDateMatch(exp.date)).reduce((sum, exp) => sum + (exp.amount || 0), 0);
 
-    // Credit payments recovered today (including past bills paid today)
-    transactions.forEach(tx => {
-      const isJ = isJayanthaTx(tx);
-      if (isJayantha && !isJ) return;
-      if (isLahiru && isJ) return;
+      // Expected Cash in Shared Drawer
+      const expectedCashInDrawer = Math.max(
+        0,
+        openingCash + sharedCashSales + sharedCreditRecovered - sharedCashPurchases - sharedSupplierCreditPaid - sharedDayExpensesTotal
+      );
 
-      if (tx.type === 'sell' && tx.credit_payments) {
-        tx.credit_payments.forEach(pay => {
-          if (isDateMatch(pay.date) && (pay.payment_method === 'Cash' || !pay.payment_method)) {
-            customerCreditRecovered += pay.amount;
-          }
-        });
-      } else if (tx.type === 'buy' && tx.credit_payments) {
-        tx.credit_payments.forEach(pay => {
-          if (isDateMatch(pay.date) && (pay.payment_method === 'Cash' || !pay.payment_method)) {
-            supplierCreditPaid += pay.amount;
-          }
-        });
-      }
-    });
+      // Opening cash logs breakdown by user
+      const dayOpeningCashLogs = (openingCashLogs || []).filter(l => l && isDateMatch(l.date));
+      const openingCashUserSummaryMap: Record<string, number> = {};
+      dayOpeningCashLogs.forEach(l => {
+        const u = l.addedBy || 'user';
+        openingCashUserSummaryMap[u] = (openingCashUserSummaryMap[u] || 0) + (l.amount || 0);
+      });
+      const openingCashUserSummary = Object.entries(openingCashUserSummaryMap).map(([addedBy, totalAmount]) => ({
+        addedBy,
+        totalAmount
+      }));
 
-    // Daily Expenses filtered for target account
-    const dayExpensesList = (expenses || []).filter(exp => {
-      if (!isDateMatch(exp.date)) return false;
-      if (isJayantha) return exp.addedBy === 'jayantha';
-      if (isLahiru) return exp.addedBy !== 'jayantha';
-      return true;
-    });
-    const dayExpensesTotal = dayExpensesList.reduce((sum, exp) => sum + exp.amount, 0);
+      const productsBreakdown = Object.values(prodBreakdownMap).sort((a, b) => b.value - a.value);
 
-    // Wastage / Stock Adjustments
-    const dayAdjustments = (stockAdjustments || []).filter(a => {
-      if (!isDateMatch(a.date)) return false;
-      if (isJayantha && a.desk !== 'jayantha') return false;
-      if (isLahiru && a.desk === 'jayantha') return false;
-      return true;
-    });
-    const wastageLoss = dayAdjustments.reduce((sum, a) => sum + a.totalLoss, 0);
+      const payload: SummaryReportPayload = {
+        entityType,
+        reportType: 'daily',
+        selectedDate: reportDate,
+        selectedMonth: reportDate.substring(0, 7),
+        brandName,
+        timeFrameStr: `Date: ${reportDate}`,
+        isZReport: true,
+        zSequenceNo: `Z-${reportDate.replace(/-/g, '')}-${isJayantha ? 'J01' : isLahiru ? 'L01' : 'ALL01'}`,
+        stats: {
+          sales: netSales,
+          salesCount: entityDateTransactions.filter(t => t.type === 'sell').length,
+          buys: directCashPurchases + creditPurchases,
+          buysCount: entityDateTransactions.filter(t => t.type === 'buy').length,
+          wastageLoss,
+          expenses: dayExpensesTotal,
+          openingCash,
+          profit: netProfit
+        },
+        wholesaleStats: {
+          sales: 0,
+          profit: 0,
+          count: 0
+        },
+        salesAudit: {
+          grossSales: grossSales > 0 ? grossSales : netSales,
+          discountsGiven,
+          netSales,
+          cardSales,
+          directCashSales,
+          creditSales,
+          customerCreditRecovered,
+          totalCashInflow: directCashSales + customerCreditRecovered
+        },
+        purchasesAudit: {
+          directCashPurchases,
+          creditPurchases,
+          supplierCreditPaid,
+          totalCashOutflow: directCashPurchases + supplierCreditPaid
+        },
+        creditStats: {
+          directCashSales,
+          creditSales,
+          customerCreditRecovered,
+          directCashPurchases,
+          creditPurchases,
+          supplierCreditPaid
+        },
+        profitAndLoss: {
+          grossRevenue: grossSales > 0 ? grossSales : netSales,
+          discounts: discountsGiven,
+          netRevenue: netSales,
+          cogs: totalCostOfGoodsSold,
+          grossProfit,
+          wastageLoss,
+          operatingExpenses: dayExpensesTotal,
+          netProfit
+        },
+        expensesList: dayExpensesList.map(e => ({
+          id: e.id,
+          category: e.category,
+          title: e.title,
+          amount: e.amount || 0,
+          addedBy: e.addedBy
+        })),
+        drawerReconciliation: {
+          openingCash,
+          cashSales: directCashSales,
+          creditRecovered: customerCreditRecovered,
+          cashPurchases: directCashPurchases,
+          supplierCreditPaid,
+          pettyCashExpenses: dayExpensesTotal,
+          expectedCashInDrawer
+        },
+        openingCashLogs: dayOpeningCashLogs,
+        openingCashUserSummary,
+        productsBreakdown,
+        shopProfile,
+        currentUserUsername
+      };
 
-    // Profit and Loss calculations
-    const grossProfit = Math.max(0, netSales - totalCostOfGoodsSold);
-    const netProfit = Math.max(0, grossProfit - wastageLoss - dayExpensesTotal);
-
-    // Shared Cash Drawer overall totals for physical cash reconciliation
-    const sharedCashSales = transactions
-      .filter(tx => isDateMatch(tx.date) && tx.type === 'sell' && (tx.payment_method === 'Cash' || !tx.payment_method))
-      .reduce((sum, tx) => sum + tx.total, 0);
-    let sharedCreditRecovered = 0;
-    transactions.forEach(tx => {
-      if (tx.type === 'sell' && tx.credit_payments) {
-        tx.credit_payments.forEach(p => {
-          if (isDateMatch(p.date) && (p.payment_method === 'Cash' || !p.payment_method)) {
-            sharedCreditRecovered += p.amount;
-          }
-        });
-      }
-    });
-    const sharedCashPurchases = transactions
-      .filter(tx => isDateMatch(tx.date) && tx.type === 'buy' && (tx.payment_method === 'Cash' || !tx.payment_method))
-      .reduce((sum, tx) => sum + tx.total, 0);
-    let sharedSupplierCreditPaid = 0;
-    transactions.forEach(tx => {
-      if (tx.type === 'buy' && tx.credit_payments) {
-        tx.credit_payments.forEach(p => {
-          if (isDateMatch(p.date) && (p.payment_method === 'Cash' || !p.payment_method)) {
-            sharedSupplierCreditPaid += p.amount;
-          }
-        });
-      }
-    });
-    const sharedDayExpensesTotal = (expenses || []).filter(exp => isDateMatch(exp.date)).reduce((sum, exp) => sum + exp.amount, 0);
-
-    // Expected Cash in Shared Drawer
-    const expectedCashInDrawer = Math.max(
-      0,
-      openingCash + sharedCashSales + sharedCreditRecovered - sharedCashPurchases - sharedSupplierCreditPaid - sharedDayExpensesTotal
-    );
-
-    // Opening cash logs breakdown by user
-    const dayOpeningCashLogs = (openingCashLogs || []).filter(l => isDateMatch(l.date));
-    const openingCashUserSummaryMap: Record<string, number> = {};
-    dayOpeningCashLogs.forEach(l => {
-      const u = l.addedBy || 'admin';
-      openingCashUserSummaryMap[u] = (openingCashUserSummaryMap[u] || 0) + l.amount;
-    });
-    const openingCashUserSummary = Object.entries(openingCashUserSummaryMap).map(([addedBy, totalAmount]) => ({
-      addedBy,
-      totalAmount
-    }));
-
-    const payload: SummaryReportPayload = {
-      entityType,
-      reportType: 'daily',
-      selectedDate,
-      selectedMonth: selectedDate.substring(0, 7),
-      brandName,
-      timeFrameStr: `Date: ${selectedDate}`,
-      isZReport: true,
-      zSequenceNo: `Z-${selectedDate.replace(/-/g, '')}-${isJayantha ? 'J01' : isLahiru ? 'L01' : 'ALL01'}`,
-      stats: {
-        sales: netSales,
-        salesCount: entityDateTransactions.filter(t => t.type === 'sell').length,
-        buys: directCashPurchases + creditPurchases,
-        buysCount: entityDateTransactions.filter(t => t.type === 'buy').length,
-        wastageLoss,
-        expenses: dayExpensesTotal,
-        openingCash,
-        profit: netProfit
-      },
-      wholesaleStats: {
-        sales: 0,
-        profit: 0,
-        count: 0
-      },
-      salesAudit: {
-        grossSales: grossSales > 0 ? grossSales : netSales,
-        discountsGiven,
-        netSales,
-        cardSales,
-        directCashSales,
-        creditSales,
-        customerCreditRecovered,
-        totalCashInflow: directCashSales + customerCreditRecovered
-      },
-      purchasesAudit: {
-        directCashPurchases,
-        creditPurchases,
-        supplierCreditPaid,
-        totalCashOutflow: directCashPurchases + supplierCreditPaid
-      },
-      creditStats: {
-        directCashSales,
-        creditSales,
-        customerCreditRecovered,
-        directCashPurchases,
-        creditPurchases,
-        supplierCreditPaid
-      },
-      profitAndLoss: {
-        grossRevenue: grossSales > 0 ? grossSales : netSales,
-        discounts: discountsGiven,
-        netRevenue: netSales,
-        cogs: totalCostOfGoodsSold,
-        grossProfit,
-        wastageLoss,
-        operatingExpenses: dayExpensesTotal,
-        netProfit
-      },
-      expensesList: dayExpensesList.map(e => ({
-        id: e.id,
-        category: e.category,
-        title: e.title,
-        amount: e.amount,
-        addedBy: e.addedBy
-      })),
-      drawerReconciliation: {
-        openingCash,
-        cashSales: directCashSales,
-        creditRecovered: customerCreditRecovered,
-        cashPurchases: directCashPurchases,
-        supplierCreditPaid,
-        pettyCashExpenses: dayExpensesTotal,
-        expectedCashInDrawer
-      },
-      openingCashLogs: dayOpeningCashLogs,
-      openingCashUserSummary,
-      productsBreakdown,
-      shopProfile,
-      currentUserUsername
-    };
-
-    setThermalModalData(payload);
+      setThermalModalData(payload);
+    } catch (err) {
+      console.error('Failed to open Z-Report:', err);
+      onToast?.('Z-Report සෑදීමේදී දෝෂයක් සිදු විය.', 'error');
+    }
   };
 
   return (
