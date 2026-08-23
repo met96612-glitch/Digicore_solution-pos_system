@@ -94,7 +94,14 @@ export interface SummaryReportPayload {
     unit: string;
     qty: number;
     value: number;
-    profit: number;
+    profit?: number;
+  }>;
+  purchasedProductsBreakdown?: Array<{
+    id: string;
+    name: string;
+    unit: string;
+    qty: number;
+    value: number;
   }>;
   shopProfile?: any;
   currentUserUsername?: string;
@@ -189,6 +196,22 @@ export default function ThermalSummaryModal({ data, onClose, onToast }: Props) {
             </div>
           </div>
 
+          {/* Sold Products / Goods Performance Breakdown */}
+          {data.productsBreakdown && data.productsBreakdown.length > 0 && (
+            <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
+              <p className="font-bold text-[10px] text-gray-900 uppercase">--- SOLD SPICE BREAKDOWN (විකුණු බඩු) ---</p>
+              {data.productsBreakdown.slice(0, 10).map(p => (
+                <div key={p.id} className="flex justify-between text-[9.5px] text-gray-900 font-mono">
+                  <span className="truncate max-w-[140px]">· {p.name}</span>
+                  <span className="font-bold">{p.qty % 1 === 0 ? p.qty : p.qty.toFixed(2)} {p.unit} ({formatCurrency(p.value)})</span>
+                </div>
+              ))}
+              {data.productsBreakdown.length > 10 && (
+                <p className="text-[8px] text-gray-500 text-center">+ {data.productsBreakdown.length - 10} more products...</p>
+              )}
+            </div>
+          )}
+
           {/* Restocking Purchases Audit */}
           <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
             <p className="font-bold text-[10px] text-gray-900 uppercase">--- PURCHASES / RESTOCKING (මිලදී ගැනීම්) ---</p>
@@ -205,6 +228,19 @@ export default function ThermalSummaryModal({ data, onClose, onToast }: Props) {
               <span>Rs. {data.purchasesAudit.supplierCreditPaid.toFixed(2)}</span>
             </div>
           </div>
+
+          {/* Purchased Goods / Restocking Product Breakdown */}
+          {data.purchasedProductsBreakdown && data.purchasedProductsBreakdown.length > 0 && (
+            <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
+              <p className="font-bold text-[10px] text-gray-900 uppercase">--- BOUGHT SPICE BREAKDOWN (මිලදී ගත් බඩු) ---</p>
+              {data.purchasedProductsBreakdown.map(p => (
+                <div key={p.id} className="flex justify-between text-[9.5px] text-gray-900 font-mono">
+                  <span className="truncate max-w-[140px]">· {p.name}</span>
+                  <span className="font-bold">{p.qty % 1 === 0 ? p.qty : p.qty.toFixed(2)} {p.unit} ({formatCurrency(p.value)})</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Shop Expenses Audit */}
           {data.profitAndLoss.operatingExpenses > 0 && (

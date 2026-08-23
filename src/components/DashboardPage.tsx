@@ -398,6 +398,7 @@ export default function DashboardPage({
       let totalCostOfGoodsSold = 0;
       let totalCalculatedProfit = 0;
 
+      const boughtProdBreakdownMap: Record<string, { id: string; name: string; unit: string; qty: number; value: number }> = {};
       const prodBreakdownMap: Record<string, { id: string; name: string; unit: string; qty: number; value: number; profit: number }> = {};
 
       entityDateTransactions.forEach(tx => {
@@ -463,6 +464,31 @@ export default function DashboardPage({
           } else {
             directCashPurchases += (tx.total || 0);
           }
+
+          (tx.items || []).forEach(item => {
+            if (!item) return;
+            const prod = products.find(p => p.id === item.productId);
+            const pName = prod ? prod.name : item.productId;
+            const pUnit = prod ? prod.unit : 'kg';
+
+            let qtyInBase = item.qty || 0;
+            if (prod && prod.unit === 'kg' && item.unit === 'g') {
+              qtyInBase = (item.qty || 0) * 0.001;
+            }
+
+            if (!boughtProdBreakdownMap[item.productId]) {
+              boughtProdBreakdownMap[item.productId] = {
+                id: item.productId,
+                name: pName,
+                unit: pUnit,
+                qty: 0,
+                value: 0
+              };
+            }
+
+            boughtProdBreakdownMap[item.productId].qty += qtyInBase;
+            boughtProdBreakdownMap[item.productId].value += (item.total || 0);
+          });
         } else if (tx.type === 'return') {
           netSales -= (tx.total || 0);
           directCashSales -= (tx.total || 0);
@@ -561,6 +587,7 @@ export default function DashboardPage({
       }));
 
       const productsBreakdown = Object.values(prodBreakdownMap).sort((a, b) => b.value - a.value);
+      const purchasedProductsBreakdown = Object.values(boughtProdBreakdownMap).sort((a, b) => b.value - a.value);
 
       const payload: SummaryReportPayload = {
         entityType,
@@ -639,6 +666,7 @@ export default function DashboardPage({
         openingCashLogs: dayOpeningCashLogs,
         openingCashUserSummary,
         productsBreakdown,
+        purchasedProductsBreakdown,
         shopProfile,
         currentUserUsername
       };

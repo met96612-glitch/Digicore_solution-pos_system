@@ -671,40 +671,58 @@ export default function ReportsPage({
     });
 
     const prodBreakdownMap: Record<string, { id: string; name: string; unit: string; qty: number; value: number; profit: number }> = {};
+    const boughtProdBreakdownMap: Record<string, { id: string; name: string; unit: string; qty: number; value: number }> = {};
+
     entityTransactions.forEach(tx => {
-      tx.items.forEach(item => {
-        const prod = products.find(p => p.id === item.productId);
+      if (!tx) return;
+      (tx.items || []).forEach(item => {
+        if (!item) return;
+        const prod = (products || []).find(p => p && p.id === item.productId);
         const pName = prod ? prod.name : item.productId;
         const pUnit = prod ? prod.unit : 'kg';
-        const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
+        const bPrice = prod ? (prod.buying_price ?? prod.buyPrice ?? 0) : 0;
 
-        let qtyInBase = item.qty;
+        let qtyInBase = item.qty || 0;
         if (prod && prod.unit === 'kg' && item.unit === 'g') {
-          qtyInBase = item.qty * 0.001;
+          qtyInBase = (item.qty || 0) * 0.001;
         }
-
-        if (!prodBreakdownMap[item.productId]) {
-          prodBreakdownMap[item.productId] = {
-            id: item.productId,
-            name: pName,
-            unit: pUnit,
-            qty: 0,
-            value: 0,
-            profit: 0
-          };
-        }
-
-        prodBreakdownMap[item.productId].qty += qtyInBase;
-        prodBreakdownMap[item.productId].value += item.total;
 
         if (tx.type === 'sell') {
+          if (!prodBreakdownMap[item.productId]) {
+            prodBreakdownMap[item.productId] = {
+              id: item.productId,
+              name: pName,
+              unit: pUnit,
+              qty: 0,
+              value: 0,
+              profit: 0
+            };
+          }
+
+          prodBreakdownMap[item.productId].qty += qtyInBase;
+          prodBreakdownMap[item.productId].value += (item.total || 0);
+
           const cost = bPrice * qtyInBase;
-          prodBreakdownMap[item.productId].profit += Math.max(0, item.total - cost);
+          prodBreakdownMap[item.productId].profit += Math.max(0, (item.total || 0) - cost);
+        } else if (tx.type === 'buy') {
+          if (!boughtProdBreakdownMap[item.productId]) {
+            boughtProdBreakdownMap[item.productId] = {
+              id: item.productId,
+              name: pName,
+              unit: pUnit,
+              qty: 0,
+              value: 0
+            };
+          }
+
+          boughtProdBreakdownMap[item.productId].qty += qtyInBase;
+          boughtProdBreakdownMap[item.productId].value += (item.total || 0);
         }
       });
     });
 
     const productsBreakdown = Object.values(prodBreakdownMap).sort((a, b) => b.value - a.value);
+    const purchasedProductsBreakdown = Object.values(boughtProdBreakdownMap).sort((a, b) => b.value - a.value);
 
     // Compute detailed sales audit
     let grossSales = 0;
@@ -713,19 +731,21 @@ export default function ReportsPage({
     let totalCOGS = 0;
 
     entityTransactions.forEach(tx => {
+      if (!tx) return;
       if (tx.type === 'sell') {
-        grossSales += (tx.subtotal || tx.total);
+        grossSales += (tx.subtotal || tx.total || 0);
         discountsGiven += (tx.discount || 0);
         const pm = (tx.payment_method || 'Cash').toLowerCase();
         if (pm === 'card' || pm === 'bank') {
-          cardSales += tx.total;
+          cardSales += (tx.total || 0);
         }
-        tx.items.forEach(item => {
-          const prod = products.find(p => p.id === item.productId);
-          const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
-          let qtyInBase = item.qty;
+        (tx.items || []).forEach(item => {
+          if (!item) return;
+          const prod = (products || []).find(p => p && p.id === item.productId);
+          const bPrice = prod ? (prod.buying_price ?? prod.buyPrice ?? 0) : 0;
+          let qtyInBase = item.qty || 0;
           if (prod && prod.unit === 'kg' && item.unit === 'g') {
-            qtyInBase = item.qty * 0.001;
+            qtyInBase = (item.qty || 0) * 0.001;
           }
           totalCOGS += bPrice * qtyInBase;
         });
@@ -830,6 +850,7 @@ export default function ReportsPage({
       openingCashLogs: dayOpeningCashLogs,
       openingCashUserSummary,
       productsBreakdown,
+      purchasedProductsBreakdown,
       shopProfile,
       currentUserUsername
     });
