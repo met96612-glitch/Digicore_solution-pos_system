@@ -503,14 +503,14 @@ export default function App() {
   };
 
   const todayCashSales = useMemo(() => {
-    // 1. Regular sales where payment_method is Cash
-    const directCashSales = filteredTransactions
+    // 1. Regular sales where payment_method is Cash (Combined across all users for shared cash drawer)
+    const directCashSales = transactions
       .filter(tx => tx.type === 'sell' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
       .reduce((sum, tx) => sum + tx.total, 0);
 
     // 2. Down payments or credit recoveries received in Cash today
     let creditCashRecovered = 0;
-    filteredTransactions.forEach(tx => {
+    transactions.forEach(tx => {
       if (tx.type === 'sell' && tx.credit_payments) {
         tx.credit_payments.forEach(pay => {
           if (isToday(pay.date) && pay.payment_method === 'Cash') {
@@ -521,16 +521,16 @@ export default function App() {
     });
 
     return directCashSales + creditCashRecovered;
-  }, [filteredTransactions, todayDateString]);
+  }, [transactions, todayDateString]);
 
   const todayBuysTotal = useMemo(() => {
-    // 1. Regular purchases paid in Cash today
-    let cashSpentOnBuys = filteredTransactions
+    // 1. Regular purchases paid in Cash today (Combined across all users for shared cash drawer)
+    let cashSpentOnBuys = transactions
       .filter(tx => tx.type === 'buy' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
       .reduce((sum, tx) => sum + tx.total, 0);
 
     // 2. Down payments or supplier credit payments made in Cash today
-    filteredTransactions.forEach(tx => {
+    transactions.forEach(tx => {
       if (tx.type === 'buy' && tx.credit_payments) {
         tx.credit_payments.forEach(pay => {
           if (isToday(pay.date) && pay.payment_method === 'Cash') {
@@ -541,38 +541,38 @@ export default function App() {
     });
 
     return cashSpentOnBuys;
-  }, [filteredTransactions, todayDateString]);
+  }, [transactions, todayDateString]);
 
   const todayExpensesTotal = useMemo(() => {
-    return filteredExpenses
+    return expenses
       .filter(exp => isToday(exp.date))
       .reduce((sum, exp) => sum + exp.amount, 0);
-  }, [filteredExpenses, todayDateString]);
+  }, [expenses, todayDateString]);
 
   const todayOpeningCashTotal = useMemo(() => {
-    const todayLogs = filteredOpeningCashLogs.filter(l => isToday(l.date));
+    const todayLogs = openingCashLogs.filter(l => isToday(l.date));
     return todayLogs.reduce((sum, l) => sum + l.amount, 0);
-  }, [filteredOpeningCashLogs, todayDateString]);
+  }, [openingCashLogs, todayDateString]);
 
   const currentDrawerBalance = todayOpeningCashTotal + todayCashSales - todayExpensesTotal - todayBuysTotal;
 
   const activeModalDrawerData = useMemo(() => {
-    let targetLogs = filteredOpeningCashLogs;
-    let targetTx = filteredTransactions;
-    let targetExp = filteredExpenses;
-    let username = sessionUser?.username || 'user';
-    let name = sessionUser?.name || 'User';
+    let targetLogs = openingCashLogs;
+    let targetTx = transactions;
+    let targetExp = expenses;
+    let username = 'shared_drawer';
+    let name = 'Shared Cash Drawer (පොදු ලච්චුව)';
 
     if ((sessionUser?.role === 'superuser' || sessionUser?.role === 'admin') && drawerUserFilter !== 'my') {
       if (drawerUserFilter === 'lahiru') {
         username = 'lahiru';
-        name = 'Lahiru Spices';
+        name = 'Lahiru Spices Cash Audit';
         targetLogs = openingCashLogs.filter(l => l.addedBy === 'lahiru');
         targetTx = transactions.filter(tx => tx.id.startsWith('L-') || tx.createdBy === 'lahiru');
         targetExp = expenses.filter(e => e.addedBy === 'lahiru');
       } else if (drawerUserFilter === 'jayantha') {
         username = 'jayantha';
-        name = 'Jayantha Spices';
+        name = 'Jayantha Spices Cash Audit';
         targetLogs = openingCashLogs.filter(l => l.addedBy === 'jayantha');
         targetTx = transactions.filter(tx => tx.id.startsWith('J-') || tx.createdBy === 'jayantha');
         targetExp = expenses.filter(e => e.addedBy === 'jayantha');
@@ -628,7 +628,7 @@ export default function App() {
       balance,
       todayBuysList: targetTx.filter(tx => tx.type === 'buy' && isToday(tx.date))
     };
-  }, [sessionUser, drawerUserFilter, openingCashLogs, transactions, expenses, filteredOpeningCashLogs, filteredTransactions, filteredExpenses, todayDateString]);
+  }, [sessionUser, drawerUserFilter, openingCashLogs, transactions, expenses, todayDateString]);
 
   // Initial local initialization
   useEffect(() => {
@@ -2052,10 +2052,10 @@ export default function App() {
             <div>
               <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
                 <Banknote size={20} className="text-emerald-400" />
-                <span>{activeModalDrawerData.name}'s Cash Drawer (ලච්චුව)</span>
+                <span>{activeModalDrawerData.name} (ලච්චුව)</span>
               </h3>
               <p className="text-xs text-slate-400 mt-1">
-                එක් එක් ගිණුම සඳහා වෙන් වෙන් වශයෙන් Cash Drawer පවත්වාගෙන යනු ලබයි (@{activeModalDrawerData.username}).
+                ළහිරු සහ ජයන්තා දෙදෙනාම එක් පොදු Cash Drawer (ලච්චුවක්) භාවිත කරයි.
               </p>
             </div>
 

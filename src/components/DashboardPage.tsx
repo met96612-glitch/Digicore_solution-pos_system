@@ -488,8 +488,13 @@ export default function DashboardPage({
       }
     });
 
-    // Daily Expenses
-    const dayExpensesList = (expenses || []).filter(exp => isDateMatch(exp.date));
+    // Daily Expenses filtered for target account
+    const dayExpensesList = (expenses || []).filter(exp => {
+      if (!isDateMatch(exp.date)) return false;
+      if (isJayantha) return exp.addedBy === 'jayantha';
+      if (isLahiru) return exp.addedBy !== 'jayantha';
+      return true;
+    });
     const dayExpensesTotal = dayExpensesList.reduce((sum, exp) => sum + exp.amount, 0);
 
     // Wastage / Stock Adjustments
@@ -505,10 +510,39 @@ export default function DashboardPage({
     const grossProfit = Math.max(0, netSales - totalCostOfGoodsSold);
     const netProfit = Math.max(0, grossProfit - wastageLoss - dayExpensesTotal);
 
-    // Cash Drawer reconciliation
+    // Shared Cash Drawer overall totals for physical cash reconciliation
+    const sharedCashSales = transactions
+      .filter(tx => isDateMatch(tx.date) && tx.type === 'sell' && (tx.payment_method === 'Cash' || !tx.payment_method))
+      .reduce((sum, tx) => sum + tx.total, 0);
+    let sharedCreditRecovered = 0;
+    transactions.forEach(tx => {
+      if (tx.type === 'sell' && tx.credit_payments) {
+        tx.credit_payments.forEach(p => {
+          if (isDateMatch(p.date) && (p.payment_method === 'Cash' || !p.payment_method)) {
+            sharedCreditRecovered += p.amount;
+          }
+        });
+      }
+    });
+    const sharedCashPurchases = transactions
+      .filter(tx => isDateMatch(tx.date) && tx.type === 'buy' && (tx.payment_method === 'Cash' || !tx.payment_method))
+      .reduce((sum, tx) => sum + tx.total, 0);
+    let sharedSupplierCreditPaid = 0;
+    transactions.forEach(tx => {
+      if (tx.type === 'buy' && tx.credit_payments) {
+        tx.credit_payments.forEach(p => {
+          if (isDateMatch(p.date) && (p.payment_method === 'Cash' || !p.payment_method)) {
+            sharedSupplierCreditPaid += p.amount;
+          }
+        });
+      }
+    });
+    const sharedDayExpensesTotal = (expenses || []).filter(exp => isDateMatch(exp.date)).reduce((sum, exp) => sum + exp.amount, 0);
+
+    // Expected Cash in Shared Drawer
     const expectedCashInDrawer = Math.max(
       0,
-      openingCash + directCashSales + customerCreditRecovered - directCashPurchases - supplierCreditPaid - dayExpensesTotal
+      openingCash + sharedCashSales + sharedCreditRecovered - sharedCashPurchases - sharedSupplierCreditPaid - sharedDayExpensesTotal
     );
 
     const productsBreakdown = Object.values(prodBreakdownMap).sort((a, b) => b.value - a.value);

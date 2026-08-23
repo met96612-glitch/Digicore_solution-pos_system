@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Printer, CheckCircle, FileText } from 'lucide-react';
+import { X, Printer, FileText, UserCheck, DollarSign, ShoppingBag, Receipt } from 'lucide-react';
 import { formatCurrency } from '../utils';
 
 export interface SummaryReportPayload {
@@ -112,10 +112,15 @@ export default function ThermalSummaryModal({ data, onClose, onToast }: Props) {
             </div>
             <div>
               <h3 className="text-base font-extrabold text-white">
-                {data.isZReport ? 'Z-Report Daily Close' : 'Thermal Summary Report'}
+                {data.isZReport ? 'Z-Report Daily Close (දෛනික ගිණුම් වසා දැමීම)' : 'Thermal Financial Summary'}
               </h3>
-              <p className="text-xs text-slate-400 font-mono">
-                {data.zSequenceNo || data.timeFrameStr}
+              <p className="text-xs text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+                <span>{data.zSequenceNo || data.timeFrameStr}</span>
+                {data.currentUserUsername && (
+                  <span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                    @{data.currentUserUsername}
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -131,8 +136,11 @@ export default function ThermalSummaryModal({ data, onClose, onToast }: Props) {
         <div className="bg-white text-black p-6 rounded-2xl shadow-inner font-mono text-xs space-y-4 max-w-sm mx-auto border border-slate-300 select-none">
           <div className="text-center space-y-1 border-b border-dashed border-black/40 pb-3">
             <h2 className="text-sm font-black uppercase tracking-wider">{data.brandName}</h2>
-            <p className="text-[10px] font-bold">END-OF-DAY Z-REPORT</p>
+            <p className="text-[10px] font-bold">END-OF-DAY Z-REPORT AUDIT</p>
             <p className="text-[9px] text-gray-700">{data.timeFrameStr}</p>
+            {data.currentUserUsername && (
+              <p className="text-[9px] font-bold text-gray-800 uppercase">Operator: @{data.currentUserUsername}</p>
+            )}
             {data.zSequenceNo && (
               <p className="text-[9px] font-bold text-gray-900 mt-1">{data.zSequenceNo}</p>
             )}
@@ -140,51 +148,121 @@ export default function ThermalSummaryModal({ data, onClose, onToast }: Props) {
 
           {/* Sales Audit */}
           <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
-            <div className="flex justify-between font-bold text-gray-900 uppercase">
+            <p className="font-bold text-[10px] text-gray-900 uppercase">--- SALES SUMMARY (විකුණුම්) ---</p>
+            <div className="flex justify-between font-bold text-gray-900">
               <span>Gross Sales:</span>
               <span>Rs. {data.salesAudit.grossSales.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-700">
-              <span>Discounts:</span>
-              <span>- Rs. {data.salesAudit.discountsGiven.toFixed(2)}</span>
-            </div>
+            {data.salesAudit.discountsGiven > 0 && (
+              <div className="flex justify-between text-gray-700">
+                <span>Discounts Given:</span>
+                <span>- Rs. {data.salesAudit.discountsGiven.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between font-black text-black pt-1 border-t border-black/20">
               <span>NET REVENUE:</span>
               <span>Rs. {data.salesAudit.netSales.toFixed(2)}</span>
             </div>
-          </div>
-
-          {/* Cash Inflow & Drawer */}
-          <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
-            <div className="flex justify-between text-gray-800">
-              <span>Direct Cash Sales:</span>
+            <div className="flex justify-between text-[10px] text-gray-700 pt-1">
+              <span>  ├─ Direct Cash Sales:</span>
               <span>Rs. {data.salesAudit.directCashSales.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-gray-800">
-              <span>Credit Recovered:</span>
-              <span>Rs. {data.salesAudit.customerCreditRecovered.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-gray-800">
-              <span>Credit Sales Issued:</span>
+            <div className="flex justify-between text-[10px] text-gray-700">
+              <span>  ├─ Credit Sales Issued:</span>
               <span>Rs. {data.salesAudit.creditSales.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between font-bold text-black pt-1">
-              <span>Opening Cash:</span>
-              <span>Rs. {data.drawerReconciliation.openingCash.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-black text-emerald-700 text-sm pt-1 border-t border-black/20">
-              <span>EXPECTED DRAWER:</span>
-              <span>Rs. {data.drawerReconciliation.expectedCashInDrawer.toFixed(2)}</span>
+            <div className="flex justify-between text-[10px] text-gray-700">
+              <span>  └─ Customer Credit Recovered:</span>
+              <span>Rs. {data.salesAudit.customerCreditRecovered.toFixed(2)}</span>
             </div>
           </div>
 
-          {/* Profit Summary */}
-          <div className="space-y-1 text-center pt-1">
-            <div className="flex justify-between font-bold text-black">
-              <span>ESTIMATED NET PROFIT:</span>
+          {/* Restocking Purchases Audit */}
+          <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
+            <p className="font-bold text-[10px] text-gray-900 uppercase">--- PURCHASES / RESTOCKING (මිලදී ගැනීම්) ---</p>
+            <div className="flex justify-between text-gray-800">
+              <span>Direct Cash Buys:</span>
+              <span>Rs. {data.purchasesAudit.directCashPurchases.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-gray-800">
+              <span>Credit Purchases:</span>
+              <span>Rs. {data.purchasesAudit.creditPurchases.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-gray-800">
+              <span>Supplier Credit Paid:</span>
+              <span>Rs. {data.purchasesAudit.supplierCreditPaid.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {/* Shop Expenses Audit */}
+          {data.profitAndLoss.operatingExpenses > 0 && (
+            <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
+              <p className="font-bold text-[10px] text-gray-900 uppercase">--- SHOP OPERATING EXPENSES (වියදම්) ---</p>
+              <div className="flex justify-between font-bold text-red-700">
+                <span>Total Expenses:</span>
+                <span>Rs. {data.profitAndLoss.operatingExpenses.toFixed(2)}</span>
+              </div>
+              {data.expensesList && data.expensesList.length > 0 && (
+                <div className="pt-1 space-y-0.5">
+                  {data.expensesList.slice(0, 5).map(e => (
+                    <div key={e.id} className="flex justify-between text-[9px] text-gray-700">
+                      <span className="truncate max-w-[160px]">· {e.title}</span>
+                      <span>Rs. {e.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  {data.expensesList.length > 5 && (
+                    <p className="text-[8px] text-gray-500 text-center">+ {data.expensesList.length - 5} more expenses...</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Profit & Loss Audit */}
+          <div className="space-y-1 border-b border-dashed border-black/40 pb-3">
+            <p className="font-bold text-[10px] text-gray-900 uppercase">--- PROFIT & LOSS AUDIT (ලබා අලාභ) ---</p>
+            <div className="flex justify-between text-gray-800">
+              <span>Net Revenue:</span>
+              <span>Rs. {data.profitAndLoss.netRevenue.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-gray-700">
+              <span>Cost of Goods (COGS):</span>
+              <span>- Rs. {data.profitAndLoss.cogs.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-gray-900 pt-0.5 border-t border-black/10">
+              <span>Gross Profit:</span>
+              <span>Rs. {data.profitAndLoss.grossProfit.toFixed(2)}</span>
+            </div>
+            {data.profitAndLoss.wastageLoss > 0 && (
+              <div className="flex justify-between text-rose-700">
+                <span>Wastage/Damage Loss:</span>
+                <span>- Rs. {data.profitAndLoss.wastageLoss.toFixed(2)}</span>
+              </div>
+            )}
+            {data.profitAndLoss.operatingExpenses > 0 && (
+              <div className="flex justify-between text-rose-700">
+                <span>Operating Expenses:</span>
+                <span>- Rs. {data.profitAndLoss.operatingExpenses.toFixed(2)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-black text-emerald-800 text-sm pt-1 border-t border-black/30">
+              <span>NET PROFIT (ශුද්ධ ලාභය):</span>
               <span>Rs. {data.profitAndLoss.netProfit.toFixed(2)}</span>
             </div>
-            <p className="text-[8px] text-gray-500 mt-2">Generated by Digicore POS Solution</p>
+          </div>
+
+          {/* Shared Cash Drawer Reconciliation */}
+          <div className="space-y-1 pt-1">
+            <p className="font-bold text-[10px] text-gray-900 uppercase">--- SHARED CASH DRAWER (පොදු ලච්චුව) ---</p>
+            <div className="flex justify-between text-gray-800">
+              <span>Opening Cash Today:</span>
+              <span>Rs. {data.drawerReconciliation.openingCash.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-black text-black pt-1 border-t border-black/30">
+              <span>EXPECTED CASH IN DRAWER:</span>
+              <span>Rs. {data.drawerReconciliation.expectedCashInDrawer.toFixed(2)}</span>
+            </div>
+            <p className="text-[8px] text-gray-500 text-center mt-2">Digicore POS System • Shared Cash Drawer Architecture</p>
           </div>
         </div>
 
@@ -208,3 +286,4 @@ export default function ThermalSummaryModal({ data, onClose, onToast }: Props) {
     </div>
   );
 }
+
