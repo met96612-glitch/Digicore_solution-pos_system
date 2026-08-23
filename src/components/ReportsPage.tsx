@@ -49,37 +49,51 @@ export default function ReportsPage({
   const [reportType, setReportType] = useState<'daily' | 'monthly'>('daily');
   const [thermalModalData, setThermalModalData] = useState<SummaryReportPayload | null>(null);
 
+  // Safe helper to extract YYYY-MM-DD
+  const safeGetDateStr = (dateVal?: any): string => {
+    if (!dateVal) return '';
+    if (typeof dateVal === 'string') {
+      return dateVal.split('T')[0] || '';
+    }
+    return '';
+  };
+
   // Find the most recent transaction date to show live financial data by default
   const defaultDate = useMemo(() => {
-    if (transactions.length === 0) {
+    if (!transactions || transactions.length === 0) {
       return getLocalTodayDateString();
     }
     const sorted = [...transactions]
-      .map(tx => tx.date.split('T')[0])
+      .filter(tx => tx && tx.date)
+      .map(tx => safeGetDateStr(tx.date))
+      .filter(Boolean)
       .sort((a, b) => b.localeCompare(a));
-    return sorted[0];
+    return sorted[0] || getLocalTodayDateString();
   }, [transactions]);
 
-  const [selectedDate, setSelectedDate] = useState(defaultDate);
-  const [selectedMonth, setSelectedMonth] = useState(defaultDate.substring(0, 7));
+  const [selectedDate, setSelectedDate] = useState(() => defaultDate || getLocalTodayDateString());
+  const [selectedMonth, setSelectedMonth] = useState(() => (defaultDate || getLocalTodayDateString()).substring(0, 7));
   const [hasManuallySelected, setHasManuallySelected] = useState(false);
 
   // Sync state with the latest transaction date if the user has not manually overridden it
   useEffect(() => {
     if (!hasManuallySelected) {
-      setSelectedDate(defaultDate);
-      setSelectedMonth(defaultDate.substring(0, 7));
+      const d = defaultDate || getLocalTodayDateString();
+      setSelectedDate(d);
+      setSelectedMonth(d.substring(0, 7));
     }
   }, [defaultDate, hasManuallySelected]);
 
   // Filter transactions by date/month
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(tx => {
-      const txDateStr = tx.date.split('T')[0]; // YYYY-MM-DD
+    return (transactions || []).filter(tx => {
+      if (!tx || !tx.date) return false;
+      const txDateStr = safeGetDateStr(tx.date);
+      if (!txDateStr) return false;
       if (reportType === 'daily') {
         return txDateStr === selectedDate;
       } else {
-        return txDateStr.startsWith(selectedMonth);
+        return selectedMonth ? txDateStr.startsWith(selectedMonth) : true;
       }
     });
   }, [transactions, reportType, selectedDate, selectedMonth]);
@@ -88,10 +102,11 @@ export default function ReportsPage({
   const selectedOpeningCashLogs = useMemo(() => {
     if (!openingCashLogs || openingCashLogs.length === 0) return [];
     return openingCashLogs.filter(l => {
+      if (!l || !l.date) return false;
       if (reportType === 'daily') {
         return l.date === selectedDate;
       } else {
-        return l.date.startsWith(selectedMonth);
+        return selectedMonth ? l.date.startsWith(selectedMonth) : true;
       }
     });
   }, [openingCashLogs, reportType, selectedDate, selectedMonth]);
@@ -100,32 +115,36 @@ export default function ReportsPage({
     if (selectedOpeningCashLogs.length === 0) {
       return currentOpeningCash || 1000;
     }
-    return selectedOpeningCashLogs.reduce((sum, l) => sum + l.amount, 0);
+    return selectedOpeningCashLogs.reduce((sum, l) => sum + (l ? l.amount || 0 : 0), 0);
   }, [selectedOpeningCashLogs, currentOpeningCash]);
 
   // Period Shop Expenses calculation
   const periodExpensesTotal = useMemo(() => {
-    return expenses
+    return (expenses || [])
       .filter(exp => {
-        const expDateStr = exp.date.split('T')[0];
+        if (!exp || !exp.date) return false;
+        const expDateStr = safeGetDateStr(exp.date);
+        if (!expDateStr) return false;
         if (reportType === 'daily') {
           return expDateStr === selectedDate;
         } else {
-          return expDateStr.startsWith(selectedMonth);
+          return selectedMonth ? expDateStr.startsWith(selectedMonth) : true;
         }
       })
-      .reduce((sum, exp) => sum + exp.amount, 0);
+      .reduce((sum, exp) => sum + (exp ? exp.amount || 0 : 0), 0);
   }, [expenses, reportType, selectedDate, selectedMonth]);
 
   // Period Stock Adjustments & Wastage calculation
   const selectedStockAdjustments = useMemo(() => {
     if (!stockAdjustments || stockAdjustments.length === 0) return [];
     return stockAdjustments.filter(adj => {
-      const adjDateStr = adj.date.split('T')[0];
+      if (!adj || !adj.date) return false;
+      const adjDateStr = safeGetDateStr(adj.date);
+      if (!adjDateStr) return false;
       if (reportType === 'daily') {
         return adjDateStr === selectedDate;
       } else {
-        return adjDateStr.startsWith(selectedMonth);
+        return selectedMonth ? adjDateStr.startsWith(selectedMonth) : true;
       }
     });
   }, [stockAdjustments, reportType, selectedDate, selectedMonth]);
@@ -220,7 +239,8 @@ export default function ReportsPage({
     let supplierCreditPaid = 0;
 
     filteredTransactions.forEach(tx => {
-      const isTxJayantha = tx.id.startsWith('J-') || tx.invoice_no?.startsWith('J-');
+      if (!tx) return;
+      const isTxJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
       const matches =
         entityType === 'combined' ||
         (entityType === 'jayantha' && isTxJayantha) ||
@@ -230,33 +250,35 @@ export default function ReportsPage({
 
       if (tx.type === 'sell') {
         if (tx.payment_method === 'Credit') {
-          creditSales += tx.total;
+          creditSales += (tx.total || 0);
         } else {
-          directCashSales += tx.total;
+          directCashSales += (tx.total || 0);
         }
 
         if (tx.credit_payments) {
           tx.credit_payments.forEach(pay => {
-            const payDateStr = pay.date.split('T')[0];
-            const isMatch = reportType === 'daily' ? payDateStr === selectedDate : payDateStr.startsWith(selectedMonth);
+            if (!pay || !pay.date) return;
+            const payDateStr = safeGetDateStr(pay.date);
+            const isMatch = reportType === 'daily' ? payDateStr === selectedDate : (selectedMonth ? payDateStr.startsWith(selectedMonth) : true);
             if (isMatch) {
-              customerCreditRecovered += pay.amount;
+              customerCreditRecovered += (pay.amount || 0);
             }
           });
         }
       } else if (tx.type === 'buy') {
         if (tx.payment_method === 'Credit') {
-          creditPurchases += tx.total;
+          creditPurchases += (tx.total || 0);
         } else {
-          directCashPurchases += tx.total;
+          directCashPurchases += (tx.total || 0);
         }
 
         if (tx.credit_payments) {
           tx.credit_payments.forEach(pay => {
-            const payDateStr = pay.date.split('T')[0];
-            const isMatch = reportType === 'daily' ? payDateStr === selectedDate : payDateStr.startsWith(selectedMonth);
+            if (!pay || !pay.date) return;
+            const payDateStr = safeGetDateStr(pay.date);
+            const isMatch = reportType === 'daily' ? payDateStr === selectedDate : (selectedMonth ? payDateStr.startsWith(selectedMonth) : true);
             if (isMatch) {
-              supplierCreditPaid += pay.amount;
+              supplierCreditPaid += (pay.amount || 0);
             }
           });
         }
@@ -480,12 +502,14 @@ export default function ReportsPage({
       profit: data.profit
     }));
 
-    const periodExpenses = expenses.filter(exp => {
-      const expDateStr = exp.date.split('T')[0];
+    const periodExpenses = (expenses || []).filter(exp => {
+      if (!exp || !exp.date) return false;
+      const expDateStr = safeGetDateStr(exp.date);
+      if (!expDateStr) return false;
       if (reportType === 'daily') {
         return expDateStr === selectedDate;
       } else {
-        return expDateStr.startsWith(selectedMonth);
+        return selectedMonth ? expDateStr.startsWith(selectedMonth) : true;
       }
     });
 
@@ -698,12 +722,14 @@ export default function ReportsPage({
       }
     });
 
-    const periodExpenses = expenses.filter(exp => {
-      const expDateStr = exp.date.split('T')[0];
+    const periodExpenses = (expenses || []).filter(exp => {
+      if (!exp || !exp.date) return false;
+      const expDateStr = safeGetDateStr(exp.date);
+      if (!expDateStr) return false;
       if (reportType === 'daily') {
         return expDateStr === selectedDate;
       } else {
-        return expDateStr.startsWith(selectedMonth);
+        return selectedMonth ? expDateStr.startsWith(selectedMonth) : true;
       }
     });
 

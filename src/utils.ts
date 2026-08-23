@@ -151,16 +151,23 @@ export function getLocalTodayDateString(dateObj: Date = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-export function formatCurrency(amount: number): string {
-  return `Rs. ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+export function formatCurrency(amount?: number | null): string {
+  const val = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return `Rs. ${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function formatDateString(isoString: string): string {
-  const date = new Date(isoString);
-  return date.toLocaleString('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  });
+export function formatDateString(isoString?: string): string {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return isoString || '';
+    return date.toLocaleString('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    });
+  } catch {
+    return isoString || '';
+  }
 }
 
 export function generateInvoiceNumber(type: 'sell' | 'buy'): string {
