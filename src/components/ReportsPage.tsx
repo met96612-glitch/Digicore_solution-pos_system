@@ -175,8 +175,9 @@ export default function ReportsPage({
     let buys = 0;
     let profit = 0;
 
-    filteredTransactions.forEach(tx => {
-      const isJayantha = tx.id.startsWith('J-') || tx.invoice_no?.startsWith('J-');
+    (filteredTransactions || []).forEach(tx => {
+      if (!tx) return;
+      const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
       const matches = 
         entityType === 'combined' ||
         (entityType === 'jayantha' && isJayantha) ||
@@ -185,30 +186,33 @@ export default function ReportsPage({
       if (!matches) return;
 
       if (tx.type === 'sell') {
-        sales += tx.total;
+        sales += (tx.total || 0);
 
         if (typeof tx.total_profit === 'number' && tx.total_profit > 0) {
           profit += tx.total_profit;
         } else {
           let txCost = 0;
-          tx.items.forEach(item => {
-            const prod = products.find(p => p.id === item.productId);
-            const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
-            let qtyInBase = item.qty;
+          (tx.items || []).forEach(item => {
+            if (!item) return;
+            const prod = (products || []).find(p => p && p.id === item.productId);
+            const bPrice = prod ? (prod.buying_price ?? prod.buyPrice ?? 0) : 0;
+            let qtyInBase = item.qty || 0;
             if (prod && prod.unit === 'kg' && item.unit === 'g') {
-              qtyInBase = item.qty * 0.001;
+              qtyInBase = (item.qty || 0) * 0.001;
             }
             txCost += bPrice * qtyInBase;
           });
-          const itemRevenue = tx.items.reduce((acc, item) => acc + item.total, 0);
+          const itemRevenue = (tx.items || []).reduce((acc, item) => acc + (item ? item.total || 0 : 0), 0);
           const itemProfit = itemRevenue - txCost;
-          const ratio = tx.subtotal > 0 ? (tx.subtotal - tx.discount) / tx.subtotal : 1;
+          const sub = tx.subtotal || tx.total || 0;
+          const disc = tx.discount || 0;
+          const ratio = sub > 0 ? (sub - disc) / sub : 1;
           profit += itemProfit * ratio;
         }
       } else if (tx.type === 'buy') {
-        buys += tx.total;
+        buys += (tx.total || 0);
       } else if (tx.type === 'return') {
-        sales -= tx.total;
+        sales -= (tx.total || 0);
       }
     });
 
@@ -301,8 +305,9 @@ export default function ReportsPage({
     let profit = 0;
     let count = 0;
 
-    filteredTransactions.forEach(tx => {
-      const isJayantha = tx.id.startsWith('J-') || tx.invoice_no?.startsWith('J-');
+    (filteredTransactions || []).forEach(tx => {
+      if (!tx) return;
+      const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
       const matches =
         entityType === 'combined' ||
         (entityType === 'jayantha' && isJayantha) ||
@@ -311,25 +316,28 @@ export default function ReportsPage({
       if (!matches) return;
 
       if (tx.type === 'sell' && tx.is_wholesale) {
-        sales += tx.total;
+        sales += (tx.total || 0);
         count += 1;
 
         if (typeof tx.total_profit === 'number' && tx.total_profit > 0) {
           profit += tx.total_profit;
         } else {
           let txCost = 0;
-          tx.items.forEach(item => {
-            const prod = products.find(p => p.id === item.productId);
-            const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
-            let qtyInBase = item.qty;
+          (tx.items || []).forEach(item => {
+            if (!item) return;
+            const prod = (products || []).find(p => p && p.id === item.productId);
+            const bPrice = prod ? (prod.buying_price ?? prod.buyPrice ?? 0) : 0;
+            let qtyInBase = item.qty || 0;
             if (prod && prod.unit === 'kg' && item.unit === 'g') {
-              qtyInBase = item.qty * 0.001;
+              qtyInBase = (item.qty || 0) * 0.001;
             }
             txCost += bPrice * qtyInBase;
           });
-          const itemRevenue = tx.items.reduce((acc, item) => acc + item.total, 0);
+          const itemRevenue = (tx.items || []).reduce((acc, item) => acc + (item ? item.total || 0 : 0), 0);
           const itemProfit = itemRevenue - txCost;
-          const ratio = tx.subtotal > 0 ? (tx.subtotal - tx.discount) / tx.subtotal : 1;
+          const sub = tx.subtotal || tx.total || 0;
+          const disc = tx.discount || 0;
+          const ratio = sub > 0 ? (sub - disc) / sub : 1;
           profit += itemProfit * ratio;
         }
       }
@@ -348,25 +356,27 @@ export default function ReportsPage({
   const computeWholesaleProductBreakdown = (entityType: 'lahiru' | 'jayantha') => {
     const breakdown: Record<string, { name: string; qty: number; sales: number; profit: number; unit: string }> = {};
 
-    filteredTransactions.forEach(tx => {
-      const isJayantha = tx.id.startsWith('J-') || tx.invoice_no?.startsWith('J-');
+    (filteredTransactions || []).forEach(tx => {
+      if (!tx) return;
+      const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
       const matches = (entityType === 'jayantha' && isJayantha) || (entityType === 'lahiru' && !isJayantha);
 
       if (!matches || tx.type !== 'sell' || !tx.is_wholesale) return;
 
-      tx.items.forEach(item => {
-        const prod = products.find(p => p.id === item.productId);
+      (tx.items || []).forEach(item => {
+        if (!item) return;
+        const prod = (products || []).find(p => p && p.id === item.productId);
         const prodName = prod ? prod.name : item.productId;
         const prodUnit = prod ? prod.unit : 'kg';
-        const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
+        const bPrice = prod ? (prod.buying_price ?? prod.buyPrice ?? 0) : 0;
 
-        let qtyInBase = item.qty;
+        let qtyInBase = item.qty || 0;
         if (prod && prod.unit === 'kg' && item.unit === 'g') {
-          qtyInBase = item.qty * 0.001;
+          qtyInBase = (item.qty || 0) * 0.001;
         }
 
         const itemCost = bPrice * qtyInBase;
-        const itemRevenue = item.total;
+        const itemRevenue = item.total || 0;
         const itemProfit = Math.max(0, itemRevenue - itemCost);
 
         if (!breakdown[item.productId]) {
@@ -380,7 +390,7 @@ export default function ReportsPage({
         }
 
         breakdown[item.productId].qty += qtyInBase;
-        breakdown[item.productId].sales += item.total;
+        breakdown[item.productId].sales += itemRevenue;
         breakdown[item.productId].profit += itemProfit;
       });
     });
@@ -832,7 +842,7 @@ export default function ReportsPage({
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/60 pb-4">
           <div>
             <h3 className="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2">
-              <LineChart size={20} className="text-violet-400" />
+              <BarChart3 size={20} className="text-violet-400" />
               <span>Audit Reports & Ledger Summaries (මුදල් සහ තොග වාර්තා)</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -1513,21 +1523,22 @@ export default function ReportsPage({
               <p className="text-center py-12 text-slate-500 text-xs">No sales reported for this window.</p>
             ) : (
               salesTransactions.map(t => {
-                const isJ = t.id.startsWith('J-');
+                if (!t) return null;
+                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha');
                 return (
-                  <div key={t.id} className="py-3 flex justify-between items-center text-xs">
+                  <div key={t.id || Math.random().toString()} className="py-3 flex justify-between items-center text-xs">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-200">{t.id}</span>
+                        <span className="font-bold text-slate-200">{t.id || 'N/A'}</span>
                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
                           isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
                         }`}>
                           {isJ ? 'Jayantha' : 'Lahiru'}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 block mt-1">{t.contactName} • {formatDateString(t.date)}</span>
+                      <span className="text-[10px] text-slate-400 block mt-1">{t.contactName || 'Walking Customer'} • {formatDateString(t.date)}</span>
                     </div>
-                    <strong className="text-emerald-400 font-mono text-sm">{formatCurrency(t.total)}</strong>
+                    <strong className="text-emerald-400 font-mono text-sm">{formatCurrency(t.total || 0)}</strong>
                   </div>
                 );
               })
@@ -1546,21 +1557,22 @@ export default function ReportsPage({
               <p className="text-center py-12 text-slate-500 text-xs">No purchases reported for this window.</p>
             ) : (
               purchaseTransactions.map(t => {
-                const isJ = t.id.startsWith('J-');
+                if (!t) return null;
+                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha');
                 return (
-                  <div key={t.id} className="py-3 flex justify-between items-center text-xs">
+                  <div key={t.id || Math.random().toString()} className="py-3 flex justify-between items-center text-xs">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-200">{t.id}</span>
+                        <span className="font-bold text-slate-200">{t.id || 'N/A'}</span>
                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
                           isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
                         }`}>
                           {isJ ? 'Jayantha Stock' : 'Lahiru Stock'}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 block mt-1">{t.contactName} • {formatDateString(t.date)}</span>
+                      <span className="text-[10px] text-slate-400 block mt-1">{t.contactName || 'Supplier'} • {formatDateString(t.date)}</span>
                     </div>
-                    <strong className="text-amber-500 font-mono text-sm">{formatCurrency(t.total)}</strong>
+                    <strong className="text-amber-500 font-mono text-sm">{formatCurrency(t.total || 0)}</strong>
                   </div>
                 );
               })
