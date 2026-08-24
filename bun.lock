@@ -16,7 +16,7 @@
         "motion": "^12.23.24",
         "react": "^19.0.1",
         "react-dom": "^19.0.1",
-        "vite": "^6.2.3",
+        "vite": "^6.2.3"
       },
       "devDependencies": {
         "@types/express": "^4.17.21",
@@ -26,9 +26,9 @@
         "tailwindcss": "^4.1.14",
         "tsx": "^4.21.0",
         "typescript": "~5.8.2",
-        "vite": "^6.2.3",
-      },
-    },
+        "vite": "^6.2.3"
+      }
+    }
   },
   "packages": {
     "@babel/code-frame": [
@@ -3131,6 +3131,6 @@
         "cpu": "x64"
       },
       "sha512-pEl1bO9mfAmIC+tW5btTmrKaujg3zGtUmWNdCw/xs70FBjwAL3o9OEKNHvNmnyylD6ubxUERiEhdsL0xBQ9efw=="
-    ],
+    ]
   }
 }
