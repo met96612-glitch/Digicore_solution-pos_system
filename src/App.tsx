@@ -1018,7 +1018,20 @@ export default function App() {
       sessionStorage.setItem('kulubadu_active_session', JSON.stringify(userObj));
       triggerToast(`Welcome back, ${matched.name}! Clearance active.`, 'success');
     } else {
-      setLoginError('Invalid secret credentials match. (Hint: admin / 123)');
+      const userFoundWithoutPass = Array.from(userMap.values()).find((u: any) => {
+        const uName = (u.username || '').toLowerCase().trim();
+        const uStore = (u.store_id || '').toLowerCase().trim();
+        const uNameAlphaNum = uName.replace(/[^a-z0-9]/g, '');
+        const targetStr = rawUser.toLowerCase();
+        const targetAlphaNum = targetStr.replace(/[^a-z0-9]/g, '');
+        return uName === targetStr || uNameAlphaNum === targetAlphaNum || uStore === targetStr;
+      });
+
+      if (userFoundWithoutPass) {
+        setLoginError(`පරිශීලක (${userFoundWithoutPass.username}) සොයා ගන්නා ලදී. නමුත් ඔබ ඇතුළත් කළ Password එක වැරදිය. (Hint: 123)`);
+      } else {
+        setLoginError(`"${rawUser}" නමින් පරිශීලකයෙකු හමු නොවිණි. පහත Dropdown එකෙන් ගිණුම තෝරන්න. (Hint: 123)`);
+      }
     }
   };
 
@@ -1462,13 +1475,25 @@ export default function App() {
 
   // Login Screen Render
   if (!sessionUser) {
+    const knownUsersMap = new Map<string, User>();
+    INITIAL_USERS.forEach(u => knownUsersMap.set(u.username.toLowerCase(), u));
+    try {
+      const savedUsersStr = localStorage.getItem('kulubadu_users');
+      if (savedUsersStr) {
+        const parsed = JSON.parse(savedUsersStr);
+        if (Array.isArray(parsed)) parsed.forEach((u: User) => knownUsersMap.set(u.username.toLowerCase(), u));
+      }
+    } catch {}
+    registeredUsers.forEach(u => knownUsersMap.set(u.username.toLowerCase(), u));
+    const knownUsers = Array.from(knownUsersMap.values());
+
     return (
       <main className="min-h-screen bg-[#070911] flex items-center justify-center p-4 relative overflow-hidden font-sans">
         {/* Glow Effects */}
         <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-violet-600/10 blur-3xl"></div>
         <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl"></div>
 
-        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 relative z-10 shadow-2xl space-y-8">
+        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-8 relative z-10 shadow-2xl space-y-6">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 bg-violet-600/10 rounded-2xl flex items-center justify-center mx-auto text-violet-400 border border-violet-800/20">
               <Warehouse size={28} />
@@ -1482,13 +1507,35 @@ export default function App() {
           </div>
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
+            {/* User Account Selection Dropdown */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Select Account (පරිශීලක තෝරන්න)
+              </label>
+              <select
+                value={loginUsername}
+                onChange={(e) => {
+                  setLoginUsername(e.target.value);
+                  if (!loginPassword) setLoginPassword('123');
+                }}
+                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none font-medium focus:border-violet-600 focus:ring-1 focus:ring-violet-600 cursor-pointer"
+              >
+                <option value="">-- Choose User / පරිශීලක තෝරන්න --</option>
+                {knownUsers.map(u => (
+                  <option key={u.username} value={u.username}>
+                    {u.name} ({u.username}) {u.store_id ? `- ${u.store_id}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Username</label>
               <div className="flex items-center gap-2 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2.5 focus-within:border-violet-600 focus-within:ring-1 focus-within:ring-violet-600 transition-all">
                 <UserIcon size={14} className="text-slate-500" />
                 <input
                   type="text"
-                  placeholder="superuser, admin or cashier"
+                  placeholder="superuser, store_3, lahiru, jayantha, etc."
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   className="w-full bg-transparent text-xs text-slate-200 outline-none font-medium"
@@ -1510,20 +1557,36 @@ export default function App() {
               </div>
             </div>
 
+            {/* Quick login shortcut pills */}
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {['superuser', 'lahiru', 'jayantha', 'store_3'].map(userKey => (
+                <button
+                  key={userKey}
+                  type="button"
+                  onClick={() => {
+                    setLoginUsername(userKey);
+                    setLoginPassword('123');
+                  }}
+                  className="text-[10px] bg-slate-800 hover:bg-violet-600/30 text-slate-300 border border-slate-700 hover:border-violet-500 px-2 py-1 rounded-md transition-all cursor-pointer font-mono"
+                >
+                  ⚡ {userKey}
+                </button>
+              ))}
+            </div>
+
             {loginError && (
-              <p className="text-[10px] text-red-400 font-bold text-center bg-red-400/5 py-2 border border-red-500/10 rounded-lg">
+              <p className="text-[11px] text-red-400 font-bold text-center bg-red-400/5 py-2.5 border border-red-500/20 rounded-xl leading-relaxed">
                 {loginError}
               </p>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white font-extrabold text-xs select-none transition-all rounded-xl shadow-lg cursor-pointer"
+              className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white font-extrabold text-xs select-none transition-all rounded-xl shadow-lg cursor-pointer flex items-center justify-center gap-2"
             >
-              Sign In System
+              <LogIn size={15} />
+              <span>Sign In System (ඇතුළු වන්න)</span>
             </button>
-
-
           </form>
         </div>
       </main>
