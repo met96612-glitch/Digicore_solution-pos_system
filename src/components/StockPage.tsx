@@ -69,11 +69,8 @@ export default function StockPage({
   // Available stock for currently selected desk in modal
   const availableDeskStock = useMemo(() => {
     if (!selectedProduct) return 0;
-    if (selectedDesk === 'jayantha') {
-      return selectedProduct.jayantha_stock ?? selectedProduct.stock;
-    }
-    return selectedProduct.lahiru_stock ?? selectedProduct.stock;
-  }, [selectedProduct, selectedDesk]);
+    return selectedProduct.stock ?? 0;
+  }, [selectedProduct]);
 
   // Current buying price per base unit
   const currentCostPerUnit = useMemo(() => {
@@ -96,39 +93,22 @@ export default function StockPage({
   // Stock rows for the live level view
   const stockRows = useMemo(() => {
     return products.map(p => {
-      const lStock = p.lahiru_stock ?? p.stock;
-      const jStock = p.jayantha_stock ?? p.stock;
-      const totalStock = lStock + jStock;
+      const stock = p.stock ?? 0;
       const minLevel = p.min_stock_level ?? 5.0;
 
-      let lStatus: 'ok' | 'low' | 'out' = 'ok';
-      if (lStock === 0) lStatus = 'out';
-      else if (lStock <= minLevel) lStatus = 'low';
-
-      let jStatus: 'ok' | 'low' | 'out' = 'ok';
-      if (jStock === 0) jStatus = 'out';
-      else if (jStock <= minLevel) jStatus = 'low';
-
-      // Overall status depends on active user session
       let status: 'ok' | 'low' | 'out' = 'ok';
-      if (currentUserUsername === 'lahiru') {
-        status = lStatus;
-      } else if (currentUserUsername === 'jayantha') {
-        status = jStatus;
-      } else {
-        if (lStock === 0 && jStock === 0) status = 'out';
-        else if (lStock <= minLevel || jStock <= minLevel) status = 'low';
-      }
+      if (stock === 0) status = 'out';
+      else if (stock <= minLevel) status = 'low';
 
       return {
         id: p.id,
         name: p.name,
         unit: p.unit,
-        lahiruStock: lStock,
-        lahiruStatus: lStatus,
-        jayanthaStock: jStock,
-        jayanthaStatus: jStatus,
-        totalStock,
+        lahiruStock: stock,
+        lahiruStatus: status,
+        jayanthaStock: stock,
+        jayanthaStatus: status,
+        totalStock: stock,
         minLevel,
         status,
         buyPrice: p.buying_price ?? p.buyPrice ?? 0,
@@ -136,7 +116,7 @@ export default function StockPage({
         retailPrice: p.retail_price ?? p.sellPrice ?? 0
       };
     });
-  }, [products, currentUserUsername]);
+  }, [products]);
 
   const filteredRows = useMemo(() => {
     return stockRows.filter(row => {
@@ -275,11 +255,10 @@ export default function StockPage({
           <div className="grid grid-cols-2 sm:flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setActiveTab('levels')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
-                activeTab === 'levels'
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${activeTab === 'levels'
                   ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <Layers size={14} className="shrink-0" />
               <span className="truncate">තොග ශේෂය</span>
@@ -287,11 +266,10 @@ export default function StockPage({
 
             <button
               onClick={() => setActiveTab('adjustments')}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${
-                activeTab === 'adjustments'
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${activeTab === 'adjustments'
                   ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <TrendingDown size={14} className="shrink-0" />
               <span className="truncate">කුණු / අඩුවීම්</span>
@@ -370,11 +348,10 @@ export default function StockPage({
                     <button
                       key={btn}
                       onClick={() => setFilter(btn)}
-                      className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all uppercase select-none cursor-pointer ${
-                        filter === btn
+                      className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all uppercase select-none cursor-pointer ${filter === btn
                           ? 'bg-violet-600/20 text-violet-400 border border-violet-800/40'
                           : 'text-slate-400 hover:text-slate-200 border border-transparent'
-                      }`}
+                        }`}
                     >
                       {btn}
                     </button>
@@ -400,13 +377,12 @@ export default function StockPage({
                         <h4 className="font-bold text-slate-100 text-sm">{row.name}</h4>
                         <span className="text-[10px] text-slate-400 uppercase font-mono">ඒකකය: {row.unit}</span>
                       </div>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase select-none shrink-0 ${
-                        row.status === 'ok'
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase select-none shrink-0 ${row.status === 'ok'
                           ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
                           : row.status === 'low'
-                          ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
-                          : 'bg-red-500/10 text-red-500 border border-red-500/15'
-                      }`}>
+                            ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
+                            : 'bg-red-500/10 text-red-500 border border-red-500/15'
+                        }`}>
                         {row.status === 'ok' && <ShieldCheck size={10} />}
                         {row.status !== 'ok' && <AlertTriangle size={10} />}
                         {row.status === 'ok' ? 'In Supply' : row.status === 'low' ? 'Restock Warn' : 'Crit Out'}
@@ -417,9 +393,8 @@ export default function StockPage({
                       {currentUserUsername !== 'jayantha' && (
                         <div className="bg-violet-950/20 border border-violet-900/30 rounded-lg p-2">
                           <span className="text-[10px] text-violet-300 block font-medium">ළහිරු තොගය (Lahiru):</span>
-                          <span className={`font-mono font-bold text-xs ${
-                            row.lahiruStatus === 'out' ? 'text-red-400' : row.lahiruStatus === 'low' ? 'text-amber-400' : 'text-slate-200'
-                          }`}>
+                          <span className={`font-mono font-bold text-xs ${row.lahiruStatus === 'out' ? 'text-red-400' : row.lahiruStatus === 'low' ? 'text-amber-400' : 'text-slate-200'
+                            }`}>
                             {row.lahiruStock} {row.unit}
                           </span>
                         </div>
@@ -428,9 +403,8 @@ export default function StockPage({
                       {currentUserUsername !== 'lahiru' && (
                         <div className="bg-emerald-950/20 border border-emerald-900/30 rounded-lg p-2">
                           <span className="text-[10px] text-emerald-300 block font-medium">ජයන්තා තොගය (Jayantha):</span>
-                          <span className={`font-mono font-bold text-xs ${
-                            row.jayanthaStatus === 'out' ? 'text-red-400' : row.jayanthaStatus === 'low' ? 'text-amber-400' : 'text-slate-200'
-                          }`}>
+                          <span className={`font-mono font-bold text-xs ${row.jayanthaStatus === 'out' ? 'text-red-400' : row.jayanthaStatus === 'low' ? 'text-amber-400' : 'text-slate-200'
+                            }`}>
                             {row.jayanthaStock} {row.unit}
                           </span>
                         </div>
@@ -481,12 +455,11 @@ export default function StockPage({
                       <tr key={row.id} className="hover:bg-slate-800/20 transition-colors">
                         <td className="p-4 font-semibold text-slate-200 font-sans">{row.name}</td>
                         <td className="p-4 text-center font-bold text-slate-400 uppercase select-none">{row.unit}</td>
-                        
+
                         {/* Lahiru stock */}
                         {currentUserUsername !== 'jayantha' && (
-                          <td className={`p-4 text-center border-x border-slate-800 bg-violet-950/5 ${
-                            row.lahiruStatus === 'out' ? 'text-red-400 font-extrabold' : row.lahiruStatus === 'low' ? 'text-amber-500 font-bold' : 'text-slate-200'
-                          }`}>
+                          <td className={`p-4 text-center border-x border-slate-800 bg-violet-950/5 ${row.lahiruStatus === 'out' ? 'text-red-400 font-extrabold' : row.lahiruStatus === 'low' ? 'text-amber-500 font-bold' : 'text-slate-200'
+                            }`}>
                             {row.lahiruStock} {row.unit}
                             {row.lahiruStatus === 'low' && <span className="text-[9px] block text-amber-500/80 font-sans font-medium">(Low &lt; {row.minLevel})</span>}
                             {row.lahiruStatus === 'out' && <span className="text-[9px] block text-red-500/80 font-sans font-medium">(Out of stock)</span>}
@@ -495,9 +468,8 @@ export default function StockPage({
 
                         {/* Jayantha stock */}
                         {currentUserUsername !== 'lahiru' && (
-                          <td className={`p-4 text-center border-r border-slate-800 bg-emerald-950/5 ${
-                            row.jayanthaStatus === 'out' ? 'text-red-400 font-extrabold' : row.jayanthaStatus === 'low' ? 'text-amber-500 font-bold' : 'text-slate-200'
-                          }`}>
+                          <td className={`p-4 text-center border-r border-slate-800 bg-emerald-950/5 ${row.jayanthaStatus === 'out' ? 'text-red-400 font-extrabold' : row.jayanthaStatus === 'low' ? 'text-amber-500 font-bold' : 'text-slate-200'
+                            }`}>
                             {row.jayanthaStock} {row.unit}
                             {row.jayanthaStatus === 'low' && <span className="text-[9px] block text-amber-500/80 font-sans font-medium">(Low &lt; {row.minLevel})</span>}
                             {row.jayanthaStatus === 'out' && <span className="text-[9px] block text-red-500/80 font-sans font-medium">(Out of stock)</span>}
@@ -513,13 +485,12 @@ export default function StockPage({
 
                         {/* Overall Health */}
                         <td className="p-4 text-center">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase select-none ${
-                            row.status === 'ok'
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase select-none ${row.status === 'ok'
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
                               : row.status === 'low'
-                              ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
-                              : 'bg-red-500/10 text-red-500 border border-red-500/15'
-                          }`}>
+                                ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
+                                : 'bg-red-500/10 text-red-500 border border-red-500/15'
+                            }`}>
                             {row.status === 'ok' && <ShieldCheck size={11} />}
                             {row.status !== 'ok' && <AlertTriangle size={11} />}
                             {row.status === 'ok' ? 'In Supply' : row.status === 'low' ? 'Restock Warn' : 'Crit Out'}
@@ -653,11 +624,10 @@ export default function StockPage({
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                              adj.desk === 'jayantha'
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${adj.desk === 'jayantha'
                                 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40'
                                 : 'bg-violet-950 text-violet-400 border border-violet-800/40'
-                            }`}>
+                              }`}>
                               {adj.desk === 'jayantha' ? 'ජයන්තා' : 'ළහිරු'}
                             </span>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${reasonMeta.badgeClass}`}>
@@ -767,11 +737,10 @@ export default function StockPage({
                             )}
                           </td>
                           <td className="p-3.5 text-center whitespace-nowrap">
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                              adj.desk === 'jayantha'
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${adj.desk === 'jayantha'
                                 ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40'
                                 : 'bg-violet-950 text-violet-400 border border-violet-800/40'
-                            }`}>
+                              }`}>
                               {adj.desk === 'jayantha' ? 'ජයන්තා' : 'ළහිරු'}
                             </span>
                           </td>
@@ -880,11 +849,10 @@ export default function StockPage({
                   <button
                     type="button"
                     onClick={() => setSelectedDesk('lahiru')}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${
-                      selectedDesk === 'lahiru'
+                    className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'lahiru'
                         ? 'bg-violet-950/40 border-violet-500 text-violet-300 ring-1 ring-violet-500'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     <span>ළහිරු තොගය (Lahiru)</span>
                     <span className="text-[10px] text-slate-500 font-mono">
@@ -895,11 +863,10 @@ export default function StockPage({
                   <button
                     type="button"
                     onClick={() => setSelectedDesk('jayantha')}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${
-                      selectedDesk === 'jayantha'
+                    className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'jayantha'
                         ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     <span>ජයන්තා තොගය (Jayantha)</span>
                     <span className="text-[10px] text-slate-500 font-mono">
@@ -920,11 +887,10 @@ export default function StockPage({
                       key={meta.value}
                       type="button"
                       onClick={() => setSelectedReason(meta.value)}
-                      className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${
-                        selectedReason === meta.value
+                      className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${selectedReason === meta.value
                           ? 'bg-amber-950/40 border-amber-500 text-amber-300 font-bold ring-1 ring-amber-500'
                           : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-slate-200'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-base shrink-0">{meta.icon}</span>
@@ -960,22 +926,20 @@ export default function StockPage({
                       <button
                         type="button"
                         onClick={() => setAdjustmentUnit('kg')}
-                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          adjustmentUnit === 'kg'
+                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${adjustmentUnit === 'kg'
                             ? 'bg-amber-600 text-white'
                             : 'text-slate-400 hover:text-slate-200'
-                        }`}
+                          }`}
                       >
                         kg
                       </button>
                       <button
                         type="button"
                         onClick={() => setAdjustmentUnit('g')}
-                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          adjustmentUnit === 'g'
+                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${adjustmentUnit === 'g'
                             ? 'bg-amber-600 text-white'
                             : 'text-slate-400 hover:text-slate-200'
-                        }`}
+                          }`}
                       >
                         g
                       </button>

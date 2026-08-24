@@ -193,13 +193,13 @@ export default function BuyPage({
 
     const initialPaymentLogs = (paymentMethod === 'Credit' && downPayment > 0)
       ? [{
-          id: `PAY-${Date.now()}`,
-          date: new Date().toISOString(),
-          amount: downPayment,
-          payment_method: 'Cash' as const,
-          note: 'Supplier Down Payment',
-          addedBy: currentUserUsername
-        }]
+        id: `PAY-${Date.now()}`,
+        date: new Date().toISOString(),
+        amount: downPayment,
+        payment_method: 'Cash' as const,
+        note: 'Supplier Down Payment',
+        addedBy: currentUserUsername
+      }]
       : [];
 
     const transaction: Transaction = {
@@ -247,21 +247,19 @@ export default function BuyPage({
           <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full sm:w-auto">
             <button
               onClick={() => setActivePrefix('L-BUY')}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activePrefix === 'L-BUY'
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${activePrefix === 'L-BUY'
                   ? 'bg-amber-600 text-white shadow'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <span>Lahiru Stock (L-BUY)</span>
             </button>
             <button
               onClick={() => setActivePrefix('J-BUY')}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                activePrefix === 'J-BUY'
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${activePrefix === 'J-BUY'
                   ? 'bg-emerald-600 text-white shadow'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <span>Jayantha Stock (J-BUY)</span>
             </button>
@@ -278,11 +276,10 @@ export default function BuyPage({
               <p className="text-[10px] text-slate-500">Stock updates will increase your assigned warehouse columns</p>
             </div>
           </div>
-          <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-            activePrefix === 'J-BUY' 
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+          <span className={`text-xs font-bold px-3 py-1 rounded-full ${activePrefix === 'J-BUY'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
               : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-          }`}>
+            }`}>
             Series {activePrefix}-xxxx
           </span>
         </div>
@@ -328,11 +325,10 @@ export default function BuyPage({
                       setShowSuggestions(false);
                       setTimeout(() => qtyInputRef.current?.focus(), 100);
                     }}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold shrink-0 transition-all cursor-pointer border ${
-                      selectedProductId === p.id
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold shrink-0 transition-all cursor-pointer border ${selectedProductId === p.id
                         ? 'bg-amber-600/30 text-amber-300 border-amber-500/50'
                         : 'bg-slate-950/80 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     + {p.name}
                   </button>
@@ -341,9 +337,7 @@ export default function BuyPage({
               {filteredSearchList.length > 0 && (
                 <div className="absolute w-full mt-1.5 max-h-48 overflow-y-auto bg-slate-900 border border-slate-800 rounded-xl z-50 divide-y divide-slate-800/60 shadow-2xl">
                   {filteredSearchList.map(p => {
-                    const currentStock = activePrefix === 'J-BUY' 
-                      ? (p.jayantha_stock ?? p.stock) 
-                      : (p.lahiru_stock ?? p.stock);
+                    const currentStock = p.stock;
                     return (
                       <div
                         key={p.id}
@@ -514,11 +508,10 @@ export default function BuyPage({
                       <span>Retail Sell (සිල්ලර මිල):</span>
                       <span className="font-mono font-bold text-slate-200">{formatCurrency(rPrice)}</span>
                     </div>
-                    <div className={`p-2 rounded-lg text-xs flex flex-col gap-1 ${
-                      isLoss 
-                        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
+                    <div className={`p-2 rounded-lg text-xs flex flex-col gap-1 ${isLoss
+                        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
                         : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                    }`}>
+                      }`}>
                       <div className="flex justify-between items-center text-[11px]">
                         <span>Thoga Markup (තොග ලාභය):</span>
                         <strong className="font-mono">{wholesaleProfitPct.toFixed(1)}% ({formatCurrency(wholesaleProfitVal)})</strong>
@@ -636,22 +629,20 @@ export default function BuyPage({
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('Cash')}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      paymentMethod === 'Cash'
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${paymentMethod === 'Cash'
                         ? 'bg-amber-600 text-white'
                         : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     Cash (මුදලින්)
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('Credit')}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      paymentMethod === 'Credit'
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${paymentMethod === 'Credit'
                         ? 'bg-red-600 text-white'
                         : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     Credit (තොග ණය)
                   </button>
@@ -701,9 +692,8 @@ export default function BuyPage({
                     <Banknote size={14} className="text-emerald-400" />
                     <span>Shared Drawer Cash:</span>
                   </span>
-                  <strong className={`font-mono font-bold ${
-                    currentDrawerBalance < subtotal ? 'text-rose-400 animate-pulse' : 'text-emerald-400'
-                  }`}>
+                  <strong className={`font-mono font-bold ${currentDrawerBalance < subtotal ? 'text-rose-400 animate-pulse' : 'text-emerald-400'
+                    }`}>
                     {formatCurrency(currentDrawerBalance)}
                   </strong>
                 </div>

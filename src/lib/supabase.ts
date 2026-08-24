@@ -119,8 +119,8 @@ export async function syncDataToSupabase(
     log += 'Syncing transactions...\n';
     for (const tx of transactions) {
       const isCredit = tx.payment_method?.toLowerCase() === 'credit' || tx.paymentMethod?.toLowerCase() === 'credit';
-      const amountPaid = tx.amount_paid !== undefined && tx.amount_paid !== null 
-        ? Number(tx.amount_paid) 
+      const amountPaid = tx.amount_paid !== undefined && tx.amount_paid !== null
+        ? Number(tx.amount_paid)
         : (isCredit ? 0 : Number(tx.total));
       const creditPaidAmt = tx.credit_paid_amount !== undefined && tx.credit_paid_amount !== null
         ? Number(tx.credit_paid_amount)
@@ -289,8 +289,8 @@ export async function pushTransactionToSupabase(tx: any) {
   if (!client) return;
   try {
     const isCredit = tx.payment_method?.toLowerCase() === 'credit' || tx.paymentMethod?.toLowerCase() === 'credit';
-    const amountPaid = tx.amount_paid !== undefined && tx.amount_paid !== null 
-      ? Number(tx.amount_paid) 
+    const amountPaid = tx.amount_paid !== undefined && tx.amount_paid !== null
+      ? Number(tx.amount_paid)
       : (isCredit ? 0 : Number(tx.total));
     const creditPaidAmt = tx.credit_paid_amount !== undefined && tx.credit_paid_amount !== null
       ? Number(tx.credit_paid_amount)
@@ -505,8 +505,6 @@ export function normalizeProduct(p: any): any {
   const stock = Number(p.stock ?? 0);
   const buyPrice = Number(p.buyPrice ?? p.buying_price ?? 0);
   const sellPrice = Number(p.sellPrice ?? p.retail_price ?? 0);
-  const lahiru_stock = Number(p.lahiru_stock !== undefined && p.lahiru_stock !== null ? p.lahiru_stock : stock);
-  const jayantha_stock = Number(p.jayantha_stock !== undefined && p.jayantha_stock !== null ? p.jayantha_stock : stock);
 
   return {
     ...p,
@@ -516,8 +514,8 @@ export function normalizeProduct(p: any): any {
     buyPrice,
     sellPrice,
     stock,
-    lahiru_stock,
-    jayantha_stock,
+    lahiru_stock: stock,
+    jayantha_stock: stock,
     min_stock_level: Number(p.min_stock_level !== undefined && p.min_stock_level !== null ? p.min_stock_level : 5.0),
     buying_price: Number(p.buying_price ?? buyPrice),
     wholesale_price: Number(p.wholesale_price ?? (sellPrice * 0.9)),
@@ -581,8 +579,8 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
       }
       const pm = tx.payment_method || tx.paymentMethod || 'Cash';
       const isCredit = pm.toLowerCase() === 'credit';
-      const amtPaid = tx.amount_paid !== undefined && tx.amount_paid !== null 
-        ? Number(tx.amount_paid) 
+      const amtPaid = tx.amount_paid !== undefined && tx.amount_paid !== null
+        ? Number(tx.amount_paid)
         : (isCredit ? 0 : Number(tx.total || 0));
       const creditPaidAmt = tx.credit_paid_amount !== undefined && tx.credit_paid_amount !== null
         ? Number(tx.credit_paid_amount)

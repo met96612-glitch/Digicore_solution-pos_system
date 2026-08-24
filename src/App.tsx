@@ -192,28 +192,15 @@ export default function App() {
           qtyInBaseUnit = newAdj.qty * 0.001;
         }
 
-        const currentLStock = Number(p.lahiru_stock !== undefined && p.lahiru_stock !== null ? p.lahiru_stock : (p.stock ?? 0));
-        const currentJStock = Number(p.jayantha_stock !== undefined && p.jayantha_stock !== null ? p.jayantha_stock : (p.stock ?? 0));
+        const currentStock = Number(p.stock ?? 0);
+        const newStock = Number(Math.max(0, currentStock - qtyInBaseUnit).toFixed(3));
 
-        if (newAdj.desk === 'jayantha') {
-          const newJayanthaStock = Number(Math.max(0, currentJStock - qtyInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((currentLStock + newJayanthaStock).toFixed(3));
-          return {
-            ...p,
-            jayantha_stock: newJayanthaStock,
-            lahiru_stock: currentLStock,
-            stock: newCombinedStock
-          };
-        } else {
-          const newLahiruStock = Number(Math.max(0, currentLStock - qtyInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((newLahiruStock + currentJStock).toFixed(3));
-          return {
-            ...p,
-            lahiru_stock: newLahiruStock,
-            jayantha_stock: currentJStock,
-            stock: newCombinedStock
-          };
-        }
+        return {
+          ...p,
+          stock: newStock,
+          lahiru_stock: newStock,
+          jayantha_stock: newStock
+        };
       }
       return p;
     });
@@ -258,28 +245,15 @@ export default function App() {
           qtyInBaseUnit = targetAdj.qty * 0.001;
         }
 
-        const currentLStock = Number(p.lahiru_stock !== undefined && p.lahiru_stock !== null ? p.lahiru_stock : (p.stock ?? 0));
-        const currentJStock = Number(p.jayantha_stock !== undefined && p.jayantha_stock !== null ? p.jayantha_stock : (p.stock ?? 0));
+        const currentStock = Number(p.stock ?? 0);
+        const newStock = Number((currentStock + qtyInBaseUnit).toFixed(3));
 
-        if (targetAdj.desk === 'jayantha') {
-          const newJayanthaStock = Number((currentJStock + qtyInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((currentLStock + newJayanthaStock).toFixed(3));
-          return {
-            ...p,
-            jayantha_stock: newJayanthaStock,
-            lahiru_stock: currentLStock,
-            stock: newCombinedStock
-          };
-        } else {
-          const newLahiruStock = Number((currentLStock + qtyInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((newLahiruStock + currentJStock).toFixed(3));
-          return {
-            ...p,
-            lahiru_stock: newLahiruStock,
-            jayantha_stock: currentJStock,
-            stock: newCombinedStock
-          };
-        }
+        return {
+          ...p,
+          stock: newStock,
+          lahiru_stock: newStock,
+          jayantha_stock: newStock
+        };
       }
       return p;
     });
@@ -947,13 +921,13 @@ export default function App() {
   // Periodic background syncing every 10 seconds to keep both devices in sync
   useEffect(() => {
     let intervalId: any;
-    
+
     async function performBackgroundSync() {
       if (supabaseStatus !== 'connected') return;
       try {
         const client = createSupabaseClient();
         if (!client) return;
-        
+
         const activeStoreId = sessionUser?.role === 'superuser' ? undefined : (sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1'));
 
         // Fetch products, transactions and users in background
@@ -962,7 +936,7 @@ export default function App() {
           fetchTransactionsFromSupabase(activeStoreId),
           fetchUsersFromSupabase()
         ]);
-        
+
         if (supaProds !== null) {
           const mappedProds = supaProds.map(normalizeProduct);
           setProducts(prev => {
@@ -971,7 +945,7 @@ export default function App() {
             return merged;
           });
         }
-        
+
         if (supaTx !== null) {
           setTransactions(prev => {
             const merged = mergeTransactions(supaTx, prev);
@@ -979,7 +953,7 @@ export default function App() {
             return merged;
           });
         }
-        
+
         if (supaUsers && supaUsers.length > 0) {
           setRegisteredUsers(supaUsers);
           localStorage.setItem('kulubadu_users', JSON.stringify(supaUsers));
@@ -988,11 +962,11 @@ export default function App() {
         console.warn('Background sync failed quietly (re-trying in 10s):', err);
       }
     }
-    
+
     if (supabaseStatus === 'connected') {
       intervalId = setInterval(performBackgroundSync, 10000);
     }
-    
+
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
@@ -1033,28 +1007,15 @@ export default function App() {
           quantityInBaseUnit = returnedItem.qty * 0.001;
         }
 
-        const currentLStock = Number(p.lahiru_stock !== undefined && p.lahiru_stock !== null ? p.lahiru_stock : (p.stock ?? 0));
-        const currentJStock = Number(p.jayantha_stock !== undefined && p.jayantha_stock !== null ? p.jayantha_stock : (p.stock ?? 0));
+        const currentStock = Number(p.stock ?? 0);
+        const newStock = Number((currentStock + quantityInBaseUnit).toFixed(3));
 
-        if (isJayantha) {
-          const newJayanthaStock = Number((currentJStock + quantityInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((currentLStock + newJayanthaStock).toFixed(3));
-          return {
-            ...p,
-            jayantha_stock: newJayanthaStock,
-            lahiru_stock: currentLStock,
-            stock: newCombinedStock
-          };
-        } else {
-          const newLahiruStock = Number((currentLStock + quantityInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((newLahiruStock + currentJStock).toFixed(3));
-          return {
-            ...p,
-            lahiru_stock: newLahiruStock,
-            jayantha_stock: currentJStock,
-            stock: newCombinedStock
-          };
-        }
+        return {
+          ...p,
+          stock: newStock,
+          lahiru_stock: newStock,
+          jayantha_stock: newStock
+        };
       }
       return p;
     });
@@ -1106,28 +1067,15 @@ export default function App() {
           quantityInBaseUnit = soldItem.qty * 0.001;
         }
 
-        const currentLStock = Number(p.lahiru_stock !== undefined && p.lahiru_stock !== null ? p.lahiru_stock : (p.stock ?? 0));
-        const currentJStock = Number(p.jayantha_stock !== undefined && p.jayantha_stock !== null ? p.jayantha_stock : (p.stock ?? 0));
+        const currentStock = Number(p.stock ?? 0);
+        const newStock = Number(Math.max(0, currentStock - quantityInBaseUnit).toFixed(3));
 
-        if (isJayantha) {
-          const newJayanthaStock = Number(Math.max(0, currentJStock - quantityInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((currentLStock + newJayanthaStock).toFixed(3));
-          return {
-            ...p,
-            jayantha_stock: newJayanthaStock,
-            lahiru_stock: currentLStock,
-            stock: newCombinedStock
-          };
-        } else {
-          const newLahiruStock = Number(Math.max(0, currentLStock - quantityInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((newLahiruStock + currentJStock).toFixed(3));
-          return {
-            ...p,
-            lahiru_stock: newLahiruStock,
-            jayantha_stock: currentJStock,
-            stock: newCombinedStock
-          };
-        }
+        return {
+          ...p,
+          stock: newStock,
+          lahiru_stock: newStock,
+          jayantha_stock: newStock
+        };
       }
       return p;
     });
@@ -1179,38 +1127,20 @@ export default function App() {
         const updatedWholesalePrice = boughtItem.new_wholesale_price ?? p.wholesale_price;
         const updatedRetailPrice = boughtItem.new_retail_price ?? p.retail_price ?? p.sellPrice;
 
-        const currentLStock = Number(p.lahiru_stock !== undefined && p.lahiru_stock !== null ? p.lahiru_stock : (p.stock ?? 0));
-        const currentJStock = Number(p.jayantha_stock !== undefined && p.jayantha_stock !== null ? p.jayantha_stock : (p.stock ?? 0));
+        const currentStock = Number(p.stock ?? 0);
+        const newStock = Number((currentStock + quantityInBaseUnit).toFixed(3));
 
-        if (isJayantha) {
-          const newJayanthaStock = Number((currentJStock + quantityInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((currentLStock + newJayanthaStock).toFixed(3));
-          return {
-            ...p,
-            buying_price: updatedBuyingPrice,
-            buyPrice: updatedBuyingPrice,
-            wholesale_price: updatedWholesalePrice,
-            retail_price: updatedRetailPrice,
-            sellPrice: updatedRetailPrice,
-            jayantha_stock: newJayanthaStock,
-            lahiru_stock: currentLStock,
-            stock: newCombinedStock
-          };
-        } else {
-          const newLahiruStock = Number((currentLStock + quantityInBaseUnit).toFixed(3));
-          const newCombinedStock = Number((newLahiruStock + currentJStock).toFixed(3));
-          return {
-            ...p,
-            buying_price: updatedBuyingPrice,
-            buyPrice: updatedBuyingPrice,
-            wholesale_price: updatedWholesalePrice,
-            retail_price: updatedRetailPrice,
-            sellPrice: updatedRetailPrice,
-            lahiru_stock: newLahiruStock,
-            jayantha_stock: currentJStock,
-            stock: newCombinedStock
-          };
-        }
+        return {
+          ...p,
+          buying_price: updatedBuyingPrice,
+          buyPrice: updatedBuyingPrice,
+          wholesale_price: updatedWholesalePrice,
+          retail_price: updatedRetailPrice,
+          sellPrice: updatedRetailPrice,
+          stock: newStock,
+          lahiru_stock: newStock,
+          jayantha_stock: newStock
+        };
       }
       return p;
     });
@@ -1304,7 +1234,7 @@ export default function App() {
           const devInfo = { id: device.id || `bt-${Date.now()}`, name: devName, mac: device.id || 'BT-CONNECTED' };
           localStorage.setItem('kulubadu_active_bt_device', JSON.stringify(devInfo));
           localStorage.setItem('preferred_bt_printer_id', devInfo.id);
-          
+
           // Add to saved real printers list
           const existingListRaw = localStorage.getItem('kulubadu_real_bt_printers');
           let existingList = existingListRaw ? JSON.parse(existingListRaw) : [];
@@ -1438,20 +1368,18 @@ export default function App() {
   // Active Storefront Screen Layout
   return (
     <div className="min-h-screen flex bg-[#080b13] text-slate-200 font-sans relative">
-      
+
       {/* Side drawer overlays */}
       <div
         onClick={() => setMenuOpen(false)}
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 lg:hidden ${
-          menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 lg:hidden ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
       ></div>
 
       {/* Side Navigation panel */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-[#0a0f1d] border-r border-slate-900 z-50 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
-          menuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-[#0a0f1d] border-r border-slate-900 z-50 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="space-y-6">
           <div className="p-5 flex items-center gap-2 border-b border-slate-900 select-none">
@@ -1472,11 +1400,10 @@ export default function App() {
                 setCurrentTab('dashboard');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'dashboard'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'dashboard'
+                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <LayoutDashboard size={16} />
               <span>Cabinet Dashboard</span>
@@ -1487,11 +1414,10 @@ export default function App() {
                 setCurrentTab('sell');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'sell'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'sell'
+                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <Coins size={16} />
               <span>New Bill (Sell)</span>
@@ -1502,11 +1428,10 @@ export default function App() {
                 setCurrentTab('buy');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'buy'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'buy'
+                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <ShoppingBag size={16} />
               <span>Purchase Stock (Buy)</span>
@@ -1517,11 +1442,10 @@ export default function App() {
                 setCurrentTab('products');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'products'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'products'
+                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <FolderOpen size={16} />
               <span>Registered Products</span>
@@ -1532,11 +1456,10 @@ export default function App() {
                 setCurrentTab('stock');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'stock'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'stock'
+                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <Warehouse size={16} />
               <span>Reserve Stocks</span>
@@ -1547,11 +1470,10 @@ export default function App() {
                 setCurrentTab('expenses');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'expenses'
-                  ? 'bg-rose-600/15 text-rose-400 border border-rose-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'expenses'
+                ? 'bg-rose-600/15 text-rose-400 border border-rose-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <Receipt size={16} />
               <span>Shop Expenses (අමතර වියදම්)</span>
@@ -1562,19 +1484,18 @@ export default function App() {
                 setCurrentTab('credit');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'credit'
-                  ? 'bg-amber-600/15 text-amber-400 border border-amber-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'credit'
+                ? 'bg-amber-600/15 text-amber-400 border border-amber-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <CreditCard size={16} />
                 <span>Credit Ledger (ණය බිල්පත්)</span>
               </div>
               {(() => {
-                const pendingCount = filteredTransactions.filter(t => 
-                  (t.payment_method === 'Credit' || t.credit_status === 'pending' || t.credit_status === 'partially_paid') && 
+                const pendingCount = filteredTransactions.filter(t =>
+                  (t.payment_method === 'Credit' || t.credit_status === 'pending' || t.credit_status === 'partially_paid') &&
                   ((t.credit_paid_amount ?? t.amount_paid ?? 0) < t.total)
                 ).length;
                 if (pendingCount > 0) {
@@ -1593,11 +1514,10 @@ export default function App() {
                 setCurrentTab('reports');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'reports'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'reports'
+                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <LineChart size={16} />
               <span>Audit Reports</span>
@@ -1608,11 +1528,10 @@ export default function App() {
                 setCurrentTab('history');
                 setMenuOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                currentTab === 'history'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'history'
+                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                }`}
             >
               <History size={16} />
               <span>Invoices Ledger</span>
@@ -1624,11 +1543,10 @@ export default function App() {
                   setCurrentTab('admin');
                   setMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${
-                  currentTab === 'admin'
-                    ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'admin'
+                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                  }`}
               >
                 <Settings size={16} />
                 <span>Admin Terminal</span>
@@ -1671,7 +1589,7 @@ export default function App() {
 
       {/* Main Area right wrapper */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        
+
         {/* Horizontal Header wrapper */}
         <header className="h-14 sm:h-16 border-b border-slate-900/40 bg-[#0a0e1c] flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -1700,20 +1618,18 @@ export default function App() {
             {/* Supabase status badge */}
             <div className="flex items-center gap-1 sm:gap-2 shrink-0 border-r border-slate-900/80 pr-1.5 sm:pr-3">
               <div className="flex items-center gap-1 sm:gap-1.5 px-0.5 sm:px-1 py-1" title="Supabase Sync Status">
-                <span className={`w-2 h-2 rounded-full ${
-                  hasRlsError ? 'bg-amber-500 animate-pulse' :
+                <span className={`w-2 h-2 rounded-full ${hasRlsError ? 'bg-amber-500 animate-pulse' :
                   supabaseStatus === 'connected' ? 'bg-emerald-400 animate-pulse' :
-                  supabaseStatus === 'disconnected' ? 'bg-red-400 animate-bounce' :
-                  supabaseStatus === 'not_configured' ? 'bg-amber-500' : 'bg-slate-500 animate-pulse'
-                }`}></span>
+                    supabaseStatus === 'disconnected' ? 'bg-red-400 animate-bounce' :
+                      supabaseStatus === 'not_configured' ? 'bg-amber-500' : 'bg-slate-500 animate-pulse'
+                  }`}></span>
                 <div className="text-left hidden sm:block">
                   <span className="text-[8px] text-slate-500 block font-bold uppercase leading-none">Database</span>
-                  <span className={`text-[10px] font-extrabold leading-none block mt-0.5 ${
-                    hasRlsError ? 'text-amber-500 font-black animate-pulse' :
+                  <span className={`text-[10px] font-extrabold leading-none block mt-0.5 ${hasRlsError ? 'text-amber-500 font-black animate-pulse' :
                     supabaseStatus === 'connected' ? 'text-emerald-400' :
-                    supabaseStatus === 'disconnected' ? 'text-red-400' :
-                    supabaseStatus === 'not_configured' ? 'text-amber-400' : 'text-slate-400'
-                  }`}>
+                      supabaseStatus === 'disconnected' ? 'text-red-400' :
+                        supabaseStatus === 'not_configured' ? 'text-amber-400' : 'text-slate-400'
+                    }`}>
                     {hasRlsError && 'RLS Blocked 🔒'}
                     {!hasRlsError && supabaseStatus === 'connected' && 'Supabase Live'}
                     {supabaseStatus === 'disconnected' && 'Connection Error'}
@@ -1722,7 +1638,7 @@ export default function App() {
                   </span>
                 </div>
               </div>
-              
+
               {/* Subtle Gear/Settings button for superusers/admins to connect database */}
               {(sessionUser?.role === 'superuser' || sessionUser?.role === 'admin') && (
                 <button
@@ -1764,12 +1680,11 @@ export default function App() {
               >
                 <Palette size={14} className="text-violet-400 shrink-0" />
                 <span className="text-[10px] font-bold hidden md:inline uppercase tracking-wider">Theme</span>
-                <span className={`w-2.5 h-2.5 rounded-full ${
-                  activeTheme === 'blue' ? 'bg-blue-500' :
+                <span className={`w-2.5 h-2.5 rounded-full ${activeTheme === 'blue' ? 'bg-blue-500' :
                   activeTheme === 'violet' ? 'bg-violet-500' :
-                  activeTheme === 'emerald' ? 'bg-emerald-500' :
-                  activeTheme === 'amber' ? 'bg-amber-500' : 'bg-rose-500'
-                }`}></span>
+                    activeTheme === 'emerald' ? 'bg-emerald-500' :
+                      activeTheme === 'amber' ? 'bg-amber-500' : 'bg-rose-500'
+                  }`}></span>
               </button>
 
               {showThemeMenu && (
@@ -1791,11 +1706,10 @@ export default function App() {
                         setShowThemeMenu(false);
                         triggerToast(`System theme changed to ${t.label}!`, 'success');
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        activeTheme === t.id
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                      }`}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeTheme === t.id
+                        ? 'bg-slate-800 text-white'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                        }`}
                     >
                       <div className="flex items-center gap-2">
                         <span className={`w-3 h-3 rounded-full ${t.colorClass} shadow-sm`}></span>
@@ -1855,13 +1769,12 @@ export default function App() {
             <div className="flex items-center gap-1.5 border-l border-slate-900/80 pl-2 sm:pl-3">
               <div className="text-right">
                 <span className="text-xs font-bold block text-slate-200 capitalize truncate max-w-[80px] sm:max-w-none">{sessionUser.name}</span>
-                <span className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-wider block ${
-                  sessionUser.role === 'superuser'
-                    ? 'text-amber-400 font-extrabold animate-pulse'
-                    : sessionUser.role === 'admin'
+                <span className={`text-[8px] sm:text-[9px] font-bold uppercase tracking-wider block ${sessionUser.role === 'superuser'
+                  ? 'text-amber-400 font-extrabold animate-pulse'
+                  : sessionUser.role === 'admin'
                     ? 'text-violet-400'
                     : 'text-slate-500'
-                }`}>{sessionUser.role === 'superuser' ? '👑 superuser' : sessionUser.role}</span>
+                  }`}>{sessionUser.role === 'superuser' ? '👑 superuser' : sessionUser.role}</span>
               </div>
             </div>
           </div>
@@ -2001,11 +1914,10 @@ export default function App() {
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#070a14]/95 backdrop-blur-xl border-t border-slate-800/90 z-40 px-2 py-2 flex justify-around items-center shadow-2xl">
           <button
             onClick={() => setCurrentTab('sell')}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              currentTab === 'sell'
-                ? 'text-violet-400 bg-violet-600/15 font-bold border border-violet-500/20'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${currentTab === 'sell'
+              ? 'text-violet-400 bg-violet-600/15 font-bold border border-violet-500/20'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <Coins size={20} />
             <span className="text-[10px] font-semibold">නව බිල (Sell)</span>
@@ -2013,11 +1925,10 @@ export default function App() {
 
           <button
             onClick={() => setCurrentTab('buy')}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              currentTab === 'buy'
-                ? 'text-amber-400 bg-amber-600/15 font-bold border border-amber-500/20'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${currentTab === 'buy'
+              ? 'text-amber-400 bg-amber-600/15 font-bold border border-amber-500/20'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <ShoppingBag size={20} />
             <span className="text-[10px] font-semibold">තොග (Buy)</span>
@@ -2025,11 +1936,10 @@ export default function App() {
 
           <button
             onClick={() => setCurrentTab('dashboard')}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              currentTab === 'dashboard'
-                ? 'text-emerald-400 bg-emerald-600/15 font-bold border border-emerald-500/20'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${currentTab === 'dashboard'
+              ? 'text-emerald-400 bg-emerald-600/15 font-bold border border-emerald-500/20'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <LayoutDashboard size={20} />
             <span className="text-[10px] font-semibold">Cabinet</span>
@@ -2037,11 +1947,10 @@ export default function App() {
 
           <button
             onClick={() => setCurrentTab('products')}
-            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-              currentTab === 'products'
-                ? 'text-indigo-400 bg-indigo-600/15 font-bold border border-indigo-500/20'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
+            className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all cursor-pointer ${currentTab === 'products'
+              ? 'text-indigo-400 bg-indigo-600/15 font-bold border border-indigo-500/20'
+              : 'text-slate-400 hover:text-slate-200'
+              }`}
           >
             <FolderOpen size={20} />
             <span className="text-[10px] font-semibold">බඩු ලැයිස්තුව</span>
@@ -2070,11 +1979,10 @@ export default function App() {
 
       {/* Floating toast widget feedback alert */}
       {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] px-5 py-3 rounded-xl shadow-2xl border text-xs font-bold tracking-wide flex items-center gap-2 select-none animate-bounce bg-slate-900 ${
-          toast.type === 'success'
-            ? 'border-emerald-500/30 text-emerald-400'
-            : 'border-red-500/30 text-red-400'
-        }`}>
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] px-5 py-3 rounded-xl shadow-2xl border text-xs font-bold tracking-wide flex items-center gap-2 select-none animate-bounce bg-slate-900 ${toast.type === 'success'
+          ? 'border-emerald-500/30 text-emerald-400'
+          : 'border-red-500/30 text-red-400'
+          }`}>
           <Sparkles size={14} className={toast.type === 'success' ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'} />
           <span>{toast.msg}</span>
         </div>
@@ -2106,25 +2014,22 @@ export default function App() {
               <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1">
                 <button
                   onClick={() => setDrawerUserFilter('my')}
-                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                    drawerUserFilter === 'my' ? 'bg-violet-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${drawerUserFilter === 'my' ? 'bg-violet-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                    }`}
                 >
                   👤 My Drawer
                 </button>
                 <button
                   onClick={() => setDrawerUserFilter('lahiru')}
-                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                    drawerUserFilter === 'lahiru' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${drawerUserFilter === 'lahiru' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                    }`}
                 >
                   🌿 Lahiru
                 </button>
                 <button
                   onClick={() => setDrawerUserFilter('jayantha')}
-                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                    drawerUserFilter === 'jayantha' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                  className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${drawerUserFilter === 'jayantha' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+                    }`}
                 >
                   🍃 Jayantha
                 </button>
@@ -2159,9 +2064,8 @@ export default function App() {
               </div>
               <div className="flex justify-between items-center pt-1">
                 <span className="text-xs font-bold text-slate-300">Remaining Drawer Balance (ලච්චුවේ ශේෂය):</span>
-                <span className={`text-sm font-extrabold font-mono ${
-                  activeModalDrawerData.balance < 0 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'
-                }`}>
+                <span className={`text-sm font-extrabold font-mono ${activeModalDrawerData.balance < 0 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'
+                  }`}>
                   Rs. {activeModalDrawerData.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
@@ -2339,11 +2243,10 @@ export default function App() {
               <div className="bg-slate-950/50 border border-slate-900 rounded-xl p-3 flex flex-col justify-between">
                 <span className="text-[10px] text-slate-400 font-bold uppercase">This Device Status</span>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${
-                    supabaseStatus === 'connected' ? 'bg-emerald-400 animate-pulse' :
+                  <span className={`w-2.5 h-2.5 rounded-full ${supabaseStatus === 'connected' ? 'bg-emerald-400 animate-pulse' :
                     supabaseStatus === 'disconnected' ? 'bg-red-400 animate-bounce' :
-                    supabaseStatus === 'not_configured' ? 'bg-amber-400' : 'bg-slate-500 animate-pulse'
-                  }`}></span>
+                      supabaseStatus === 'not_configured' ? 'bg-amber-400' : 'bg-slate-500 animate-pulse'
+                    }`}></span>
                   <span className="text-xs font-black text-slate-200">
                     {supabaseStatus === 'connected' && 'Online Mode (Connected)'}
                     {supabaseStatus === 'disconnected' && 'Connection Error'}
@@ -2379,7 +2282,7 @@ export default function App() {
                   </p>
                   <div className="relative">
                     <pre className="font-mono text-[9px] bg-slate-950/90 border border-slate-800 p-2.5 pr-16 rounded-lg text-slate-300 select-all leading-normal overflow-x-auto">
-{`ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+                      {`ALTER TABLE products DISABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                     </pre>
@@ -2421,7 +2324,7 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                   <span>Why Lahiru's stock isn't updating:</span>
                 </h4>
                 <p>
-                  Currently, Jayantha's device has the online keys stored in its browser, so it updates Supabase successfully. 
+                  Currently, Jayantha's device has the online keys stored in its browser, so it updates Supabase successfully.
                   If Lahiru's device is running in <strong>Local Offline Mode</strong> (database shows "Local Only"), his transactions are only stored on his computer and <strong>will not sync</strong> online!
                 </p>
                 <p className="text-slate-400">
@@ -2440,7 +2343,7 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
               setIsVerifyingModalSupa(true);
               const isOk = await testSupabaseConnection(modalSupaUrl.trim(), modalSupaKey.trim());
               setIsVerifyingModalSupa(false);
-              
+
               if (isOk) {
                 localStorage.setItem('lahiya_supabase_url', modalSupaUrl.trim());
                 localStorage.setItem('lahiya_supabase_key', modalSupaKey.trim());
@@ -2466,7 +2369,7 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
               }
             }} className="space-y-4 pt-2">
               <span className="text-xs font-bold text-slate-200 block border-b border-slate-900 pb-1">Link This Device:</span>
-              
+
               <div className="space-y-3">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Supabase URL</label>

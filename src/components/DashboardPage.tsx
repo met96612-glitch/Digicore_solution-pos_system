@@ -713,11 +713,10 @@ export default function DashboardPage({
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-start md:justify-end">
           <button
             onClick={setToday}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              isLiveToday
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${isLiveToday
                 ? 'bg-emerald-600 text-white shadow-md border border-emerald-500/40'
                 : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
-            }`}
+              }`}
           >
             <Sparkles size={13} className={isLiveToday ? 'text-emerald-200' : 'text-slate-400'} />
             <span>අද (Today)</span>
@@ -725,11 +724,10 @@ export default function DashboardPage({
 
           <button
             onClick={setYesterday}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              !isLiveToday && selectedDate === getLocalTodayDateString(new Date(Date.now() - 86400000))
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${!isLiveToday && selectedDate === getLocalTodayDateString(new Date(Date.now() - 86400000))
                 ? 'bg-indigo-600 text-white shadow-md border border-indigo-500/40'
                 : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
-            }`}
+              }`}
           >
             <span>ඊයේ (Yesterday)</span>
           </button>
@@ -787,11 +785,10 @@ export default function DashboardPage({
           <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 w-full sm:w-auto justify-between sm:justify-start">
             <button
               onClick={() => setSelectedAccount('lahiru')}
-              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                selectedAccount === 'lahiru'
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${selectedAccount === 'lahiru'
                   ? 'bg-emerald-600 text-white shadow-lg border border-emerald-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
+                }`}
             >
               <Store size={14} />
               <span>ළහිරු (Lahiru)</span>
@@ -799,11 +796,10 @@ export default function DashboardPage({
 
             <button
               onClick={() => setSelectedAccount('jayantha')}
-              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                selectedAccount === 'jayantha'
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${selectedAccount === 'jayantha'
                   ? 'bg-teal-600 text-white shadow-lg border border-teal-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
+                }`}
             >
               <Store size={14} />
               <span>ජයන්තා (Jayantha)</span>
@@ -811,11 +807,10 @@ export default function DashboardPage({
 
             <button
               onClick={() => setSelectedAccount('all')}
-              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                selectedAccount === 'all'
+              className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${selectedAccount === 'all'
                   ? 'bg-indigo-600 text-white shadow-lg border border-indigo-500/30'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
+                }`}
             >
               <Users size={14} />
               <span>දෙදෙනාම (Both)</span>
@@ -1014,7 +1009,7 @@ export default function DashboardPage({
       {/* Secondary KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Shared Cash Drawer Balance */}
-        <div 
+        <div
           onClick={onManageDrawer}
           className="bg-emerald-950/20 border border-emerald-500/30 hover:border-emerald-500/50 rounded-2xl p-4 flex items-center gap-4 shadow-lg cursor-pointer transition-all hover:bg-emerald-950/25"
           title="Click to manage shared cash drawer"
@@ -1157,11 +1152,10 @@ export default function DashboardPage({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Lahiru Card */}
-            <div 
+            <div
               onClick={() => setSelectedAccount('lahiru')}
-              className={`bg-slate-950/70 border rounded-xl p-4 transition-all cursor-pointer ${
-                effectiveAccount === 'lahiru' ? 'border-emerald-500 shadow-lg ring-1 ring-emerald-500/30' : 'border-emerald-500/20 hover:border-emerald-500/40'
-              }`}
+              className={`bg-slate-950/70 border rounded-xl p-4 transition-all cursor-pointer ${effectiveAccount === 'lahiru' ? 'border-emerald-500 shadow-lg ring-1 ring-emerald-500/30' : 'border-emerald-500/20 hover:border-emerald-500/40'
+                }`}
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <span className="font-bold text-emerald-400 text-sm flex items-center gap-2">
@@ -1182,11 +1176,10 @@ export default function DashboardPage({
             </div>
 
             {/* Jayantha Card */}
-            <div 
+            <div
               onClick={() => setSelectedAccount('jayantha')}
-              className={`bg-slate-950/70 border rounded-xl p-4 transition-all cursor-pointer ${
-                effectiveAccount === 'jayantha' ? 'border-teal-500 shadow-lg ring-1 ring-teal-500/30' : 'border-teal-500/20 hover:border-teal-500/40'
-              }`}
+              className={`bg-slate-950/70 border rounded-xl p-4 transition-all cursor-pointer ${effectiveAccount === 'jayantha' ? 'border-teal-500 shadow-lg ring-1 ring-teal-500/30' : 'border-teal-500/20 hover:border-teal-500/40'
+                }`}
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
                 <span className="font-bold text-teal-400 text-sm flex items-center gap-2">
@@ -1244,8 +1237,8 @@ export default function DashboardPage({
                 </tr>
               ) : (
                 recentTransactions.map((tx) => (
-                  <tr 
-                    key={tx.id} 
+                  <tr
+                    key={tx.id}
                     onClick={() => onViewTransaction(tx)}
                     className="hover:bg-slate-800/30 transition-all cursor-pointer group"
                   >
@@ -1257,11 +1250,10 @@ export default function DashboardPage({
                     </td>
                     <td className="p-3.5 text-slate-400">{formatDateString(tx.date)}</td>
                     <td className="p-3.5">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        tx.type === 'sell' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                        tx.type === 'buy' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
-                        'bg-red-500/10 text-red-400 border border-red-500/20'
-                      }`}>
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${tx.type === 'sell' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                          tx.type === 'buy' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                            'bg-red-500/10 text-red-400 border border-red-500/20'
+                        }`}>
                         {tx.type}
                       </span>
                     </td>

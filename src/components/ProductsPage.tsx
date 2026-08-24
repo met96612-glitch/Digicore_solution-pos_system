@@ -68,8 +68,8 @@ export default function ProductsPage({
     setWholesalePrice(p.wholesale_price ?? p.sellPrice * 0.9);
     setRetailPrice(p.retail_price ?? p.sellPrice);
     setMinStockLevel(p.min_stock_level ?? 5.0);
-    setLahiruStock(p.lahiru_stock ?? p.stock);
-    setJayanthaStock(p.jayantha_stock ?? p.stock);
+    setLahiruStock(p.stock);
+    setJayanthaStock(p.stock);
     setModalOpen(true);
   };
 
@@ -92,14 +92,11 @@ export default function ProductsPage({
     const priceRetail = Number(retailPrice);
     const priceWholesale = wholesalePrice === '' ? priceRetail * 0.9 : Number(wholesalePrice);
     const minBuffer = minStockLevel === '' ? 5.0 : Number(minStockLevel);
-    const lStock = lahiruStock === '' ? 0 : Number(lahiruStock);
-    const jStock = jayanthaStock === '' ? 0 : Number(jayanthaStock);
+    const stockVal = lahiruStock === '' ? (jayanthaStock === '' ? 0 : Number(jayanthaStock)) : Number(lahiruStock);
 
     if (priceRetail < priceBuy) {
       onToast('Warning: Retail price is less than buying cost.', 'success');
     }
-
-    const commonStock = lStock + jStock; // Overall stock pool helper
 
     if (editingProduct) {
       onUpdateProduct({
@@ -108,13 +105,13 @@ export default function ProductsPage({
         unit,
         buyPrice: priceBuy,
         sellPrice: priceRetail,
-        stock: commonStock,
+        stock: stockVal,
         buying_price: priceBuy,
         wholesale_price: priceWholesale,
         retail_price: priceRetail,
         min_stock_level: minBuffer,
-        lahiru_stock: lStock,
-        jayantha_stock: jStock
+        lahiru_stock: stockVal,
+        jayantha_stock: stockVal
       });
       onToast('Product updated successfully.', 'success');
     } else {
@@ -124,13 +121,13 @@ export default function ProductsPage({
         unit: unit as any,
         buyPrice: priceBuy,
         sellPrice: priceRetail,
-        stock: commonStock,
+        stock: stockVal,
         buying_price: priceBuy,
         wholesale_price: priceWholesale,
         retail_price: priceRetail,
         min_stock_level: minBuffer,
-        lahiru_stock: lStock,
-        jayantha_stock: jStock
+        lahiru_stock: stockVal,
+        jayantha_stock: stockVal
       };
       onAddProduct(newProduct);
       onToast('New spice product registered successfully.', 'success');
@@ -179,7 +176,7 @@ export default function ProductsPage({
             <div className="w-16 h-16 bg-violet-600/10 border border-violet-800/30 text-violet-400 rounded-2xl flex items-center justify-center mx-auto shadow-inner animate-pulse">
               <Database size={32} />
             </div>
-            
+
             <div className="space-y-2">
               <h4 className="text-base font-extrabold text-slate-100 font-sans">පද්ධතියේ කිසිදු කුළුබඩු වර්ගයක් නොමැත</h4>
               <p className="text-xs text-slate-400 leading-relaxed max-w-md mx-auto">
@@ -203,7 +200,7 @@ export default function ProductsPage({
                   </p>
                   <div className="relative">
                     <pre className="font-mono text-[9px] bg-slate-950/90 border border-slate-800 p-2.5 pr-16 rounded-lg text-slate-300 select-all leading-normal overflow-x-auto">
-{`ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+                      {`ALTER TABLE products DISABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                     </pre>
@@ -227,14 +224,14 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                   <span>උපකරණය පද්ධතිය සමඟ සම්බන්ධ වී නැත (Local Mode)</span>
                 </span>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  මෙම උපකරණය තවමත් ඔබගේ Supabase database එක සමඟ සම්බන්ධ කර නැත. 
+                  මෙම උපකරණය තවමත් ඔබගේ Supabase database එක සමඟ සම්බන්ධ කර නැත.
                 </p>
                 <p className="text-xs text-slate-400 leading-relaxed">
                   මෙය සම්බන්ධ කිරීම සඳහා, පද්ධතියේ ඉහළ දකුණු කෙළවරෙහි ඇති <strong>"Database Status"</strong> badge එක හෝ gear icon එක ක්ලික් කර ඔබගේ Supabase URL එක සහ Secret Key එක ඇතුලත් කරන්න.
                 </p>
               </div>
             )}
-            
+
             <div className="pt-2 text-[10px] text-slate-500 font-medium">
               Note: Database එකට සාර්ථකව සම්බන්ධ වූ පසු පද්ධතිය ස්වයංක්‍රීයව දත්ත සමමුහුර්තකරණය සිදු කරයි.
             </div>
@@ -261,7 +258,7 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                       Per {p.unit.toUpperCase()}
                     </span>
                   </div>
-                  
+
                   {/* Prices block */}
                   <div className="mt-4 grid grid-cols-3 gap-2 border-t border-b border-slate-800/40 py-3 my-3">
                     <div>
@@ -296,30 +293,12 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
 
                   {/* Stock levels block */}
                   <div className="bg-slate-950/40 rounded-xl p-3 border border-slate-800 space-y-1.5 text-[11px] font-medium text-slate-400">
-                    {currentUserUsername !== 'jayantha' && (
-                      <div className="flex justify-between">
-                        <span>Lahiru Warehouse:</span>
-                        <strong className={`font-mono ${lStock <= minAlert ? 'text-red-400 font-extrabold' : 'text-slate-300'}`}>
-                          {lStock} {p.unit}
-                        </strong>
-                      </div>
-                    )}
-                    {currentUserUsername !== 'lahiru' && (
-                      <div className="flex justify-between">
-                        <span>Jayantha Warehouse:</span>
-                        <strong className={`font-mono ${jStock <= minAlert ? 'text-red-400 font-extrabold' : 'text-slate-300'}`}>
-                          {jStock} {p.unit}
-                        </strong>
-                      </div>
-                    )}
-                    {currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha' && (
-                      <div className="flex justify-between border-t border-slate-800/60 pt-1.5 mt-1">
-                        <span className="font-semibold text-slate-400">Combined Pool:</span>
-                        <strong className="font-mono text-slate-200">
-                          {lStock + jStock} {p.unit}
-                        </strong>
-                      </div>
-                    )}
+                    <div className="flex justify-between">
+                      <span>Available Stock:</span>
+                      <strong className={`font-mono ${p.stock <= minAlert ? 'text-red-400 font-extrabold' : 'text-slate-300'}`}>
+                        {p.stock} {p.unit}
+                      </strong>
+                    </div>
                   </div>
                 </div>
 
@@ -410,10 +389,10 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                 </div>
               </div>
 
-              {/* Dual Stocks Initial pools */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 bg-slate-950/40 p-3 rounded-xl border border-slate-800">
+              {/* Initial Stock Pool */}
+              <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-800">
                 <div className="space-y-1">
-                  <label className="text-[11px] text-violet-400 font-semibold font-sans">Lahiru Stock Pool</label>
+                  <label className="text-[11px] text-violet-400 font-semibold font-sans">Current Stock Quantity</label>
                   <input
                     type="number"
                     step="0.01"
@@ -421,21 +400,10 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                     required
                     placeholder="0"
                     value={lahiruStock === '' ? '' : lahiruStock}
-                    onChange={(e) => setLahiruStock(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-300 outline-none focus:border-violet-600 font-mono"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] text-emerald-400 font-semibold font-sans">Jayantha Stock Pool</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    placeholder="0"
-                    value={jayanthaStock === '' ? '' : jayanthaStock}
-                    onChange={(e) => setJayanthaStock(e.target.value === '' ? '' : Number(e.target.value))}
+                    onChange={(e) => {
+                      setLahiruStock(e.target.value === '' ? '' : Number(e.target.value));
+                      setJayanthaStock(e.target.value === '' ? '' : Number(e.target.value));
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-300 outline-none focus:border-violet-600 font-mono"
                   />
                 </div>

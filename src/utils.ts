@@ -7,42 +7,42 @@ export const STOCK_ADJUSTMENT_REASONS: {
   icon: string;
   badgeClass: string;
 }[] = [
-  {
-    value: 'wastage',
-    label: 'Dust / Garbage / Wastage',
-    sinhala: 'කුණු / අපද්‍රව්‍ය ඉවත් කිරීම් (Wastage & Dust)',
-    icon: '🧹',
-    badgeClass: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-  },
-  {
-    value: 'drying_loss',
-    label: 'Drying / Moisture Weight Loss',
-    sinhala: 'වියළීම නිසා බර අඩුවීම (Drying Loss)',
-    icon: '☀️',
-    badgeClass: 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
-  },
-  {
-    value: 'damage',
-    label: 'Damage / Mold / Insects',
-    sinhala: 'නරක් වීම් / දිලීර / කෘමි හානි (Spoilage)',
-    icon: '🍂',
-    badgeClass: 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-  },
-  {
-    value: 'audit_loss',
-    label: 'Stock Audit Discrepancy',
-    sinhala: 'තොග ගණන් බැලීමේ අඩුවීම් (Audit Shortage)',
-    icon: '⚖️',
-    badgeClass: 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-  },
-  {
-    value: 'other',
-    label: 'Other Stock Deduction',
-    sinhala: 'වෙනත් තොග අඩුවීම් (Other Loss)',
-    icon: '📝',
-    badgeClass: 'bg-slate-500/10 text-slate-300 border border-slate-500/20'
-  }
-];
+    {
+      value: 'wastage',
+      label: 'Dust / Garbage / Wastage',
+      sinhala: 'කුණු / අපද්‍රව්‍ය ඉවත් කිරීම් (Wastage & Dust)',
+      icon: '🧹',
+      badgeClass: 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+    },
+    {
+      value: 'drying_loss',
+      label: 'Drying / Moisture Weight Loss',
+      sinhala: 'වියළීම නිසා බර අඩුවීම (Drying Loss)',
+      icon: '☀️',
+      badgeClass: 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+    },
+    {
+      value: 'damage',
+      label: 'Damage / Mold / Insects',
+      sinhala: 'නරක් වීම් / දිලීර / කෘමි හානි (Spoilage)',
+      icon: '🍂',
+      badgeClass: 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+    },
+    {
+      value: 'audit_loss',
+      label: 'Stock Audit Discrepancy',
+      sinhala: 'තොග ගණන් බැලීමේ අඩුවීම් (Audit Shortage)',
+      icon: '⚖️',
+      badgeClass: 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+    },
+    {
+      value: 'other',
+      label: 'Other Stock Deduction',
+      sinhala: 'වෙනත් තොග අඩුවීම් (Other Loss)',
+      icon: '📝',
+      badgeClass: 'bg-slate-500/10 text-slate-300 border border-slate-500/20'
+    }
+  ];
 
 const SPICE_NAME_MAP: Record<string, string> = {
   'ceylon cinnamon alba': 'කුරුඳු',
@@ -176,7 +176,7 @@ export function generateInvoiceNumber(type: 'sell' | 'buy'): string {
   const year = now.getFullYear().toString().substring(2);
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const day = now.getDate().toString().padStart(2, '0');
-  
+
   const randNum = Math.floor(1000 + Math.random() * 9000); // 4 digit random
   return `${prefix}-${year}${month}${day}-${randNum}`;
 }
@@ -194,7 +194,7 @@ export function generateNextInvoiceNumber(prefix: string, transactions: Transact
   if (matching.length === 0) {
     return `${prefix}-0001`;
   }
-  
+
   let maxNum = 0;
   matching.forEach(tx => {
     const parts = tx.id.split('-');
@@ -205,7 +205,7 @@ export function generateNextInvoiceNumber(prefix: string, transactions: Transact
       }
     }
   });
-  
+
   return `${prefix}-${(maxNum + 1).toString().padStart(4, '0')}`;
 }
 
@@ -266,12 +266,13 @@ export function mergeProducts(primaryProds: Product[], secondaryProds: Product[]
     if (!existing) {
       map.set(pId, p);
     } else {
+      const stock = Number(p.stock !== undefined && p.stock !== null ? p.stock : (existing.stock ?? 0));
       map.set(pId, {
         ...existing,
         ...p,
-        stock: Number(p.stock !== undefined && p.stock !== null ? p.stock : (existing.stock ?? 0)),
-        lahiru_stock: Number(p.lahiru_stock !== undefined && p.lahiru_stock !== null ? p.lahiru_stock : (existing.lahiru_stock ?? 0)),
-        jayantha_stock: Number(p.jayantha_stock !== undefined && p.jayantha_stock !== null ? p.jayantha_stock : (existing.jayantha_stock ?? 0)),
+        stock,
+        lahiru_stock: stock,
+        jayantha_stock: stock,
       });
     }
   });

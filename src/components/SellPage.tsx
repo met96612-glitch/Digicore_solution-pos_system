@@ -27,7 +27,7 @@ export default function SellPage({
   const [unit, setUnit] = useState<'kg' | 'g' | 'pcs'>('kg');
   const [price, setPrice] = useState<number | ''>('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  
+
   // Active Desk Prefix: Defaults to J for Jayantha, L for everyone else
   const defaultPrefix = currentUserUsername === 'jayantha' ? 'J' : 'L';
   const [activePrefix, setActivePrefix] = useState<'L' | 'J'>(defaultPrefix);
@@ -134,16 +134,14 @@ export default function SellPage({
     const netVal = Math.max(0, grossVal - deductVal);
 
     // Active stock of selected shop entity
-    const activeStock = activePrefix === 'J' 
-      ? (matchedProduct.jayantha_stock ?? matchedProduct.stock) 
-      : (matchedProduct.lahiru_stock ?? matchedProduct.stock);
+    const activeStock = matchedProduct.stock;
 
     // Live stock warning check
     let quantityInBaseUnit = netVal;
     if (matchedProduct.unit === 'kg' && unit === 'g') {
       quantityInBaseUnit = netVal * 0.001;
     }
-    
+
     if (quantityInBaseUnit > activeStock) {
       onToast(`Warning: Requested quantity exceeds warehouse stock (${activeStock} ${matchedProduct.unit} available).`, 'error');
     }
@@ -247,7 +245,7 @@ export default function SellPage({
       }
       totalCost += itemBuyPrice * qtyInBase;
     });
-    
+
     const itemRevenue = billItems.reduce((acc, item) => acc + item.total, 0);
     const itemProfit = itemRevenue - totalCost;
     const discountRatio = subtotal > 0 ? (subtotal - discount) / subtotal : 1;
@@ -263,13 +261,13 @@ export default function SellPage({
 
     const initialPaymentLogs = (paymentMethod === 'Credit' && downPayment > 0)
       ? [{
-          id: `PAY-${Date.now()}`,
-          date: new Date().toISOString(),
-          amount: downPayment,
-          payment_method: 'Cash' as const,
-          note: 'Down Payment (ආරම්භක ගෙවීම)',
-          addedBy: currentUserUsername
-        }]
+        id: `PAY-${Date.now()}`,
+        date: new Date().toISOString(),
+        amount: downPayment,
+        payment_method: 'Cash' as const,
+        note: 'Down Payment (ආරම්භක ගෙවීම)',
+        addedBy: currentUserUsername
+      }]
       : [];
 
     const transaction: Transaction = {
@@ -323,11 +321,10 @@ export default function SellPage({
           <button
             type="button"
             onClick={() => setTransactionType('sell')}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              transactionType === 'sell'
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${transactionType === 'sell'
                 ? 'bg-emerald-600 text-white shadow-lg'
                 : 'text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             <Coins size={14} />
             <span>විකුණුම් බිල (Sale)</span>
@@ -335,11 +332,10 @@ export default function SellPage({
           <button
             type="button"
             onClick={() => setTransactionType('return')}
-            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-              transactionType === 'return'
+            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${transactionType === 'return'
                 ? 'bg-rose-600 text-white shadow-lg font-bold'
                 : 'text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             <RotateCcw size={14} />
             <span>ආපසු බාරගැනීම් (Return)</span>
@@ -360,21 +356,19 @@ export default function SellPage({
           <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full sm:w-auto">
             <button
               onClick={() => setActivePrefix('L')}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                activePrefix === 'L'
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${activePrefix === 'L'
                   ? 'bg-violet-600 text-white shadow'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <span>Lahiru Spices Desk (L)</span>
             </button>
             <button
               onClick={() => setActivePrefix('J')}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                activePrefix === 'J'
+              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${activePrefix === 'J'
                   ? 'bg-emerald-600 text-white shadow'
                   : 'text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <span>Jayantha Spices Desk (J)</span>
             </button>
@@ -391,11 +385,10 @@ export default function SellPage({
               <p className="text-[10px] text-slate-500">Cashier session locked to your assigned series</p>
             </div>
           </div>
-          <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-            activePrefix === 'J' 
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+          <span className={`text-xs font-bold px-3 py-1 rounded-full ${activePrefix === 'J'
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
               : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
-          }`}>
+            }`}>
             Series {activePrefix}-xxxx
           </span>
         </div>
@@ -417,22 +410,20 @@ export default function SellPage({
                 <button
                   type="button"
                   onClick={() => setPriceMode('retail')}
-                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 z-10 cursor-pointer ${
-                    priceMode === 'retail'
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 z-10 cursor-pointer ${priceMode === 'retail'
                       ? 'bg-violet-600 text-white shadow-lg font-extrabold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-                  }`}
+                    }`}
                 >
                   <span>Sillara / Retail (සිල්ලර)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setPriceMode('wholesale')}
-                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 z-10 cursor-pointer ${
-                    priceMode === 'wholesale'
+                  className={`flex-1 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 z-10 cursor-pointer ${priceMode === 'wholesale'
                       ? 'bg-amber-500 text-slate-950 shadow-lg font-extrabold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-                  }`}
+                    }`}
                 >
                   <Sparkles size={13} className="text-amber-950 animate-pulse" />
                   <span>Thoga / Wholesale (තොග)</span>
@@ -458,7 +449,7 @@ export default function SellPage({
                   className="w-full bg-transparent text-slate-200 py-3 text-base sm:text-sm font-medium outline-none"
                 />
               </div>
-              
+
               {/* Quick Product Chips for Fast Mobile Tapping */}
               <div className="flex gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar text-xs">
                 {products.slice(0, 6).map(p => (
@@ -471,11 +462,10 @@ export default function SellPage({
                       setShowSuggestions(false);
                       setTimeout(() => qtyInputRef.current?.focus(), 100);
                     }}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold shrink-0 transition-all cursor-pointer border ${
-                      selectedProductId === p.id
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold shrink-0 transition-all cursor-pointer border ${selectedProductId === p.id
                         ? 'bg-violet-600/30 text-violet-300 border-violet-500/50'
                         : 'bg-slate-950/80 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
-                    }`}
+                      }`}
                   >
                     + {p.name}
                   </button>
@@ -485,9 +475,7 @@ export default function SellPage({
               {filteredSearchList.length > 0 && (
                 <div className="absolute w-full mt-1.5 max-h-48 overflow-y-auto bg-slate-900 border border-slate-800 rounded-xl z-50 divide-y divide-slate-800/60 shadow-2xl">
                   {filteredSearchList.map(p => {
-                    const availableStock = activePrefix === 'J' 
-                      ? (p.jayantha_stock ?? p.stock) 
-                      : (p.lahiru_stock ?? p.stock);
+                    const availableStock = p.stock;
                     return (
                       <div
                         key={p.id}
@@ -605,11 +593,10 @@ export default function SellPage({
                 const profitPct = bPrice > 0 ? (profitVal / bPrice) * 100 : 0;
                 const isLoss = profitVal < 0;
                 return (
-                  <div className={`mt-2.5 p-3 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                    isLoss 
-                      ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
+                  <div className={`mt-2.5 p-3 rounded-xl border flex flex-col gap-1.5 transition-all ${isLoss
+                      ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
                       : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                  }`}>
+                    }`}>
                     <div className="flex justify-between items-center text-[11px]">
                       <span className="font-semibold text-slate-400">Buying Cost (ගැනුම් මිල):</span>
                       <span className="font-mono font-bold text-slate-300">{formatCurrency(bPrice)} per {matchedProduct.unit}</span>
@@ -639,9 +626,7 @@ export default function SellPage({
                   <span>Available reserve ({activePrefix === 'J' ? 'Jayantha' : 'Lahiru'}):</span>
                 </div>
                 {(() => {
-                  const activeStock = activePrefix === 'J' 
-                    ? (matchedProduct.jayantha_stock ?? matchedProduct.stock) 
-                    : (matchedProduct.lahiru_stock ?? matchedProduct.stock);
+                  const activeStock = matchedProduct.stock;
                   return (
                     <span className={`text-xs font-bold ${activeStock <= (matchedProduct.min_stock_level || 5) ? 'text-red-400' : 'text-emerald-400'}`}>
                       {activeStock} {matchedProduct.unit}
@@ -799,33 +784,30 @@ export default function SellPage({
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('Cash')}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      paymentMethod === 'Cash'
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${paymentMethod === 'Cash'
                         ? 'bg-violet-600 text-white'
                         : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     Cash
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('Card')}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      paymentMethod === 'Card'
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${paymentMethod === 'Card'
                         ? 'bg-indigo-600 text-white'
                         : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     Card
                   </button>
                   <button
                     type="button"
                     onClick={() => setPaymentMethod('Credit')}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                      paymentMethod === 'Credit'
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${paymentMethod === 'Credit'
                         ? 'bg-red-600 text-white'
                         : 'text-slate-400 hover:text-slate-200'
-                    }`}
+                      }`}
                   >
                     Credit (ණය බිල්)
                   </button>
@@ -882,11 +864,10 @@ export default function SellPage({
               <button
                 onClick={handleCheckout}
                 disabled={billItems.length === 0}
-                className={`w-full sm:w-2/3 py-3 rounded-xl text-white font-bold text-xs tracking-wider transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                  transactionType === 'return'
+                className={`w-full sm:w-2/3 py-3 rounded-xl text-white font-bold text-xs tracking-wider transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${transactionType === 'return'
                     ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-950/50'
                     : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/50'
-                }`}
+                  }`}
               >
                 <Save size={16} />
                 <span>
