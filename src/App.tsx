@@ -431,8 +431,11 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return products;
     }
-    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
-    return products.filter(p => !p.store_id || p.store_id === userStore);
+    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : (sessionUser.username === 'lahiru' ? 'store_1' : sessionUser.username));
+    if (isSharedStore(userStore)) {
+      return products.filter(p => !p.store_id || p.store_id === 'store_1' || p.store_id === 'store_2');
+    }
+    return products.filter(p => p.store_id === userStore);
   }, [products, sessionUser]);
 
   const filteredTransactions = useMemo(() => {
@@ -440,13 +443,13 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return transactions;
     }
-    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : (sessionUser.username === 'lahiru' ? 'store_1' : sessionUser.username));
     if (isSharedStore(userStore)) {
       if (sessionUser.username === 'lahiru') {
-        return transactions.filter(tx => !tx.id.startsWith('J-'));
+        return transactions.filter(tx => !tx.id.startsWith('J-') && (!tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2'));
       }
       if (sessionUser.username === 'jayantha') {
-        return transactions.filter(tx => tx.id.startsWith('J-'));
+        return transactions.filter(tx => tx.id.startsWith('J-') && (!tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2'));
       }
       return transactions.filter(tx => !tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2');
     }
@@ -867,10 +870,10 @@ export default function App() {
 
   // Update states helper functions
   const saveProductsToDb = (newProds: Product[]) => {
-    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1');
+    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : sessionUser?.username || 'store_1'));
     const prodsWithStore = newProds.map(p => ({
       ...p,
-      store_id: p.store_id || userStore
+      store_id: p.store_id ? p.store_id : userStore
     }));
     setProducts(prodsWithStore);
     localStorage.setItem('kulubadu_products', JSON.stringify(prodsWithStore));

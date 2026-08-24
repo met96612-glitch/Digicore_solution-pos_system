@@ -115,6 +115,7 @@ export default function ProductsPage({
       });
       onToast('Product updated successfully.', 'success');
     } else {
+      const userStore = currentUserUsername === 'jayantha' ? 'store_2' : (currentUserUsername === 'lahiru' ? 'store_1' : currentUserUsername);
       const newProduct: Product = {
         id: Math.random().toString(36).substring(2, 9),
         name: name.trim(),
@@ -127,7 +128,8 @@ export default function ProductsPage({
         retail_price: priceRetail,
         min_stock_level: minBuffer,
         lahiru_stock: stockVal,
-        jayantha_stock: stockVal
+        jayantha_stock: stockVal,
+        store_id: userStore
       };
       onAddProduct(newProduct);
       onToast('New spice product registered successfully.', 'success');

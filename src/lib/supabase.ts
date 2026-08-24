@@ -531,7 +531,11 @@ export async function fetchProductsFromSupabase(storeId?: string): Promise<any[]
     const targetStoreId = storeId !== undefined ? storeId : getActiveStoreId();
     let query = client.from('products').select('*');
     if (targetStoreId) {
-      query = query.eq('store_id', targetStoreId);
+      if (targetStoreId === 'store_1' || targetStoreId === 'store_2') {
+        query = query.or('store_id.eq.store_1,store_id.eq.store_2,store_id.is.null,store_id.eq.');
+      } else {
+        query = query.eq('store_id', targetStoreId);
+      }
     }
     const { data, error } = await query;
     if (error) {
@@ -553,7 +557,11 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
     const targetStoreId = storeId !== undefined ? storeId : getActiveStoreId();
     let query = client.from('transactions').select('*');
     if (targetStoreId) {
-      query = query.eq('store_id', targetStoreId);
+      if (targetStoreId === 'store_1' || targetStoreId === 'store_2') {
+        query = query.or('store_id.eq.store_1,store_id.eq.store_2,store_id.is.null,store_id.eq.');
+      } else {
+        query = query.eq('store_id', targetStoreId);
+      }
     }
     const { data, error } = await query;
     if (error) {
