@@ -58,19 +58,24 @@ export default function DashboardPage({
 }: DashboardProps) {
   const [thermalModalData, setThermalModalData] = useState<SummaryReportPayload | null>(null);
 
-  // Check if current user is a superuser/admin
+  // Check if current user is a superuser
   const isSuperUser = useMemo(() => {
     const r = (currentUserRole || '').toLowerCase();
     const u = (currentUserUsername || '').toLowerCase();
-    return r === 'superuser' || r === 'admin' || u === 'superuser' || u === 'admin';
+    return r === 'superuser' || u === 'superuser';
   }, [currentUserRole, currentUserUsername]);
+
+  const isSharedUser = useMemo(() => {
+    const u = (currentUserUsername || '').toLowerCase();
+    return u === 'lahiru' || u === 'jayantha';
+  }, [currentUserUsername]);
 
   // Determine default account view based on active login
   const [selectedAccount, setSelectedAccount] = useState<'lahiru' | 'jayantha' | 'all'>(() => {
     const u = currentUserUsername.toLowerCase();
     if (u === 'jayantha') return 'jayantha';
     if (u === 'lahiru') return 'lahiru';
-    return isSuperUser ? 'all' : 'lahiru';
+    return 'all';
   });
 
   // Strict effect: non-superusers can NEVER view other accounts
@@ -78,7 +83,8 @@ export default function DashboardPage({
     const u = currentUserUsername.toLowerCase();
     if (!isSuperUser) {
       if (u === 'jayantha') setSelectedAccount('jayantha');
-      else setSelectedAccount('lahiru');
+      else if (u === 'lahiru') setSelectedAccount('lahiru');
+      else setSelectedAccount('all');
     }
   }, [currentUserUsername, isSuperUser]);
 
@@ -346,8 +352,8 @@ export default function DashboardPage({
   }, [products, transactions, selectedDate]);
 
   // Ensure activeStats is strictly constrained to standard user's account if not superuser
-  const effectiveAccount = isSuperUser ? selectedAccount : (((currentUserUsername || '').toLowerCase() === 'jayantha') ? 'jayantha' : 'lahiru');
-  const activeStats = statsMap[effectiveAccount] || statsMap['lahiru'];
+  const effectiveAccount = isSuperUser ? selectedAccount : (((currentUserUsername || '').toLowerCase() === 'jayantha') ? 'jayantha' : (((currentUserUsername || '').toLowerCase() === 'lahiru') ? 'lahiru' : 'all'));
+  const activeStats = statsMap[effectiveAccount] || statsMap['all'];
 
   const recentTransactions = useMemo(() => {
     return [...transactions]
@@ -366,9 +372,10 @@ export default function DashboardPage({
       const isJayantha = targetAccount === 'jayantha';
       const isLahiru = targetAccount === 'lahiru';
 
-      let brandName = 'Lahiru Spices Center';
+      let brandName = shopProfile?.shopName || 'Store Spices Center';
       if (isJayantha) brandName = 'Jayantha Spices Center';
-      else if (targetAccount === 'all') brandName = 'Kulubadu Enterprise Consolidated';
+      else if (isLahiru) brandName = 'Lahiru Spices Center';
+      else if (targetAccount === 'all' && isSuperUser) brandName = 'Kulubadu Enterprise Consolidated';
 
       const entityType = targetAccount === 'all' ? 'combined' : targetAccount;
       const reportDate = selectedDate || getLocalTodayDateString();
@@ -837,7 +844,7 @@ export default function DashboardPage({
                   <span className="text-[10px] bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full capitalize">
                     {effectiveAccount === 'lahiru' && 'ළහිරු (Lahiru)'}
                     {effectiveAccount === 'jayantha' && 'ජයන්තා (Jayantha)'}
-                    {effectiveAccount === 'all' && 'දෙදෙනාම එකතුව (Total)'}
+                    {effectiveAccount === 'all' && (isSuperUser ? 'දෙදෙනාම එකතුව (Total)' : (shopProfile?.shopName || currentUserUsername || 'Store'))}
                   </span>
                 </span>
                 <h2 className="text-2xl md:text-3xl font-black text-white mt-0.5">
@@ -894,7 +901,7 @@ export default function DashboardPage({
                   <span className="text-[10px] bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-full capitalize">
                     {effectiveAccount === 'lahiru' && 'ළහිරු (Lahiru)'}
                     {effectiveAccount === 'jayantha' && 'ජයන්තා (Jayantha)'}
-                    {effectiveAccount === 'all' && 'දෙදෙනාම එකතුව (Total)'}
+                    {effectiveAccount === 'all' && (isSuperUser ? 'දෙදෙනාම එකතුව (Total)' : (shopProfile?.shopName || currentUserUsername || 'Store'))}
                   </span>
                 </span>
                 <h2 className="text-2xl md:text-3xl font-black text-white mt-0.5">

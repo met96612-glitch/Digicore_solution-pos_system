@@ -9,32 +9,114 @@
 :root,
 [data-theme="blue"] {
   --app-bg: #070a14;
-  --app-card: #0c1224;
-  --app-primary: #3b82f6;
+  --app-sidebar: #0c1020;
+  --app-header: #0f152b;
+  --app-card: #121a36;
+  --app-card-border: #1e2c56;
+  --app-accent: #3b82f6;
+  --app-accent-hover: #2563eb;
+  --app-accent-light: rgba(59, 130, 246, 0.15);
+  --app-accent-border: rgba(59, 130, 246, 0.35);
+  --app-accent-text: #60a5fa;
 }
 
 [data-theme="violet"] {
   --app-bg: #090614;
-  --app-card: #100b22;
-  --app-primary: #8b5cf6;
+  --app-sidebar: #100b22;
+  --app-header: #140e2b;
+  --app-card: #1a1236;
+  --app-card-border: #2c1e56;
+  --app-accent: #8b5cf6;
+  --app-accent-hover: #7c3aed;
+  --app-accent-light: rgba(139, 92, 246, 0.15);
+  --app-accent-border: rgba(139, 92, 246, 0.35);
+  --app-accent-text: #a78bfa;
 }
 
 [data-theme="emerald"] {
   --app-bg: #04120a;
-  --app-card: #081d12;
-  --app-primary: #10b981;
+  --app-sidebar: #071c11;
+  --app-header: #0a2517;
+  --app-card: #0e321f;
+  --app-card-border: #175233;
+  --app-accent: #10b981;
+  --app-accent-hover: #059669;
+  --app-accent-light: rgba(16, 185, 129, 0.15);
+  --app-accent-border: rgba(16, 185, 129, 0.35);
+  --app-accent-text: #34d399;
 }
 
 [data-theme="amber"] {
   --app-bg: #140d04;
-  --app-card: #1f1408;
-  --app-primary: #f59e0b;
+  --app-sidebar: #1e1307;
+  --app-header: #26190a;
+  --app-card: #32210e;
+  --app-card-border: #523717;
+  --app-accent: #f59e0b;
+  --app-accent-hover: #d97706;
+  --app-accent-light: rgba(245, 158, 11, 0.15);
+  --app-accent-border: rgba(245, 158, 11, 0.35);
+  --app-accent-text: #fbbf24;
 }
 
 [data-theme="rose"] {
   --app-bg: #140508;
-  --app-card: #20090e;
-  --app-primary: #f43f5e;
+  --app-sidebar: #20080e;
+  --app-header: #290a12;
+  --app-card: #360d18;
+  --app-card-border: #591627;
+  --app-accent: #f43f5e;
+  --app-accent-hover: #e11d48;
+  --app-accent-light: rgba(244, 63, 94, 0.15);
+  --app-accent-border: rgba(244, 63, 94, 0.35);
+  --app-accent-text: #fb7185;
+}
+
+/* Dynamic Theme Utility Classes */
+.theme-app-bg {
+  background-color: var(--app-bg) !important;
+}
+
+.theme-app-sidebar {
+  background-color: var(--app-sidebar) !important;
+  border-color: var(--app-card-border) !important;
+}
+
+.theme-app-header {
+  background-color: var(--app-header) !important;
+  border-color: var(--app-card-border) !important;
+}
+
+.theme-app-card {
+  background-color: var(--app-card) !important;
+  border-color: var(--app-card-border) !important;
+}
+
+.theme-accent-bg {
+  background-color: var(--app-accent) !important;
+}
+
+.theme-accent-text {
+  color: var(--app-accent-text) !important;
+}
+
+.theme-accent-border {
+  border-color: var(--app-accent-border) !important;
+}
+
+.theme-active-nav {
+  background-color: var(--app-accent-light) !important;
+  color: var(--app-accent-text) !important;
+  border: 1px solid var(--app-accent-border) !important;
+}
+
+.theme-primary-btn {
+  background-color: var(--app-accent) !important;
+  color: #ffffff !important;
+}
+
+.theme-primary-btn:hover {
+  background-color: var(--app-accent-hover) !important;
 }
 
 body {

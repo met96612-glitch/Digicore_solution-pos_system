@@ -380,7 +380,7 @@ export default function SellPage({
             <Landmark className="text-violet-400" size={18} />
             <div>
               <h4 className="text-sm font-bold text-slate-100">
-                POS Desk: {activePrefix === 'J' ? 'Jayantha Spices' : 'Lahiru Spices'}
+                POS Desk: {currentUserUsername === 'jayantha' ? 'Jayantha Spices' : currentUserUsername === 'lahiru' ? 'Lahiru Spices' : (shopProfile?.shopName || currentUserUsername || 'Main Store Desk')}
               </h4>
               <p className="text-[10px] text-slate-500">Cashier session locked to your assigned series</p>
             </div>

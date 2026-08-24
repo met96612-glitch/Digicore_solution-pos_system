@@ -248,8 +248,8 @@ export default function BuyPage({
             <button
               onClick={() => setActivePrefix('L-BUY')}
               className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${activePrefix === 'L-BUY'
-                  ? 'bg-amber-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200'
                 }`}
             >
               <span>Lahiru Stock (L-BUY)</span>
@@ -257,8 +257,8 @@ export default function BuyPage({
             <button
               onClick={() => setActivePrefix('J-BUY')}
               className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${activePrefix === 'J-BUY'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-emerald-600 text-white shadow'
+                : 'text-slate-400 hover:text-slate-200'
                 }`}
             >
               <span>Jayantha Stock (J-BUY)</span>
@@ -277,8 +277,8 @@ export default function BuyPage({
             </div>
           </div>
           <span className={`text-xs font-bold px-3 py-1 rounded-full ${activePrefix === 'J-BUY'
-              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
             }`}>
             Series {activePrefix}-xxxx
           </span>
@@ -326,8 +326,8 @@ export default function BuyPage({
                       setTimeout(() => qtyInputRef.current?.focus(), 100);
                     }}
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold shrink-0 transition-all cursor-pointer border ${selectedProductId === p.id
-                        ? 'bg-amber-600/30 text-amber-300 border-amber-500/50'
-                        : 'bg-slate-950/80 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
+                      ? 'bg-amber-600/30 text-amber-300 border-amber-500/50'
+                      : 'bg-slate-950/80 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
                       }`}
                   >
                     + {p.name}
@@ -509,8 +509,8 @@ export default function BuyPage({
                       <span className="font-mono font-bold text-slate-200">{formatCurrency(rPrice)}</span>
                     </div>
                     <div className={`p-2 rounded-lg text-xs flex flex-col gap-1 ${isLoss
-                        ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                       }`}>
                       <div className="flex justify-between items-center text-[11px]">
                         <span>Thoga Markup (තොග ලාභය):</span>
@@ -630,8 +630,8 @@ export default function BuyPage({
                     type="button"
                     onClick={() => setPaymentMethod('Cash')}
                     className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${paymentMethod === 'Cash'
-                        ? 'bg-amber-600 text-white'
-                        : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-amber-600 text-white'
+                      : 'text-slate-400 hover:text-slate-200'
                       }`}
                   >
                     Cash (මුදලින්)
@@ -640,8 +640,8 @@ export default function BuyPage({
                     type="button"
                     onClick={() => setPaymentMethod('Credit')}
                     className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${paymentMethod === 'Credit'
-                        ? 'bg-red-600 text-white'
-                        : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-red-600 text-white'
+                      : 'text-slate-400 hover:text-slate-200'
                       }`}
                   >
                     Credit (තොග ණය)

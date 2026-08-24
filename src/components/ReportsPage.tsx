@@ -178,7 +178,7 @@ export default function ReportsPage({
     (filteredTransactions || []).forEach(tx => {
       if (!tx) return;
       const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
-      const matches = 
+      const matches =
         entityType === 'combined' ||
         (entityType === 'jayantha' && isJayantha) ||
         (entityType === 'lahiru' && !isJayantha);
@@ -410,17 +410,17 @@ export default function ReportsPage({
   ) => {
     const isJayantha = entity === 'jayantha';
     const isLahiru = entity === 'lahiru';
-    const brandName = isJayantha 
-      ? 'Jayantha Spices (ජයන්ත කුළුබඩු)' 
-      : isLahiru 
-        ? 'Lahiya Spices (ලහියා කුළුබඩු)' 
-        : 'Enterprise Consolidated (සමස්ත ව්‍යාපාරය)';
-    
+    const brandName = isJayantha
+      ? 'Jayantha Spices (ජයන්ත කුළුබඩු)'
+      : isLahiru
+        ? 'Lahiya Spices (ලහියා කුළුබඩු)'
+        : ((currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Enterprise Consolidated (සමස්ත ව්‍යාපාරය)' : (shopProfile?.shopName || 'Store Financial Report'));
+
     const reportTitle = `${brandName} - ${reportType.toUpperCase()} FINANCIAL REPORT`;
-    const timeFrameStr = reportType === 'daily' 
-      ? `Date: ${selectedDate}` 
+    const timeFrameStr = reportType === 'daily'
+      ? `Date: ${selectedDate}`
       : `Month: ${selectedMonth}`;
-      
+
     const filename = `${entity}_spices_${reportType}_report_${reportType === 'daily' ? selectedDate : selectedMonth}`;
 
     const entityTransactions = filteredTransactions.filter(tx => {
@@ -459,14 +459,14 @@ export default function ReportsPage({
     ];
 
     const prodBreakdownMap: Record<string, { name: string; unit: string; qty: number; value: number; profit: number }> = {};
-    
+
     entityTransactions.forEach(tx => {
       tx.items.forEach(item => {
         const prod = products.find(p => p.id === item.productId);
         const pName = prod ? prod.name : item.productId;
         const pUnit = prod ? prod.unit : 'kg';
         const bPrice = prod ? (prod.buying_price ?? prod.buyPrice) : 0;
-        
+
         let qtyInBase = item.qty;
         if (prod && prod.unit === 'kg' && item.unit === 'g') {
           qtyInBase = item.qty * 0.001;
@@ -484,7 +484,7 @@ export default function ReportsPage({
 
         prodBreakdownMap[item.productId].qty += qtyInBase;
         prodBreakdownMap[item.productId].value += item.total;
-        
+
         if (tx.type === 'sell') {
           const cost = bPrice * qtyInBase;
           prodBreakdownMap[item.productId].profit += Math.max(0, item.total - cost);
@@ -643,7 +643,7 @@ export default function ReportsPage({
   const openThermalSummaryModal = (entityType: 'lahiru' | 'jayantha' | 'combined') => {
     const brandName = entityType === 'lahiru'
       ? 'Lahiru Spices'
-      : (entityType === 'jayantha' ? 'Jayantha Spices' : 'Kulubadu Enterprise');
+      : (entityType === 'jayantha' ? 'Jayantha Spices' : ((currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Kulubadu Enterprise' : (shopProfile?.shopName || 'Store Spices Center')));
 
     const timeFrameStr = reportType === 'daily'
       ? formatDateString(selectedDate)
@@ -656,10 +656,10 @@ export default function ReportsPage({
     const wholesaleStats = entityType === 'lahiru'
       ? lahiruWholesale
       : (entityType === 'jayantha' ? jayanthaWholesale : {
-          sales: lahiruWholesale.sales + jayanthaWholesale.sales,
-          profit: lahiruWholesale.profit + jayanthaWholesale.profit,
-          count: lahiruWholesale.count + jayanthaWholesale.count
-        });
+        sales: lahiruWholesale.sales + jayanthaWholesale.sales,
+        profit: lahiruWholesale.profit + jayanthaWholesale.profit,
+        count: lahiruWholesale.count + jayanthaWholesale.count
+      });
 
     const creditStats = computeCreditBreakdown(entityType);
 
@@ -877,21 +877,19 @@ export default function ReportsPage({
           <div className="flex bg-slate-950/80 border border-slate-800 rounded-xl p-1 gap-1">
             <button
               onClick={() => setReportType('daily')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all uppercase select-none cursor-pointer ${
-                reportType === 'daily'
-                  ? 'bg-violet-600/25 text-violet-400 border border-violet-800/40'
-                  : 'text-slate-400 hover:text-slate-200 border border-transparent'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all uppercase select-none cursor-pointer ${reportType === 'daily'
+                ? 'bg-violet-600/25 text-violet-400 border border-violet-800/40'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                }`}
             >
               Daily
             </button>
             <button
               onClick={() => setReportType('monthly')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all uppercase select-none cursor-pointer ${
-                reportType === 'monthly'
-                  ? 'bg-violet-600/25 text-violet-400 border border-violet-800/40'
-                  : 'text-slate-400 hover:text-slate-200 border border-transparent'
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all uppercase select-none cursor-pointer ${reportType === 'monthly'
+                ? 'bg-violet-600/25 text-violet-400 border border-violet-800/40'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                }`}
             >
               Monthly
             </button>
@@ -1002,9 +1000,9 @@ export default function ReportsPage({
       </div>
 
       {/* Entity Split Dashboard */}
-      <div className={`grid grid-cols-1 ${(currentUserUsername === 'lahiru' || currentUserUsername === 'jayantha') ? '' : 'lg:grid-cols-3'} gap-6`}>
-        {/* Lahiru Spices */}
-        {currentUserUsername !== 'jayantha' && (
+      <div className={`grid grid-cols-1 ${(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'lg:grid-cols-3' : ''} gap-6`}>
+        {/* Lahiru Spices Card */}
+        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'lahiru') && (
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
             <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 rounded-full blur-2xl"></div>
             <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
@@ -1093,8 +1091,8 @@ export default function ReportsPage({
           </div>
         )}
 
-        {/* Jayantha Spices */}
-        {currentUserUsername !== 'lahiru' && (
+        {/* Jayantha Spices Card */}
+        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'jayantha') && (
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-full blur-2xl"></div>
             <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
@@ -1183,23 +1181,27 @@ export default function ReportsPage({
           </div>
         )}
 
-        {/* Consolidated Enterprise */}
-        {currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha' && (
+        {/* Store / Consolidated Enterprise Card */}
+        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || (currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha')) && (
           <div className="bg-gradient-to-br from-indigo-950/15 to-slate-900/60 border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl"></div>
             <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 bg-indigo-400 rounded-full inline-block"></span>
-                <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">Enterprise Consolidated</h4>
+                <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
+                  {(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Enterprise Consolidated' : (shopProfile?.shopName || 'Store Audit Report')}
+                </h4>
               </div>
-              <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold">All Series</span>
+              <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold">
+                {(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'All Series' : (shopProfile?.shopName || currentUserUsername)}
+              </span>
             </div>
 
             <div className="space-y-3">
               <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
                 <div className="flex items-center gap-2">
                   <TrendingUp size={14} className="text-emerald-400 font-extrabold" />
-                  <span className="text-xs text-slate-400">Enterprise Revenue:</span>
+                  <span className="text-xs text-slate-400">Total Sales:</span>
                 </div>
                 <strong className="text-sm font-mono text-emerald-400 font-extrabold">{formatCurrency(combinedStats.sales)}</strong>
               </div>
@@ -1207,7 +1209,7 @@ export default function ReportsPage({
               <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
                 <div className="flex items-center gap-2">
                   <ShoppingBag size={14} className="text-amber-500 font-extrabold" />
-                  <span className="text-xs text-slate-400">Enterprise Stock:</span>
+                  <span className="text-xs text-slate-400">Restocking:</span>
                 </div>
                 <strong className="text-sm font-mono text-amber-500 font-extrabold">{formatCurrency(combinedStats.buys)}</strong>
               </div>
@@ -1225,7 +1227,7 @@ export default function ReportsPage({
               <div className="flex justify-between items-center pt-2">
                 <div className="flex items-center gap-2">
                   <DollarSign size={14} className="text-indigo-400 font-extrabold" />
-                  <span className="text-xs text-slate-200 font-bold">Consolidated Net Profit:</span>
+                  <span className="text-xs text-slate-200 font-bold">Net Profit (ශුද්ධ ලාභය):</span>
                 </div>
                 <strong className="text-base font-mono text-indigo-400 font-extrabold">{formatCurrency(combinedStats.profit)}</strong>
               </div>
@@ -1325,9 +1327,8 @@ export default function ReportsPage({
                         {new Date(adj.date).toLocaleDateString()} {new Date(adj.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="p-3 text-center">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          adj.desk === 'jayantha' ? 'bg-emerald-950 text-emerald-400' : 'bg-violet-950 text-violet-400'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${adj.desk === 'jayantha' ? 'bg-emerald-950 text-emerald-400' : 'bg-violet-950 text-violet-400'
+                          }`}>
                           {adj.desk === 'jayantha' ? 'ජයන්තා' : 'ළහිරු'}
                         </span>
                       </td>
@@ -1551,9 +1552,8 @@ export default function ReportsPage({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-200">{t.id || 'N/A'}</span>
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
-                          isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
-                        }`}>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
+                          }`}>
                           {isJ ? 'Jayantha' : 'Lahiru'}
                         </span>
                       </div>
@@ -1585,9 +1585,8 @@ export default function ReportsPage({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-200">{t.id || 'N/A'}</span>
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
-                          isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
-                        }`}>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
+                          }`}>
                           {isJ ? 'Jayantha Stock' : 'Lahiru Stock'}
                         </span>
                       </div>

@@ -437,7 +437,7 @@ export default function App() {
 
   const filteredTransactions = useMemo(() => {
     if (!sessionUser) return [];
-    if (sessionUser.role === 'superuser' || sessionUser.role === 'admin') {
+    if (sessionUser.role === 'superuser') {
       return transactions;
     }
     const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
@@ -1426,7 +1426,7 @@ export default function App() {
 
   // Active Storefront Screen Layout
   return (
-    <div className="min-h-screen flex bg-[#080b13] text-slate-200 font-sans relative">
+    <div className="min-h-screen flex theme-app-bg text-slate-200 font-sans relative">
 
       {/* Side drawer overlays */}
       <div
@@ -1437,17 +1437,17 @@ export default function App() {
 
       {/* Side Navigation panel */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-[#0a0f1d] border-r border-slate-900 z-50 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed lg:sticky top-0 left-0 h-screen w-64 theme-app-sidebar border-r border-slate-900 z-50 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
       >
         <div className="space-y-6">
           <div className="p-5 flex items-center gap-2 border-b border-slate-900 select-none">
-            <Warehouse size={22} className="text-violet-500 shrink-0" />
+            <Warehouse size={22} className="theme-accent-text shrink-0" />
             <div className="min-w-0">
               <h1 id="sidebar-brand-title" className="text-sm font-extrabold tracking-wider text-slate-100 truncate">
                 {sessionUser?.shop_name || sessionUser?.name || 'Digicore Spices'}
               </h1>
-              <span className="text-[10px] text-violet-400 font-bold block truncate capitalize">
+              <span className="text-[10px] theme-accent-text font-bold block truncate capitalize">
                 {sessionUser?.role} • {sessionUser?.name}
               </span>
             </div>
@@ -1460,7 +1460,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'dashboard'
-                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1474,7 +1474,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'sell'
-                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1488,7 +1488,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'buy'
-                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1502,7 +1502,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'products'
-                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1516,7 +1516,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'stock'
-                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1530,7 +1530,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'expenses'
-                ? 'bg-rose-600/15 text-rose-400 border border-rose-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1544,7 +1544,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center justify-between px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'credit'
-                ? 'bg-amber-600/15 text-amber-400 border border-amber-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1574,7 +1574,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'reports'
-                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1588,7 +1588,7 @@ export default function App() {
                 setMenuOpen(false);
               }}
               className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'history'
-                ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                ? 'theme-active-nav'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                 }`}
             >
@@ -1603,7 +1603,7 @@ export default function App() {
                   setMenuOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-all rounded-xl cursor-pointer ${currentTab === 'admin'
-                  ? 'bg-violet-600/15 text-violet-400 border border-violet-800/20'
+                  ? 'theme-active-nav'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
                   }`}
               >
@@ -1650,7 +1650,7 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
 
         {/* Horizontal Header wrapper */}
-        <header className="h-14 sm:h-16 border-b border-slate-900/40 bg-[#0a0e1c] flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30">
+        <header className="h-14 sm:h-16 border-b border-slate-900/40 theme-app-header flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-2.5 min-w-0">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -1737,7 +1737,7 @@ export default function App() {
                 className="px-2 sm:px-2.5 py-1.5 bg-[#10172a] hover:bg-[#1e293b] border border-slate-800 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all text-slate-300"
                 title="Change System Theme Color (තීම් වර්ණය වෙනස් කරන්න)"
               >
-                <Palette size={14} className="text-violet-400 shrink-0" />
+                <Palette size={14} className="theme-accent-text shrink-0" />
                 <span className="text-[10px] font-bold hidden md:inline uppercase tracking-wider">Theme</span>
                 <span className={`w-2.5 h-2.5 rounded-full ${activeTheme === 'blue' ? 'bg-blue-500' :
                   activeTheme === 'violet' ? 'bg-violet-500' :

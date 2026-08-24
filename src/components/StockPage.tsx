@@ -389,8 +389,8 @@ export default function StockPage({
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80">
-                      {currentUserUsername !== 'jayantha' && (
+                    <div className="grid grid-cols-1 gap-2 pt-1 border-t border-slate-800/80">
+                      {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'lahiru') && (
                         <div className="bg-violet-950/20 border border-violet-900/30 rounded-lg p-2">
                           <span className="text-[10px] text-violet-300 block font-medium">ළහිරු තොගය (Lahiru):</span>
                           <span className={`font-mono font-bold text-xs ${row.lahiruStatus === 'out' ? 'text-red-400' : row.lahiruStatus === 'low' ? 'text-amber-400' : 'text-slate-200'
@@ -400,7 +400,7 @@ export default function StockPage({
                         </div>
                       )}
 
-                      {currentUserUsername !== 'lahiru' && (
+                      {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'jayantha') && (
                         <div className="bg-emerald-950/20 border border-emerald-900/30 rounded-lg p-2">
                           <span className="text-[10px] text-emerald-300 block font-medium">ජයන්තා තොගය (Jayantha):</span>
                           <span className={`font-mono font-bold text-xs ${row.jayanthaStatus === 'out' ? 'text-red-400' : row.jayanthaStatus === 'low' ? 'text-amber-400' : 'text-slate-200'
@@ -409,16 +409,18 @@ export default function StockPage({
                           </span>
                         </div>
                       )}
-                    </div>
 
-                    {currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha' && (
-                      <div className="flex justify-between items-center bg-slate-900/60 px-2.5 py-1.5 rounded-lg text-xs">
-                        <span className="text-slate-400 font-medium">මුළු ඒකාබද්ධ තොගය:</span>
-                        <span className="font-mono font-extrabold text-slate-100">
-                          {row.totalStock} {row.unit}
-                        </span>
-                      </div>
-                    )}
+                      {currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha' && (
+                        <div className="flex justify-between items-center bg-slate-900/60 px-2.5 py-1.5 rounded-lg text-xs">
+                          <span className="text-slate-400 font-medium">
+                            {(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'මුළු ඒකාබද්ධ තොගය:' : 'පවතින තොගය (Current Stock):'}
+                          </span>
+                          <span className="font-mono font-extrabold text-slate-100">
+                            {row.totalStock} {row.unit}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
@@ -431,14 +433,16 @@ export default function StockPage({
                   <tr className="bg-slate-950 border-b border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">
                     <th className="p-4">Spice Product Label</th>
                     <th className="p-4 text-center">Unit</th>
-                    {currentUserUsername !== 'jayantha' && (
+                    {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'lahiru') && (
                       <th className="p-4 text-center bg-violet-950/15 border-x border-slate-800">Lahiru's Stock</th>
                     )}
-                    {currentUserUsername !== 'lahiru' && (
+                    {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'jayantha') && (
                       <th className="p-4 text-center bg-emerald-950/15 border-r border-slate-800">Jayantha's Stock</th>
                     )}
                     {currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha' && (
-                      <th className="p-4 text-right">Combined Stock</th>
+                      <th className="p-4 text-right">
+                        {(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Combined Stock' : 'Available Stock'}
+                      </th>
                     )}
                     <th className="p-4 text-center">Overall Health</th>
                   </tr>
@@ -457,7 +461,7 @@ export default function StockPage({
                         <td className="p-4 text-center font-bold text-slate-400 uppercase select-none">{row.unit}</td>
 
                         {/* Lahiru stock */}
-                        {currentUserUsername !== 'jayantha' && (
+                        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'lahiru') && (
                           <td className={`p-4 text-center border-x border-slate-800 bg-violet-950/5 ${row.lahiruStatus === 'out' ? 'text-red-400 font-extrabold' : row.lahiruStatus === 'low' ? 'text-amber-500 font-bold' : 'text-slate-200'
                             }`}>
                             {row.lahiruStock} {row.unit}
@@ -467,7 +471,7 @@ export default function StockPage({
                         )}
 
                         {/* Jayantha stock */}
-                        {currentUserUsername !== 'lahiru' && (
+                        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'jayantha') && (
                           <td className={`p-4 text-center border-r border-slate-800 bg-emerald-950/5 ${row.jayanthaStatus === 'out' ? 'text-red-400 font-extrabold' : row.jayanthaStatus === 'low' ? 'text-amber-500 font-bold' : 'text-slate-200'
                             }`}>
                             {row.jayanthaStock} {row.unit}
