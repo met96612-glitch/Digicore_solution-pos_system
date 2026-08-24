@@ -129,7 +129,9 @@ export const INITIAL_USERS: User[] = [
   { id: 'u1', name: 'Saman Kumara', username: 'admin', password: '123', role: 'admin' as const, shop_name: 'Lahiya Spice Collectors', phone_number: '074 0050211', invoice_prefix: 'L', store_id: 'store_1' },
   { id: 'u2', name: 'Nimali Silva', username: 'cashier', password: '123', role: 'cashier' as const, shop_name: 'Lahiya Spice Collectors', phone_number: '074 0050211', invoice_prefix: 'L', store_id: 'store_1' },
   { id: 'u3', name: 'Lahiru Kumara', username: 'lahiru', password: '123', role: 'cashier' as const, shop_name: 'Lahiya Spice Collectors', phone_number: '074 0050211 / 076 0808246', invoice_prefix: 'L', store_id: 'store_1' },
-  { id: 'u4', name: 'Jayantha De Silva', username: 'jayantha', password: '123', role: 'cashier' as const, shop_name: 'Jayantha Spice Collectors', phone_number: '077 602 1831', invoice_prefix: 'J', store_id: 'store_2' }
+  { id: 'u4', name: 'Jayantha De Silva', username: 'jayantha', password: '123', role: 'cashier' as const, shop_name: 'Jayantha Spice Collectors', phone_number: '077 602 1831', invoice_prefix: 'J', store_id: 'store_2' },
+  { id: 'u5', name: 'Suresh (Kadaya 3)', username: 'suresh', password: '1234', role: 'cashier' as const, shop_name: 'Suresh Spice Collectors (Store 3)', phone_number: '077 000 0000', invoice_prefix: 'S3', store_id: 'store_3' },
+  { id: 'u6', name: 'Store 3 Account', username: 'store_3', password: '1234', role: 'cashier' as const, shop_name: 'Store 3 Spice Collectors', phone_number: '077 000 0000', invoice_prefix: 'S3', store_id: 'store_3' }
 ];
 
 export const INITIAL_TRANSACTIONS: Transaction[] = [];
