@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Product, TransactionItem, Transaction } from '../types';
+import { Product, TransactionItem, Transaction, ShopProfile } from '../types';
 import { generateNextInvoiceNumber, formatCurrency } from '../utils';
 import { Search, Scale, BadgePercent, Trash2, Save, ShoppingBag, Plus, Sparkles, Landmark, Wallet, RotateCcw, Coins } from 'lucide-react';
 
@@ -10,15 +10,17 @@ interface SellPageProps {
   transactions: Transaction[];
   onSaveBill: (transaction: Transaction) => void;
   onToast: (msg: string, type?: 'success' | 'error') => void;
+  shopProfile?: ShopProfile;
 }
 
 export default function SellPage({
-  products,
-  currentUserUsername,
+  products = [],
+  currentUserUsername = 'cashier',
   currentUserRole = 'cashier',
-  transactions,
+  transactions = [],
   onSaveBill,
-  onToast
+  onToast,
+  shopProfile
 }: SellPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -29,7 +31,8 @@ export default function SellPage({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Active Desk Prefix: Defaults to J for Jayantha, L for Lahiru, or username prefix for independent stores
-  const defaultPrefix = currentUserUsername === 'jayantha' ? 'J' : (currentUserUsername === 'lahiru' ? 'L' : currentUserUsername.toUpperCase().slice(0, 3));
+  const safeUsername = currentUserUsername || 'cashier';
+  const defaultPrefix = safeUsername === 'jayantha' ? 'J' : (safeUsername === 'lahiru' ? 'L' : safeUsername.toUpperCase().slice(0, 3));
   const [activePrefix, setActivePrefix] = useState<string>(defaultPrefix);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card' | 'Credit'>('Cash');
   const [initialPaidAmount, setInitialPaidAmount] = useState<number | ''>('');
@@ -39,8 +42,8 @@ export default function SellPage({
   const [transactionType, setTransactionType] = useState<'sell' | 'return'>('sell');
   const [refInvoiceNo, setRefInvoiceNo] = useState('');
 
-  const currentUserId = currentUserUsername === 'jayantha' ? 'u4' : (currentUserUsername === 'lahiru' ? 'u3' : currentUserUsername);
-  const currentStoreId = currentUserUsername === 'jayantha' ? 'store_2' : (currentUserUsername === 'lahiru' ? 'store_1' : currentUserUsername);
+  const currentUserId = safeUsername === 'jayantha' ? 'u4' : (safeUsername === 'lahiru' ? 'u3' : safeUsername);
+  const currentStoreId = safeUsername === 'jayantha' ? 'store_2' : (safeUsername === 'lahiru' ? 'store_1' : safeUsername);
 
   const [currentBillId, setCurrentBillId] = useState('');
   const [billItems, setBillItems] = useState<TransactionItem[]>([]);
@@ -59,7 +62,9 @@ export default function SellPage({
 
   // Handle selected product detail syncing
   const matchedProduct = useMemo(() => {
-    return products.find(p => p.id === selectedProductId || p.name.toLowerCase() === searchQuery.toLowerCase());
+    if (!products || !Array.isArray(products)) return undefined;
+    const q = searchQuery ? searchQuery.toLowerCase() : '';
+    return products.find(p => p && (p.id === selectedProductId || (p.name && p.name.toLowerCase() === q)));
   }, [selectedProductId, searchQuery, products]);
 
   // Adjust defaults when matchedProduct or priceMode is updated
@@ -73,7 +78,7 @@ export default function SellPage({
           ? (matchedProduct.wholesale_price ?? (matchedProduct.sellPrice * 0.9))
           : (matchedProduct.retail_price ?? matchedProduct.sellPrice);
         setPrice(defaultPrice);
-        setUnit(matchedProduct.unit);
+        setUnit(matchedProduct.unit || 'kg');
         setSelectedProductId(matchedProduct.id);
         lastProductIdRef.current = matchedProduct.id;
         lastPriceModeRef.current = priceMode;
@@ -89,11 +94,22 @@ export default function SellPage({
 
   // List of filtered products for search suggestion dropdown
   const filteredSearchList = useMemo(() => {
-    if (!searchQuery || !showSuggestions) return [];
-    return products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (!searchQuery || !showSuggestions || !products || !Array.isArray(products)) return [];
+    const q = searchQuery.toLowerCase();
+    return products.filter(p => p && p.name && p.name.toLowerCase().includes(q));
   }, [searchQuery, products, showSuggestions]);
 
   // Calculations
+  const calculatedLineTotal = useMemo(() => {
+    const numericQty = Number(qty);
+    const numericPrice = Number(price);
+    if (isNaN(numericQty) || numericQty <= 0 || isNaN(numericPrice) || numericPrice < 0) return 0;
+    if (unit === 'g') {
+      return (numericQty / 1000) * numericPrice;
+    }
+    return numericQty * numericPrice;
+  }, [qty, price, unit]);
+
   const subtotal = useMemo(() => {
     return billItems.reduce((acc, item) => acc + item.total, 0);
   }, [billItems]);

@@ -1867,6 +1867,7 @@ export default function App() {
               transactions={filteredTransactions}
               onSaveBill={recordNewSaleTx}
               onToast={triggerToast}
+              shopProfile={shopProfile}
             />
           )}
 

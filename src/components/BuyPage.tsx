@@ -14,10 +14,10 @@ interface BuyPageProps {
 }
 
 export default function BuyPage({
-  products,
-  currentUserUsername,
+  products = [],
+  currentUserUsername = 'cashier',
   currentUserRole = 'cashier',
-  transactions,
+  transactions = [],
   onSavePurchase,
   onToast,
   currentDrawerBalance
@@ -33,11 +33,12 @@ export default function BuyPage({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Active Desk Prefix: Defaults to J-BUY for Jayantha, L-BUY for Lahiru, or custom BUY prefix for independent stores
-  const defaultPrefix = currentUserUsername === 'jayantha' ? 'J-BUY' : (currentUserUsername === 'lahiru' ? 'L-BUY' : `${currentUserUsername.toUpperCase().slice(0, 3)}-BUY`);
+  const safeUsername = currentUserUsername || 'cashier';
+  const defaultPrefix = safeUsername === 'jayantha' ? 'J-BUY' : (safeUsername === 'lahiru' ? 'L-BUY' : `${safeUsername.toUpperCase().slice(0, 3)}-BUY`);
   const [activePrefix, setActivePrefix] = useState<string>(defaultPrefix);
 
-  const currentUserId = currentUserUsername === 'jayantha' ? 'u4' : (currentUserUsername === 'lahiru' ? 'u3' : currentUserUsername);
-  const currentStoreId = currentUserUsername === 'jayantha' ? 'store_2' : (currentUserUsername === 'lahiru' ? 'store_1' : currentUserUsername);
+  const currentUserId = safeUsername === 'jayantha' ? 'u4' : (safeUsername === 'lahiru' ? 'u3' : safeUsername);
+  const currentStoreId = safeUsername === 'jayantha' ? 'store_2' : (safeUsername === 'lahiru' ? 'store_1' : safeUsername);
 
   const [currentBillId, setCurrentBillId] = useState('');
   const [billItems, setBillItems] = useState<TransactionItem[]>([]);
@@ -56,7 +57,9 @@ export default function BuyPage({
 
   // Handle selected product detail syncing
   const matchedProduct = useMemo(() => {
-    return products.find(p => p.id === selectedProductId || p.name.toLowerCase() === searchQuery.toLowerCase());
+    if (!products || !Array.isArray(products)) return undefined;
+    const q = searchQuery ? searchQuery.toLowerCase() : '';
+    return products.find(p => p && (p.id === selectedProductId || (p.name && p.name.toLowerCase() === q)));
   }, [selectedProductId, searchQuery, products]);
 
   // Adjust defaults when matchedProduct is updated
@@ -70,7 +73,7 @@ export default function BuyPage({
         setPrice(defaultBuyPrice);
         setNewWholesalePrice(defaultWholesalePrice);
         setNewRetailPrice(defaultRetailPrice);
-        setUnit(matchedProduct.unit);
+        setUnit(matchedProduct.unit || 'kg');
         setSelectedProductId(matchedProduct.id);
         lastProductIdRef.current = matchedProduct.id;
       }
@@ -87,12 +90,30 @@ export default function BuyPage({
 
   // Search filter suggestions
   const productSuggestions = useMemo(() => {
-    if (!searchQuery.trim()) return products.slice(0, 8);
+    if (!products || !Array.isArray(products)) return [];
+    if (!searchQuery.trim()) return products.filter(Boolean).slice(0, 8);
     const q = searchQuery.toLowerCase();
-    return products.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)).slice(0, 8);
+    return products.filter(p => p && ((p.name && p.name.toLowerCase().includes(q)) || (p.id && p.id.toLowerCase().includes(q)))).slice(0, 8);
   }, [searchQuery, products]);
 
+  const filteredSearchList = useMemo(() => {
+    if (!products || !Array.isArray(products)) return [];
+    if (!searchQuery.trim() || !showSuggestions) return [];
+    const q = searchQuery.toLowerCase();
+    return products.filter(p => p && p.name && (p.name.toLowerCase().includes(q) || (p.id && p.id.toLowerCase().includes(q)))).slice(0, 8);
+  }, [searchQuery, products, showSuggestions]);
+
   // Calculations
+  const calculatedLineTotal = useMemo(() => {
+    const numericQty = Number(qty);
+    const numericPrice = Number(price);
+    if (isNaN(numericQty) || numericQty <= 0 || isNaN(numericPrice) || numericPrice < 0) return 0;
+    if (unit === 'g') {
+      return (numericQty / 1000) * numericPrice;
+    }
+    return numericQty * numericPrice;
+  }, [qty, price, unit]);
+
   const subtotal = useMemo(() => {
     return billItems.reduce((acc, item) => acc + item.total, 0);
   }, [billItems]);
