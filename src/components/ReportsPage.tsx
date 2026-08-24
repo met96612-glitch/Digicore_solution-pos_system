@@ -177,11 +177,12 @@ export default function ReportsPage({
 
     (filteredTransactions || []).forEach(tx => {
       if (!tx) return;
-      const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
+      const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha') || tx.store_id === 'store_2';
+      const isLahiru = (tx.id && tx.id.startsWith('L-')) || (tx.invoice_no && tx.invoice_no.startsWith('L-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'lahiru') || tx.store_id === 'store_1';
       const matches =
         entityType === 'combined' ||
         (entityType === 'jayantha' && isJayantha) ||
-        (entityType === 'lahiru' && !isJayantha);
+        (entityType === 'lahiru' && isLahiru);
 
       if (!matches) return;
 
@@ -1002,7 +1003,7 @@ export default function ReportsPage({
       {/* Entity Split Dashboard */}
       <div className={`grid grid-cols-1 ${(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'lg:grid-cols-3' : ''} gap-6`}>
         {/* Lahiru Spices Card */}
-        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'lahiru') && (
+        {(currentUserUsername === 'superuser' || currentUserUsername === 'lahiru') && (
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
             <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 rounded-full blur-2xl"></div>
             <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
@@ -1092,7 +1093,7 @@ export default function ReportsPage({
         )}
 
         {/* Jayantha Spices Card */}
-        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || currentUserUsername === 'jayantha') && (
+        {(currentUserUsername === 'superuser' || currentUserUsername === 'jayantha') && (
           <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-full blur-2xl"></div>
             <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
@@ -1182,7 +1183,7 @@ export default function ReportsPage({
         )}
 
         {/* Store / Consolidated Enterprise Card */}
-        {((currentUserRole === 'superuser' || currentUserUsername === 'superuser') || (currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha')) && (
+        {(currentUserUsername === 'superuser' || (currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha')) && (
           <div className="bg-gradient-to-br from-indigo-950/15 to-slate-900/60 border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl"></div>
             <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
@@ -1546,15 +1547,17 @@ export default function ReportsPage({
             ) : (
               salesTransactions.map(t => {
                 if (!t) return null;
-                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha');
+                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha') || t.store_id === 'store_2';
+                const isL = (t.id && t.id.startsWith('L-')) || (t.invoice_no && t.invoice_no.startsWith('L-')) || (t.createdBy && t.createdBy.toLowerCase() === 'lahiru') || t.store_id === 'store_1';
+                const badgeLabel = isJ ? 'Jayantha' : (isL ? 'Lahiru' : (t.createdBy || 'Store'));
+                const badgeColor = isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (isL ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20');
                 return (
                   <div key={t.id || Math.random().toString()} className="py-3 flex justify-between items-center text-xs">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-200">{t.id || 'N/A'}</span>
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
-                          }`}>
-                          {isJ ? 'Jayantha' : 'Lahiru'}
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor}`}>
+                          {badgeLabel}
                         </span>
                       </div>
                       <span className="text-[10px] text-slate-400 block mt-1">{t.contactName || 'Walking Customer'} • {formatDateString(t.date)}</span>
@@ -1579,15 +1582,17 @@ export default function ReportsPage({
             ) : (
               purchaseTransactions.map(t => {
                 if (!t) return null;
-                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha');
+                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha') || t.store_id === 'store_2';
+                const isL = (t.id && t.id.startsWith('L-')) || (t.invoice_no && t.invoice_no.startsWith('L-')) || (t.createdBy && t.createdBy.toLowerCase() === 'lahiru') || t.store_id === 'store_1';
+                const badgeLabel = isJ ? 'Jayantha Stock' : (isL ? 'Lahiru Stock' : `${t.createdBy || 'Store'} Stock`);
+                const badgeColor = isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (isL ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20');
                 return (
                   <div key={t.id || Math.random().toString()} className="py-3 flex justify-between items-center text-xs">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-200">{t.id || 'N/A'}</span>
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
-                          }`}>
-                          {isJ ? 'Jayantha Stock' : 'Lahiru Stock'}
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor}`}>
+                          {badgeLabel}
                         </span>
                       </div>
                       <span className="text-[10px] text-slate-400 block mt-1">{t.contactName || 'Supplier'} • {formatDateString(t.date)}</span>

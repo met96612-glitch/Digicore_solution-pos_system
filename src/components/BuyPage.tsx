@@ -32,9 +32,12 @@ export default function BuyPage({
   const [newRetailPrice, setNewRetailPrice] = useState<number | ''>('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Active Desk Prefix: Defaults to J-BUY for Jayantha, L-BUY for everyone else
-  const defaultPrefix = currentUserUsername === 'jayantha' ? 'J-BUY' : 'L-BUY';
-  const [activePrefix, setActivePrefix] = useState<'L-BUY' | 'J-BUY'>(defaultPrefix);
+  // Active Desk Prefix: Defaults to J-BUY for Jayantha, L-BUY for Lahiru, or custom BUY prefix for independent stores
+  const defaultPrefix = currentUserUsername === 'jayantha' ? 'J-BUY' : (currentUserUsername === 'lahiru' ? 'L-BUY' : `${currentUserUsername.toUpperCase().slice(0, 3)}-BUY`);
+  const [activePrefix, setActivePrefix] = useState<string>(defaultPrefix);
+
+  const currentUserId = currentUserUsername === 'jayantha' ? 'u4' : (currentUserUsername === 'lahiru' ? 'u3' : currentUserUsername);
+  const currentStoreId = currentUserUsername === 'jayantha' ? 'store_2' : (currentUserUsername === 'lahiru' ? 'store_1' : currentUserUsername);
 
   const [currentBillId, setCurrentBillId] = useState('');
   const [billItems, setBillItems] = useState<TransactionItem[]>([]);
@@ -43,81 +46,80 @@ export default function BuyPage({
   const [initialPaidAmount, setInitialPaidAmount] = useState<number | ''>('');
 
   const qtyInputRef = useRef<HTMLInputElement>(null);
-
   const lastProductIdRef = useRef<string>('');
 
-  // Auto-generate invoice ID when active desk, transactions or component boots up
+  // Auto-generate buy bill ID when active desk, transactions or component boots up
   useEffect(() => {
     const nextId = generateNextInvoiceNumber(activePrefix, transactions);
     setCurrentBillId(nextId);
   }, [activePrefix, transactions]);
 
+  // Handle selected product detail syncing
   const matchedProduct = useMemo(() => {
     return products.find(p => p.id === selectedProductId || p.name.toLowerCase() === searchQuery.toLowerCase());
   }, [selectedProductId, searchQuery, products]);
 
+  // Adjust defaults when matchedProduct is updated
   useEffect(() => {
     if (matchedProduct) {
       if (lastProductIdRef.current !== matchedProduct.id) {
-        setPrice(matchedProduct.buying_price ?? matchedProduct.buyPrice);
-        setNewWholesalePrice(matchedProduct.wholesale_price);
-        setNewRetailPrice(matchedProduct.retail_price ?? matchedProduct.sellPrice);
+        const defaultBuyPrice = matchedProduct.buying_price ?? matchedProduct.buyPrice ?? 0;
+        const defaultWholesalePrice = matchedProduct.wholesale_price ?? (matchedProduct.sellPrice * 0.9);
+        const defaultRetailPrice = matchedProduct.retail_price ?? matchedProduct.sellPrice;
+
+        setPrice(defaultBuyPrice);
+        setNewWholesalePrice(defaultWholesalePrice);
+        setNewRetailPrice(defaultRetailPrice);
         setUnit(matchedProduct.unit);
         setSelectedProductId(matchedProduct.id);
         lastProductIdRef.current = matchedProduct.id;
       }
     } else {
       if (lastProductIdRef.current !== '') {
-        setSelectedProductId('');
+        setPrice('');
         setNewWholesalePrice('');
         setNewRetailPrice('');
+        setSelectedProductId('');
         lastProductIdRef.current = '';
       }
     }
   }, [matchedProduct]);
 
-  const filteredSearchList = useMemo(() => {
-    if (!searchQuery || !showSuggestions) return [];
-    return products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [searchQuery, products, showSuggestions]);
+  // Search filter suggestions
+  const productSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return products.slice(0, 8);
+    const q = searchQuery.toLowerCase();
+    return products.filter(p => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)).slice(0, 8);
+  }, [searchQuery, products]);
 
-  const netQty = useMemo(() => {
-    if (qty === '') return 0;
-    const gross = Number(qty);
-    const deduct = deductionQty !== '' && !isNaN(Number(deductionQty)) ? Math.max(0, Number(deductionQty)) : 0;
-    return Math.max(0, gross - deduct);
-  }, [qty, deductionQty]);
-
-  const calculatedLineTotal = useMemo(() => {
-    if (!qty || !price) return 0;
-    let multiplier = 1;
-    if (matchedProduct && matchedProduct.unit === 'kg' && unit === 'g') {
-      multiplier = 0.001;
-    }
-    return Number((netQty * price * multiplier).toFixed(2));
-  }, [qty, price, unit, matchedProduct, netQty]);
-
+  // Calculations
   const subtotal = useMemo(() => {
     return billItems.reduce((acc, item) => acc + item.total, 0);
   }, [billItems]);
 
   const handleAddLineItem = () => {
     if (!selectedProductId || !matchedProduct) {
-      onToast('Select a valid spice/product to restock.', 'error');
+      onToast('Please select a valid spice/product from the search list.', 'error');
       return;
     }
     if (!qty || Number(qty) <= 0) {
-      onToast('Enter a valid stock amount.', 'error');
+      onToast('Please enter a valid buying weight/quantity.', 'error');
       return;
     }
-    if (!price || Number(price) <= 0) {
-      onToast('Enter a valid custom purchase price.', 'error');
+    if (price === '' || Number(price) <= 0) {
+      onToast('Please enter a valid buying price.', 'error');
       return;
     }
 
     const grossVal = Number(qty);
     const deductVal = deductionQty !== '' && !isNaN(Number(deductionQty)) ? Math.max(0, Number(deductionQty)) : 0;
     const netVal = Math.max(0, grossVal - deductVal);
+
+    let multiplier = 1;
+    if (matchedProduct.unit === 'kg' && unit === 'g') {
+      multiplier = 0.001;
+    }
+    const lineTotal = Number((netVal * Number(price) * multiplier).toFixed(2));
 
     const newItem: TransactionItem = {
       productId: matchedProduct.id,
@@ -127,9 +129,10 @@ export default function BuyPage({
       deductionQty: deductVal > 0 ? deductVal : undefined,
       unit: unit,
       price: Number(price),
-      total: calculatedLineTotal,
-      new_wholesale_price: newWholesalePrice !== '' ? Number(newWholesalePrice) : undefined,
-      new_retail_price: newRetailPrice !== '' ? Number(newRetailPrice) : undefined
+      total: lineTotal,
+      buyingPrice: Number(price),
+      wholesalePrice: newWholesalePrice !== '' ? Number(newWholesalePrice) : undefined,
+      retailPrice: newRetailPrice !== '' ? Number(newRetailPrice) : undefined
     };
 
     setBillItems(prev => {
@@ -144,15 +147,16 @@ export default function BuyPage({
           updated[existingIdx].deductionQty = Number(((updated[existingIdx].deductionQty || 0) + newItem.deductionQty).toFixed(3));
         }
         updated[existingIdx].total = Number((updated[existingIdx].total + newItem.total).toFixed(2));
-        // Update price options on merge as well
         updated[existingIdx].price = newItem.price;
-        updated[existingIdx].new_wholesale_price = newItem.new_wholesale_price;
-        updated[existingIdx].new_retail_price = newItem.new_retail_price;
+        updated[existingIdx].buyingPrice = newItem.buyingPrice;
+        if (newItem.wholesalePrice !== undefined) updated[existingIdx].wholesalePrice = newItem.wholesalePrice;
+        if (newItem.retailPrice !== undefined) updated[existingIdx].retailPrice = newItem.retailPrice;
         return updated;
       }
       return [...prev, newItem];
     });
 
+    // Reset inputs
     setSearchQuery('');
     setSelectedProductId('');
     setQty('');
@@ -161,12 +165,12 @@ export default function BuyPage({
     setNewWholesalePrice('');
     setNewRetailPrice('');
     lastProductIdRef.current = '';
-    onToast('Item added to buy order.', 'success');
+    onToast('Purchase item added to current invoice.', 'success');
   };
 
   const handleRemoveLineItem = (index: number) => {
     setBillItems(prev => prev.filter((_, idx) => idx !== index));
-    onToast('Item removed from buy order.', 'success');
+    onToast('Item removed from purchase invoice.', 'success');
   };
 
   const cleanCurrentBill = () => {
@@ -214,7 +218,8 @@ export default function BuyPage({
       createdBy: currentUserUsername,
       // Blueprint fields
       invoice_no: currentBillId,
-      user_id: activePrefix === 'L-BUY' ? 'u3' : 'u4', // u3=lahiru, u4=jayantha
+      user_id: currentUserId,
+      store_id: currentStoreId,
       payment_method: paymentMethod,
       amount_paid: downPayment,
       credit_status: creditStatus,

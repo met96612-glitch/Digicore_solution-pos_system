@@ -58,8 +58,14 @@ function drawLeftRightRow(
 
 // Bulletproof direct 2D Canvas receipt generator (Zero CSS / html2canvas dependency)
 export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?: ShopProfile) {
-  const isJayanthaTx = transaction.id.startsWith('J') || transaction.createdBy === 'jayantha' || transaction.user_id === 'u4';
-  const isLahiruTx = transaction.id.startsWith('L') || transaction.createdBy === 'lahiru' || transaction.user_id === 'u3';
+  const createdByLower = (transaction.createdBy || '').toLowerCase();
+  const isJayanthaTx = transaction.id.startsWith('J') || createdByLower === 'jayantha' || transaction.user_id === 'u4' || transaction.store_id === 'store_2';
+  const isLahiruTx = transaction.id.startsWith('L') || createdByLower === 'lahiru' || transaction.user_id === 'u3' || transaction.store_id === 'store_1';
+
+  // Independent store check: not shared Lahiru/Jayantha desk
+  const isIndependentStore = (!isJayanthaTx && !isLahiruTx) ||
+    (transaction.store_id && transaction.store_id !== 'store_1' && transaction.store_id !== 'store_2') ||
+    (createdByLower !== 'lahiru' && createdByLower !== 'jayantha' && createdByLower !== 'superuser');
 
   const defaultLahiruName = 'LAHIYA SPICE COLLECTORS';
   const defaultLahiruSinhala = 'ළහියා කුළුබඩු එකතු කිරීම්';
@@ -73,43 +79,31 @@ export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?:
 
   const configuredName = shopProfile?.shopName?.trim() || '';
   const configuredSinhala = shopProfile?.shopSinhalaName?.trim() || '';
-  const configuredAddress = shopProfile?.address?.trim() || 'Wewalwatta, Rathnapura';
+  const configuredAddress = shopProfile?.address?.trim() || '';
   const configuredPhone = [shopProfile?.phone1, shopProfile?.phone2].filter(Boolean).map(p => p?.trim()).filter(Boolean).join(' / ');
   const footerNote = shopProfile?.footerNote || '*** THANK YOU! COME AGAIN ***';
   const footerSubNote = shopProfile?.footerSubNote || 'Software Powered by Digicore Solution';
 
-  // Check if profile was changed to something custom (not the standard Lahiru or Jayantha presets)
-  const isCustomStore = configuredName &&
-    configuredName !== 'LAHIRU SPICE COLLECTORS' &&
-    configuredName !== 'LAHIYA SPICE COLLECTORS' &&
-    configuredName !== 'LAHIRU SPICES CENTER' &&
-    configuredName !== 'LAHIYA SPICES CENTER' &&
-    configuredName !== 'JAYANTHA SPICE COLLECTORS' &&
-    configuredName !== 'JAYANTHA SPICES CENTER';
+  let shopName = '';
+  let shopSinhala = '';
+  let shopAddress = '';
+  let shopPhone = '';
 
-  let shopName = defaultLahiruName;
-  let shopSinhala = defaultLahiruSinhala;
-  let shopAddress = defaultLahiruAddress;
-  let shopPhone = defaultLahiruPhone;
-
-  if (isCustomStore) {
-    // Custom user configured store identity
-    shopName = configuredName;
+  if (isIndependentStore) {
+    shopName = configuredName || `${(transaction.createdBy || 'STORE').toUpperCase()} SPICES CENTER`;
+    shopSinhala = configuredSinhala || `${transaction.createdBy || 'කුළුබඩු'} වෙළඳසැල`;
+    shopAddress = configuredAddress || 'Wewalwatta, Rathnapura';
+    shopPhone = configuredPhone || '074 0050211';
+  } else if (isJayanthaTx) {
+    shopName = (configuredName && configuredName !== defaultLahiruName) ? configuredName : defaultJayanthaName;
+    shopSinhala = configuredSinhala || defaultJayanthaSinhala;
+    shopAddress = configuredAddress || defaultJayanthaAddress;
+    shopPhone = configuredPhone || defaultJayanthaPhone;
+  } else {
+    shopName = (configuredName && configuredName !== defaultJayanthaName) ? configuredName : defaultLahiruName;
     shopSinhala = configuredSinhala || defaultLahiruSinhala;
     shopAddress = configuredAddress || defaultLahiruAddress;
-    shopPhone = configuredPhone || (isJayanthaTx ? defaultJayanthaPhone : defaultLahiruPhone);
-  } else if (isJayanthaTx) {
-    // Jayantha's bill
-    shopName = defaultJayanthaName;
-    shopSinhala = defaultJayanthaSinhala;
-    shopAddress = defaultJayanthaAddress;
-    shopPhone = (configuredName === defaultJayanthaName && configuredPhone) ? configuredPhone : defaultJayanthaPhone;
-  } else {
-    // Lahiru's bill or Default
-    shopName = defaultLahiruName;
-    shopSinhala = defaultLahiruSinhala;
-    shopAddress = defaultLahiruAddress;
-    shopPhone = (configuredName === defaultLahiruName && configuredPhone) ? configuredPhone : defaultLahiruPhone;
+    shopPhone = configuredPhone || defaultLahiruPhone;
   }
 
   const cashierName = isJayanthaTx
@@ -546,8 +540,8 @@ export default function PrintReceipt({ transaction, shopProfile, onClose, onToas
               type="button"
               onClick={() => setPaperSize('80mm')}
               className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${paperSize === '80mm'
-                  ? 'bg-violet-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-violet-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
             >
               <span>📄 80mm Wide (Standard POS)</span>
@@ -556,8 +550,8 @@ export default function PrintReceipt({ transaction, shopProfile, onClose, onToas
               type="button"
               onClick={() => setPaperSize('58mm')}
               className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${paperSize === '58mm'
-                  ? 'bg-violet-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-violet-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
             >
               <span>📱 58mm Mobile</span>

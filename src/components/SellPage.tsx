@@ -28,9 +28,9 @@ export default function SellPage({
   const [price, setPrice] = useState<number | ''>('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Active Desk Prefix: Defaults to J for Jayantha, L for everyone else
-  const defaultPrefix = currentUserUsername === 'jayantha' ? 'J' : 'L';
-  const [activePrefix, setActivePrefix] = useState<'L' | 'J'>(defaultPrefix);
+  // Active Desk Prefix: Defaults to J for Jayantha, L for Lahiru, or username prefix for independent stores
+  const defaultPrefix = currentUserUsername === 'jayantha' ? 'J' : (currentUserUsername === 'lahiru' ? 'L' : currentUserUsername.toUpperCase().slice(0, 3));
+  const [activePrefix, setActivePrefix] = useState<string>(defaultPrefix);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card' | 'Credit'>('Cash');
   const [initialPaidAmount, setInitialPaidAmount] = useState<number | ''>('');
   const [priceMode, setPriceMode] = useState<'retail' | 'wholesale'>('retail');
@@ -38,7 +38,9 @@ export default function SellPage({
   // Transaction Type: 'sell' or 'return'
   const [transactionType, setTransactionType] = useState<'sell' | 'return'>('sell');
   const [refInvoiceNo, setRefInvoiceNo] = useState('');
-  const [returnReason, setReturnReason] = useState('');
+
+  const currentUserId = currentUserUsername === 'jayantha' ? 'u4' : (currentUserUsername === 'lahiru' ? 'u3' : currentUserUsername);
+  const currentStoreId = currentUserUsername === 'jayantha' ? 'store_2' : (currentUserUsername === 'lahiru' ? 'store_1' : currentUserUsername);
 
   const [currentBillId, setCurrentBillId] = useState('');
   const [billItems, setBillItems] = useState<TransactionItem[]>([]);
@@ -78,6 +80,7 @@ export default function SellPage({
       }
     } else {
       if (lastProductIdRef.current !== '') {
+        setPrice('');
         setSelectedProductId('');
         lastProductIdRef.current = '';
       }
@@ -91,22 +94,6 @@ export default function SellPage({
   }, [searchQuery, products, showSuggestions]);
 
   // Calculations
-  const netQty = useMemo(() => {
-    if (qty === '') return 0;
-    const gross = Number(qty);
-    const deduct = deductionQty !== '' && !isNaN(Number(deductionQty)) ? Math.max(0, Number(deductionQty)) : 0;
-    return Math.max(0, gross - deduct);
-  }, [qty, deductionQty]);
-
-  const calculatedLineTotal = useMemo(() => {
-    if (!qty || !price) return 0;
-    let multiplier = 1;
-    if (matchedProduct && matchedProduct.unit === 'kg' && unit === 'g') {
-      multiplier = 0.001; // gram ratio helper
-    }
-    return Number((netQty * price * multiplier).toFixed(2));
-  }, [qty, price, unit, matchedProduct, netQty]);
-
   const subtotal = useMemo(() => {
     return billItems.reduce((acc, item) => acc + item.total, 0);
   }, [billItems]);
@@ -116,72 +103,43 @@ export default function SellPage({
   }, [subtotal, discount]);
 
   const handleAddLineItem = () => {
-    if (!selectedProductId || !matchedProduct) {
-      onToast('Please select a valid spice/product from the search list.', 'error');
+    if (!matchedProduct) {
+      onToast('Please search and select a valid product first.', 'error');
       return;
     }
-    if (!qty || Number(qty) <= 0) {
-      onToast('Please enter a valid amount or quantity.', 'error');
+    const numericQty = Number(qty);
+    if (isNaN(numericQty) || numericQty <= 0) {
+      onToast('Please enter a valid numeric quantity greater than 0.', 'error');
       return;
     }
-    if (!price || Number(price) <= 0) {
-      onToast('Please enter a valid price.', 'error');
+    const numericPrice = Number(price);
+    if (isNaN(numericPrice) || numericPrice < 0) {
+      onToast('Please enter a valid numeric unit price.', 'error');
       return;
     }
 
-    const grossVal = Number(qty);
-    const deductVal = deductionQty !== '' && !isNaN(Number(deductionQty)) ? Math.max(0, Number(deductionQty)) : 0;
-    const netVal = Math.max(0, grossVal - deductVal);
-
-    // Active stock of selected shop entity
-    const activeStock = matchedProduct.stock;
-
-    // Live stock warning check
-    let quantityInBaseUnit = netVal;
-    if (matchedProduct.unit === 'kg' && unit === 'g') {
-      quantityInBaseUnit = netVal * 0.001;
+    let calculatedTotal = numericQty * numericPrice;
+    if (unit === 'g') {
+      calculatedTotal = (numericQty / 1000) * numericPrice;
     }
 
-    if (quantityInBaseUnit > activeStock) {
-      onToast(`Warning: Requested quantity exceeds warehouse stock (${activeStock} ${matchedProduct.unit} available).`, 'error');
-    }
-
-    // Add or append item
     const newItem: TransactionItem = {
       productId: matchedProduct.id,
       productName: matchedProduct.name,
-      qty: netVal,
-      grossQty: deductVal > 0 ? grossVal : undefined,
-      deductionQty: deductVal > 0 ? deductVal : undefined,
+      qty: numericQty,
+      deductionQty: Number(deductionQty) || undefined,
       unit: unit,
-      price: Number(price),
-      total: calculatedLineTotal
+      price: numericPrice,
+      total: calculatedTotal
     };
 
-    setBillItems(prev => {
-      const existingIdx = prev.findIndex(item => item.productId === newItem.productId && item.unit === newItem.unit);
-      if (existingIdx > -1) {
-        const updated = [...prev];
-        updated[existingIdx].qty = Number((updated[existingIdx].qty + newItem.qty).toFixed(3));
-        if (newItem.grossQty) {
-          updated[existingIdx].grossQty = Number(((updated[existingIdx].grossQty || updated[existingIdx].qty) + newItem.grossQty).toFixed(3));
-        }
-        if (newItem.deductionQty) {
-          updated[existingIdx].deductionQty = Number(((updated[existingIdx].deductionQty || 0) + newItem.deductionQty).toFixed(3));
-        }
-        updated[existingIdx].total = Number((updated[existingIdx].total + newItem.total).toFixed(2));
-        return updated;
-      }
-      return [...prev, newItem];
-    });
+    setBillItems(prev => [...prev, newItem]);
 
-    // Reset inputs
     setSearchQuery('');
     setSelectedProductId('');
     setQty('');
     setDeductionQty('');
     setPrice('');
-    lastProductIdRef.current = '';
     onToast('Item added to current bill.', 'success');
   };
 
@@ -195,7 +153,6 @@ export default function SellPage({
     setDiscount(0);
     setCustomerName('');
     setRefInvoiceNo('');
-    setReturnReason('');
     setPaymentMethod('Cash');
     setInitialPaidAmount('');
     setCurrentBillId(generateNextInvoiceNumber(activePrefix, transactions));
@@ -219,13 +176,13 @@ export default function SellPage({
         contactName: customerName.trim() || 'Walk-in Customer',
         createdBy: currentUserUsername,
         invoice_no: currentBillId,
-        user_id: activePrefix === 'L' ? 'u3' : 'u4',
+        user_id: currentUserId,
+        store_id: currentStoreId,
         payment_method: paymentMethod,
         amount_paid: grandTotal,
         total_profit: 0,
         is_wholesale: false,
         ref_invoice_no: refInvoiceNo.trim() || undefined,
-        return_reason: returnReason.trim() || undefined
       };
 
       onSaveBill(transaction);
@@ -282,7 +239,8 @@ export default function SellPage({
       createdBy: currentUserUsername,
       // Blueprint fields
       invoice_no: currentBillId,
-      user_id: activePrefix === 'J' ? 'u4' : 'u3',
+      user_id: currentUserId,
+      store_id: currentStoreId,
       payment_method: paymentMethod,
       amount_paid: downPayment,
       credit_status: creditStatus,
