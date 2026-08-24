@@ -33,6 +33,23 @@ export function createSupabaseClient() {
   }
 }
 
+export function getActiveStoreId(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const rawSession = sessionStorage.getItem('kulubadu_active_session');
+    if (rawSession) {
+      const parsed = JSON.parse(rawSession);
+      if (parsed?.role === 'superuser') return undefined;
+      if (parsed?.store_id) return parsed.store_id;
+      if (parsed?.username === 'jayantha') return 'store_2';
+      if (parsed?.username === 'lahiru') return 'store_1';
+    }
+  } catch (e) {
+    // fallback
+  }
+  return undefined;
+}
+
 // Check if connection is fully configured and working
 export async function testSupabaseConnection(url: string, key: string): Promise<boolean> {
   if (!url || !key) return false;
@@ -228,6 +245,7 @@ export async function pushProductToSupabase(prodOrProds: any) {
   const items = Array.isArray(prodOrProds) ? prodOrProds : [prodOrProds];
   if (items.length === 0) return;
   try {
+    const activeStore = getActiveStoreId() || 'store_1';
     const records = items.map(prod => ({
       id: prod.id,
       name: prod.name,
@@ -243,7 +261,7 @@ export async function pushProductToSupabase(prodOrProds: any) {
       retail_price: prod.retail_price ?? prod.sellPrice ?? 0,
       category: prod.category || 'Spices',
       image: prod.image || '',
-      store_id: prod.store_id || ''
+      store_id: prod.store_id || activeStore
     }));
 
     const { error } = await safeUpsert(client, 'products', records);
@@ -285,6 +303,8 @@ export async function pushTransactionToSupabase(tx: any) {
       else defaultStatus = 'pending';
     }
 
+    const activeStore = tx.store_id || getActiveStoreId() || (tx.id?.startsWith('J-') || tx.createdBy === 'jayantha' ? 'store_2' : 'store_1');
+
     const { error } = await safeUpsert(client, 'transactions', {
       id: tx.id,
       date: tx.date,
@@ -305,7 +325,7 @@ export async function pushTransactionToSupabase(tx: any) {
       credit_status: tx.credit_status || defaultStatus,
       credit_paid_amount: creditPaidAmt,
       credit_payments: tx.credit_payments ? (typeof tx.credit_payments === 'string' ? tx.credit_payments : JSON.stringify(tx.credit_payments)) : null,
-      store_id: tx.store_id || ''
+      store_id: tx.store_id || activeStore
     });
     if (error) {
       console.error(`Supabase transaction upsert error for ${tx.id}:`, error.message, error.details, error);
@@ -510,9 +530,10 @@ export async function fetchProductsFromSupabase(storeId?: string): Promise<any[]
   const client = createSupabaseClient();
   if (!client) return null;
   try {
+    const targetStoreId = storeId !== undefined ? storeId : getActiveStoreId();
     let query = client.from('products').select('*');
-    if (storeId) {
-      query = query.eq('store_id', storeId);
+    if (targetStoreId) {
+      query = query.eq('store_id', targetStoreId);
     }
     const { data, error } = await query;
     if (error) {
@@ -531,9 +552,10 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
   const client = createSupabaseClient();
   if (!client) return null;
   try {
+    const targetStoreId = storeId !== undefined ? storeId : getActiveStoreId();
     let query = client.from('transactions').select('*');
-    if (storeId) {
-      query = query.eq('store_id', storeId);
+    if (targetStoreId) {
+      query = query.eq('store_id', targetStoreId);
     }
     const { data, error } = await query;
     if (error) {

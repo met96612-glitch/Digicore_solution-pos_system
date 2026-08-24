@@ -169,9 +169,10 @@ export default function App() {
     // 1. Fetch latest products from Supabase if online
     let latestProducts = [...products];
     const client = createSupabaseClient();
+    const targetStore = newAdj.desk === 'jayantha' ? 'store_2' : 'store_1';
     if (client && supabaseStatus === 'connected') {
       try {
-        const supaProds = await fetchProductsFromSupabase();
+        const supaProds = await fetchProductsFromSupabase(targetStore);
         if (supaProds !== null) {
           latestProducts = supaProds.map(normalizeProduct);
         }
@@ -182,7 +183,10 @@ export default function App() {
 
     // 2. Reduce the specific desk's stock and combined stock
     const updatedProductsList = latestProducts.map(p => {
-      if (p.id === newAdj.productId || String(p.id) === String(newAdj.productId) || p.name.trim().toLowerCase() === newAdj.productName.trim().toLowerCase()) {
+      const matchesId = p.id === newAdj.productId || String(p.id) === String(newAdj.productId);
+      const matchesName = p.name.trim().toLowerCase() === newAdj.productName.trim().toLowerCase();
+      const matchesStore = !p.store_id || p.store_id === targetStore;
+      if ((matchesId || matchesName) && matchesStore) {
         let qtyInBaseUnit = newAdj.qty;
         if (p.unit === 'kg' && newAdj.unit === 'g') {
           qtyInBaseUnit = newAdj.qty * 0.001;
@@ -229,11 +233,12 @@ export default function App() {
     const targetAdj = stockAdjustments.find(a => a.id === adjId);
     if (!targetAdj) return;
 
+    const targetStore = targetAdj.desk === 'jayantha' ? 'store_2' : 'store_1';
     let latestProducts = [...products];
     const client = createSupabaseClient();
     if (client && supabaseStatus === 'connected') {
       try {
-        const supaProds = await fetchProductsFromSupabase();
+        const supaProds = await fetchProductsFromSupabase(targetStore);
         if (supaProds !== null) {
           latestProducts = supaProds.map(normalizeProduct);
         }
@@ -244,7 +249,10 @@ export default function App() {
 
     // Rollback stock
     const updatedProductsList = latestProducts.map(p => {
-      if (p.id === targetAdj.productId || String(p.id) === String(targetAdj.productId) || p.name.trim().toLowerCase() === targetAdj.productName.trim().toLowerCase()) {
+      const matchesId = p.id === targetAdj.productId || String(p.id) === String(targetAdj.productId);
+      const matchesName = p.name.trim().toLowerCase() === targetAdj.productName.trim().toLowerCase();
+      const matchesStore = !p.store_id || p.store_id === targetStore;
+      if ((matchesId || matchesName) && matchesStore) {
         let qtyInBaseUnit = targetAdj.qty;
         if (p.unit === 'kg' && targetAdj.unit === 'g') {
           qtyInBaseUnit = targetAdj.qty * 0.001;
@@ -437,6 +445,15 @@ export default function App() {
       return updated;
     });
   };
+
+  const filteredProducts = useMemo(() => {
+    if (!sessionUser) return [];
+    if (sessionUser.role === 'superuser') {
+      return products;
+    }
+    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    return products.filter(p => !p.store_id || p.store_id === userStore);
+  }, [products, sessionUser]);
 
   const filteredTransactions = useMemo(() => {
     if (!sessionUser) return [];
@@ -637,9 +654,13 @@ export default function App() {
         const client = createSupabaseClient();
         if (client) {
           console.log('Supabase client detected. Attempting to fetch live data...');
+          const activeSessionRaw = sessionStorage.getItem('kulubadu_active_session');
+          const activeSession = activeSessionRaw ? JSON.parse(activeSessionRaw) : null;
+          const initStoreId = activeSession?.role === 'superuser' ? undefined : (activeSession?.store_id || (activeSession?.username === 'jayantha' ? 'store_2' : 'store_1'));
+
           const [supaProds, supaTx, supaUsers] = await Promise.all([
-            fetchProductsFromSupabase(),
-            fetchTransactionsFromSupabase(),
+            fetchProductsFromSupabase(initStoreId),
+            fetchTransactionsFromSupabase(initStoreId),
             fetchUsersFromSupabase()
           ]);
 
@@ -813,9 +834,14 @@ export default function App() {
 
   // Update states helper functions
   const saveProductsToDb = (newProds: Product[]) => {
-    setProducts(newProds);
-    localStorage.setItem('kulubadu_products', JSON.stringify(newProds));
-    pushProductToSupabase(newProds);
+    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1');
+    const prodsWithStore = newProds.map(p => ({
+      ...p,
+      store_id: p.store_id || userStore
+    }));
+    setProducts(prodsWithStore);
+    localStorage.setItem('kulubadu_products', JSON.stringify(prodsWithStore));
+    pushProductToSupabase(prodsWithStore);
   };
 
   const saveTransactionsToDb = (newTx: Transaction[]) => {
@@ -928,10 +954,12 @@ export default function App() {
         const client = createSupabaseClient();
         if (!client) return;
         
+        const activeStoreId = sessionUser?.role === 'superuser' ? undefined : (sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1'));
+
         // Fetch products, transactions and users in background
         const [supaProds, supaTx, supaUsers] = await Promise.all([
-          fetchProductsFromSupabase(),
-          fetchTransactionsFromSupabase(),
+          fetchProductsFromSupabase(activeStoreId),
+          fetchTransactionsFromSupabase(activeStoreId),
           fetchUsersFromSupabase()
         ]);
         
@@ -980,7 +1008,7 @@ export default function App() {
     const client = createSupabaseClient();
     if (client && supabaseStatus === 'connected') {
       try {
-        const supaProds = await fetchProductsFromSupabase();
+        const supaProds = await fetchProductsFromSupabase(tx.store_id);
         if (supaProds !== null) {
           latestProducts = supaProds.map(normalizeProduct);
         }
@@ -993,11 +1021,12 @@ export default function App() {
     const isJayantha = tx.id.startsWith('J-') || tx.id.startsWith('J') || tx.user_id === 'u4' || tx.createdBy === 'jayantha';
 
     const updatedProductsList = latestProducts.map(p => {
-      const returnedItem = tx.items.find(item => 
-        item.productId === p.id || 
-        String(item.productId) === String(p.id) || 
-        (item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase())
-      );
+      const returnedItem = tx.items.find(item => {
+        const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
+        const matchesName = item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase();
+        const matchesStore = !p.store_id || !tx.store_id || p.store_id === tx.store_id;
+        return (matchesId || matchesName) && matchesStore;
+      });
       if (returnedItem) {
         let quantityInBaseUnit = returnedItem.qty;
         if (p.unit === 'kg' && returnedItem.unit === 'g') {
@@ -1051,7 +1080,7 @@ export default function App() {
     const client = createSupabaseClient();
     if (client && supabaseStatus === 'connected') {
       try {
-        const supaProds = await fetchProductsFromSupabase();
+        const supaProds = await fetchProductsFromSupabase(tx.store_id);
         if (supaProds !== null) {
           latestProducts = supaProds.map(normalizeProduct);
         }
@@ -1064,11 +1093,12 @@ export default function App() {
     const isJayantha = tx.id.startsWith('J-') || tx.id.startsWith('J') || tx.user_id === 'u4' || tx.createdBy === 'jayantha';
 
     const updatedProductsList = latestProducts.map(p => {
-      const soldItem = tx.items.find(item => 
-        item.productId === p.id || 
-        String(item.productId) === String(p.id) || 
-        (item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase())
-      );
+      const soldItem = tx.items.find(item => {
+        const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
+        const matchesName = item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase();
+        const matchesStore = !p.store_id || !tx.store_id || p.store_id === tx.store_id;
+        return (matchesId || matchesName) && matchesStore;
+      });
       if (soldItem) {
         let quantityInBaseUnit = soldItem.qty;
         // Gram conversions index
@@ -1119,7 +1149,7 @@ export default function App() {
     const client = createSupabaseClient();
     if (client && supabaseStatus === 'connected') {
       try {
-        const supaProds = await fetchProductsFromSupabase();
+        const supaProds = await fetchProductsFromSupabase(tx.store_id);
         if (supaProds !== null) {
           latestProducts = supaProds.map(normalizeProduct);
         }
@@ -1132,11 +1162,12 @@ export default function App() {
     const isJayantha = tx.id.startsWith('J-') || tx.id.startsWith('J') || tx.user_id === 'u4' || tx.createdBy === 'jayantha';
 
     const updatedProductsList = latestProducts.map(p => {
-      const boughtItem = tx.items.find(item => 
-        item.productId === p.id || 
-        String(item.productId) === String(p.id) || 
-        (item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase())
-      );
+      const boughtItem = tx.items.find(item => {
+        const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
+        const matchesName = item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase();
+        const matchesStore = !p.store_id || !tx.store_id || p.store_id === tx.store_id;
+        return (matchesId || matchesName) && matchesStore;
+      });
       if (boughtItem) {
         let quantityInBaseUnit = boughtItem.qty;
         if (p.unit === 'kg' && boughtItem.unit === 'g') {
@@ -1840,7 +1871,7 @@ export default function App() {
         <main className="flex-1 p-3 sm:p-6 pb-28 lg:pb-6 overflow-y-auto">
           {currentTab === 'dashboard' && (
             <DashboardPage
-              products={products}
+              products={filteredProducts}
               transactions={filteredTransactions}
               onViewTransaction={(tx) => setReceiptTx(tx)}
               openingCash={todayOpeningCashTotal}
@@ -1858,7 +1889,7 @@ export default function App() {
 
           {currentTab === 'sell' && (
             <SellPage
-              products={products}
+              products={filteredProducts}
               currentUserUsername={sessionUser.username}
               currentUserRole={sessionUser.role}
               transactions={filteredTransactions}
@@ -1869,7 +1900,7 @@ export default function App() {
 
           {currentTab === 'buy' && (
             <BuyPage
-              products={products}
+              products={filteredProducts}
               currentUserUsername={sessionUser.username}
               currentUserRole={sessionUser.role}
               transactions={filteredTransactions}
@@ -1881,7 +1912,7 @@ export default function App() {
 
           {currentTab === 'products' && (
             <ProductsPage
-              products={products}
+              products={filteredProducts}
               currentUserRole={sessionUser.role}
               currentUserUsername={sessionUser.username}
               onAddProduct={addProduct}
@@ -1895,7 +1926,7 @@ export default function App() {
 
           {currentTab === 'stock' && (
             <StockPage
-              products={products}
+              products={filteredProducts}
               currentUserUsername={sessionUser.username}
               currentUserRole={sessionUser.role}
               stockAdjustments={filteredStockAdjustments}
@@ -1928,7 +1959,7 @@ export default function App() {
           {currentTab === 'reports' && (
             <ReportsPage
               transactions={filteredTransactions}
-              products={products}
+              products={filteredProducts}
               currentUserUsername={sessionUser.username}
               currentUserRole={sessionUser.role}
               openingCashLogs={filteredOpeningCashLogs}
