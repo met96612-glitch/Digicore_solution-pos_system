@@ -730,8 +730,26 @@ export default function App() {
           }
 
           if (supaUsers && supaUsers.length > 0) {
-            setRegisteredUsers(supaUsers);
-            localStorage.setItem('kulubadu_users', JSON.stringify(supaUsers));
+            const savedUsersStr = localStorage.getItem('kulubadu_users');
+            let localUsers: User[] = [];
+            if (savedUsersStr) {
+              try { localUsers = JSON.parse(savedUsersStr); } catch {}
+            }
+            const userMap = new Map<string, User>();
+            INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
+            localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+            supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+
+            const merged = Array.from(userMap.values());
+            merged.forEach(u => {
+              u.store_id = u.store_id || (
+                u.username === 'jayantha' ? 'store_2' :
+                u.username === 'lahiru' ? 'store_1' :
+                (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
+              );
+            });
+            setRegisteredUsers(merged);
+            localStorage.setItem('kulubadu_users', JSON.stringify(merged));
           } else {
             loadLocalUsers();
           }
@@ -780,58 +798,41 @@ export default function App() {
 
     function loadLocalUsers() {
       const savedUsers = localStorage.getItem('kulubadu_users');
+      let loadedUsers: User[] = [];
       if (savedUsers) {
         try {
-          let loadedUsers = JSON.parse(savedUsers) as User[];
-          if (Array.isArray(loadedUsers)) {
-            const hasLahiru = loadedUsers.some(u => u.username === 'lahiru');
-            if (!hasLahiru) {
-              const merged = [...loadedUsers];
-              INITIAL_USERS.forEach(iu => {
-                if (!merged.some(u => u.username === iu.username)) {
-                  merged.push(iu);
-                }
-              });
-              merged.forEach(u => {
-                if (!u.shop_name || u.shop_name.includes('Center')) {
-                  if (u.username === 'jayantha') {
-                    u.shop_name = 'Jayantha Spice Collectors';
-                    u.phone_number = '077 602 1831';
-                    u.invoice_prefix = 'J';
-                  } else {
-                    u.shop_name = 'Lahiya Spice Collectors';
-                    u.phone_number = '074 0050211 / 076 0808246';
-                    u.invoice_prefix = 'L';
-                  }
-                }
-              });
-              localStorage.setItem('kulubadu_users', JSON.stringify(merged));
-              setRegisteredUsers(merged);
-            } else {
-              loadedUsers.forEach(u => {
-                u.store_id = u.store_id || (u.username === 'jayantha' ? 'store_2' : 'store_1');
-                if (!u.shop_name || u.shop_name.includes('Center')) {
-                  if (u.username === 'jayantha') {
-                    u.shop_name = 'Jayantha Spice Collectors';
-                    u.phone_number = '077 602 1831';
-                    u.invoice_prefix = 'J';
-                  } else {
-                    u.shop_name = 'Lahiya Spice Collectors';
-                    u.phone_number = '074 0050211 / 076 0808246';
-                    u.invoice_prefix = 'L';
-                  }
-                }
-              });
-              setRegisteredUsers(loadedUsers);
-            }
-            return;
-          }
+          const parsed = JSON.parse(savedUsers);
+          if (Array.isArray(parsed)) loadedUsers = parsed;
         } catch (e) {
           console.warn('Failed to parse kulubadu_users from localStorage:', e);
         }
       }
-      localStorage.setItem('kulubadu_users', JSON.stringify(INITIAL_USERS));
-      setRegisteredUsers(INITIAL_USERS);
+
+      const userMap = new Map<string, User>();
+      INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
+      loadedUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+
+      const merged = Array.from(userMap.values());
+      merged.forEach(u => {
+        u.store_id = u.store_id || (
+          u.username === 'jayantha' ? 'store_2' :
+          u.username === 'lahiru' ? 'store_1' :
+          (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
+        );
+        if (!u.shop_name || u.shop_name.includes('Center')) {
+          if (u.username === 'jayantha') {
+            u.shop_name = 'Jayantha Spice Collectors';
+            u.phone_number = '077 602 1831';
+            u.invoice_prefix = 'J';
+          } else {
+            u.shop_name = 'Lahiya Spice Collectors';
+            u.phone_number = '074 0050211 / 076 0808246';
+            u.invoice_prefix = 'L';
+          }
+        }
+      });
+      localStorage.setItem('kulubadu_users', JSON.stringify(merged));
+      setRegisteredUsers(merged);
     }
 
     function loadLocalTransactions() {
@@ -936,22 +937,50 @@ export default function App() {
   }, [toast]);
 
   // Authentication submission
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
-    if (!loginUsername.trim() || !loginPassword.trim()) {
+    const cleanUser = loginUsername.trim().toLowerCase();
+    const cleanPass = loginPassword.trim();
+
+    if (!cleanUser || !cleanPass) {
       setLoginError('Both parameters are highly mandatory.');
       return;
     }
 
-    // Match static username
-    const systemUsers = JSON.parse(localStorage.getItem('kulubadu_users') || JSON.stringify(INITIAL_USERS));
-    const cleanUser = loginUsername.trim().toLowerCase();
+    const savedUsersStr = localStorage.getItem('kulubadu_users');
+    let localUsers: User[] = [];
+    if (savedUsersStr) {
+      try { localUsers = JSON.parse(savedUsersStr); } catch {}
+    }
 
-    let matched = systemUsers.find(
-      (u: any) => u.username.toLowerCase() === cleanUser && u.password === loginPassword.trim()
+    const userMap = new Map<string, User>();
+    INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
+    localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+    registeredUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+
+    let matched = Array.from(userMap.values()).find(
+      (u: any) => u.username.toLowerCase() === cleanUser && String(u.password).trim() === cleanPass
     );
+
+    if (!matched) {
+      try {
+        const supaUsers = await fetchUsersFromSupabase();
+        if (supaUsers && supaUsers.length > 0) {
+          supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+          const updatedList = Array.from(userMap.values());
+          setRegisteredUsers(updatedList);
+          localStorage.setItem('kulubadu_users', JSON.stringify(updatedList));
+
+          matched = supaUsers.find(
+            (u: any) => u.username.toLowerCase() === cleanUser && String(u.password).trim() === cleanPass
+          );
+        }
+      } catch (err) {
+        console.warn('Live login fetch error:', err);
+      }
+    }
 
     if (matched) {
       const resolvedStoreId = matched.store_id || (
@@ -963,10 +992,10 @@ export default function App() {
         id: matched.id,
         name: matched.name,
         username: matched.username,
-        role: matched.role,
-        shop_name: matched.shop_name,
-        phone_number: matched.phone_number,
-        invoice_prefix: matched.invoice_prefix,
+        role: matched.role || (matched.username === 'superuser' ? 'superuser' : 'admin'),
+        shop_name: matched.shop_name || (matched.username === 'jayantha' ? 'Jayantha Spice Collectors' : 'Lahiya Spice Collectors'),
+        phone_number: matched.phone_number || '',
+        invoice_prefix: matched.invoice_prefix || (matched.username === 'jayantha' ? 'J' : 'L'),
         store_id: resolvedStoreId
       };
       setSessionUser(userObj);
