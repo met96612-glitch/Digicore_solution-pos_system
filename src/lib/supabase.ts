@@ -43,6 +43,9 @@ export function getActiveStoreId(): string | undefined {
       if (parsed?.store_id) return parsed.store_id;
       if (parsed?.username === 'jayantha') return 'store_2';
       if (parsed?.username === 'lahiru') return 'store_1';
+      if (parsed?.username) {
+        return parsed.username.startsWith('store_') ? parsed.username : `store_${parsed.username}`;
+      }
     }
   } catch (e) {
     // fallback
@@ -349,6 +352,7 @@ export async function pushUserToSupabase(u: any) {
   const client = createSupabaseClient();
   if (!client) return;
   try {
+    const userStoreId = u.store_id || (u.username === 'jayantha' ? 'store_2' : (u.username === 'lahiru' ? 'store_1' : (u.username.startsWith('store_') ? u.username : `store_${u.username}`)));
     const { error } = await safeUpsert(client, 'users', {
       id: u.id,
       name: u.name,
@@ -358,7 +362,7 @@ export async function pushUserToSupabase(u: any) {
       shop_name: u.shop_name || '',
       phone_number: u.phone_number || '',
       invoice_prefix: u.invoice_prefix || '',
-      store_id: u.store_id || (u.username === 'jayantha' ? 'store_2' : 'store_1')
+      store_id: userStoreId
     });
     if (error) {
       console.error(`Supabase user upsert error for ${u.username}:`, error.message, error.details, error);
@@ -534,7 +538,8 @@ export async function fetchProductsFromSupabase(storeId?: string): Promise<any[]
       if (targetStoreId === 'store_1' || targetStoreId === 'store_2') {
         query = query.or('store_id.eq.store_1,store_id.eq.store_2,store_id.is.null,store_id.eq.');
       } else {
-        query = query.eq('store_id', targetStoreId);
+        const cleanStore = targetStoreId.replace('store_', '');
+        query = query.or(`store_id.eq.${targetStoreId},store_id.eq.${cleanStore}`);
       }
     }
     const { data, error } = await query;
@@ -560,7 +565,8 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
       if (targetStoreId === 'store_1' || targetStoreId === 'store_2') {
         query = query.or('store_id.eq.store_1,store_id.eq.store_2,store_id.is.null,store_id.eq.');
       } else {
-        query = query.eq('store_id', targetStoreId);
+        const cleanStore = targetStoreId.replace('store_', '');
+        query = query.or(`store_id.eq.${targetStoreId},createdBy.eq.${targetStoreId},createdBy.eq.${cleanStore},store_id.eq.${cleanStore}`);
       }
     }
     const { data, error } = await query;
@@ -632,7 +638,11 @@ export async function fetchUsersFromSupabase(storeId?: string): Promise<any[] | 
       console.warn('Failed to fetch users from Supabase:', error.message || error);
       return null;
     }
-    return data;
+    if (!data) return [];
+    return data.map(u => ({
+      ...u,
+      store_id: u.store_id || (u.username === 'jayantha' ? 'store_2' : (u.username === 'lahiru' ? 'store_1' : (u.username.startsWith('store_') ? u.username : `store_${u.username}`)))
+    }));
   } catch (e) {
     console.warn(e);
     return null;

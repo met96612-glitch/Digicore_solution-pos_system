@@ -954,6 +954,11 @@ export default function App() {
     );
 
     if (matched) {
+      const resolvedStoreId = matched.store_id || (
+        matched.username === 'jayantha' ? 'store_2' :
+        matched.username === 'lahiru' ? 'store_1' :
+        (matched.username.startsWith('store_') ? matched.username : `store_${matched.username}`)
+      );
       const userObj: User = {
         id: matched.id,
         name: matched.name,
@@ -962,7 +967,7 @@ export default function App() {
         shop_name: matched.shop_name,
         phone_number: matched.phone_number,
         invoice_prefix: matched.invoice_prefix,
-        store_id: matched.store_id || (matched.username === 'jayantha' ? 'store_2' : 'store_1')
+        store_id: resolvedStoreId
       };
       setSessionUser(userObj);
       sessionStorage.setItem('kulubadu_active_session', JSON.stringify(userObj));
@@ -980,6 +985,42 @@ export default function App() {
     triggerToast('Securely logged out from POS session.', 'success');
   };
 
+  // Sync products and transactions immediately when active session user changes/logins
+  useEffect(() => {
+    if (!sessionUser) return;
+    const userStoreId = sessionUser.role === 'superuser'
+      ? undefined
+      : (sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : (sessionUser.username === 'lahiru' ? 'store_1' : (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`))));
+
+    async function syncUserDataOnLogin() {
+      try {
+        const client = createSupabaseClient();
+        if (!client) return;
+        const [supaProds, supaTx] = await Promise.all([
+          fetchProductsFromSupabase(userStoreId),
+          fetchTransactionsFromSupabase(userStoreId)
+        ]);
+
+        if (supaProds !== null) {
+          const mappedProds = supaProds.map(normalizeProduct);
+          setProducts(mappedProds);
+          localStorage.setItem('kulubadu_products', JSON.stringify(mappedProds));
+        }
+
+        if (supaTx !== null) {
+          const DEMO_IDS = ['S-260524-1001', 'S-260524-1002', 'B-260524-1001'];
+          const cleanSupaTx = supaTx.filter(tx => !DEMO_IDS.includes(tx.id));
+          setTransactions(cleanSupaTx);
+          localStorage.setItem('kulubadu_transactions', JSON.stringify(cleanSupaTx));
+        }
+      } catch (err) {
+        console.warn('Failed to sync data for user session:', err);
+      }
+    }
+
+    syncUserDataOnLogin();
+  }, [sessionUser?.username, sessionUser?.store_id]);
+
   // Periodic background syncing every 10 seconds to keep both devices in sync
   useEffect(() => {
     let intervalId: any;
@@ -990,7 +1031,9 @@ export default function App() {
         const client = createSupabaseClient();
         if (!client) return;
 
-        const activeStoreId = sessionUser?.role === 'superuser' ? undefined : (sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1'));
+        const activeStoreId = sessionUser?.role === 'superuser'
+          ? undefined
+          : (sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : undefined))));
 
         // Fetch products, transactions and users in background
         const [supaProds, supaTx, supaUsers] = await Promise.all([
