@@ -733,7 +733,7 @@ export default function App() {
             const savedUsersStr = localStorage.getItem('kulubadu_users');
             let localUsers: User[] = [];
             if (savedUsersStr) {
-              try { localUsers = JSON.parse(savedUsersStr); } catch {}
+              try { localUsers = JSON.parse(savedUsersStr); } catch { }
             }
             const userMap = new Map<string, User>();
             INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
@@ -744,12 +744,18 @@ export default function App() {
             merged.forEach(u => {
               u.store_id = u.store_id || (
                 u.username === 'jayantha' ? 'store_2' :
-                u.username === 'lahiru' ? 'store_1' :
-                (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
+                  u.username === 'lahiru' ? 'store_1' :
+                    (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
               );
             });
             setRegisteredUsers(merged);
             localStorage.setItem('kulubadu_users', JSON.stringify(merged));
+            // Push missing users to Supabase
+            merged.forEach(u => {
+              if (!supaUsers.some(su => su.username.toLowerCase() === u.username.toLowerCase())) {
+                pushUserToSupabase(u);
+              }
+            });
           } else {
             loadLocalUsers();
           }
@@ -816,8 +822,8 @@ export default function App() {
       merged.forEach(u => {
         u.store_id = u.store_id || (
           u.username === 'jayantha' ? 'store_2' :
-          u.username === 'lahiru' ? 'store_1' :
-          (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
+            u.username === 'lahiru' ? 'store_1' :
+              (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
         );
         if (!u.shop_name || u.shop_name.includes('Center')) {
           if (u.username === 'jayantha') {
@@ -840,34 +846,24 @@ export default function App() {
       const DEMO_IDS = ['S-260524-1001', 'S-260524-1002', 'B-260524-1001'];
       if (savedTx) {
         try {
-          const parsed = JSON.parse(savedTx) as Transaction[];
-          if (Array.isArray(parsed)) {
-            const normalized = parsed
-              .filter(tx => !DEMO_IDS.includes(tx.id))
-              .map(tx => ({
-                ...tx,
-                items: tx.items.map(it => ({
-                  ...it,
-                  productName: toSinhalaProductName(it.productName)
-                }))
-              }));
-            localStorage.setItem('kulubadu_transactions', JSON.stringify(normalized));
-            setTransactions(normalized);
+          let loaded = JSON.parse(savedTx) as Transaction[];
+          if (Array.isArray(loaded)) {
+            const cleanLoaded = loaded.filter(tx => !DEMO_IDS.includes(tx.id));
+            setTransactions(cleanLoaded);
+            localStorage.setItem('kulubadu_transactions', JSON.stringify(cleanLoaded));
             return;
           }
         } catch (e) {
           console.warn('Failed to parse kulubadu_transactions from localStorage:', e);
         }
       }
-      localStorage.setItem('kulubadu_transactions', JSON.stringify([]));
-      setTransactions([]);
+      const cleanInitial = INITIAL_TRANSACTIONS.filter(tx => !DEMO_IDS.includes(tx.id));
+      localStorage.setItem('kulubadu_transactions', JSON.stringify(cleanInitial));
+      setTransactions(cleanInitial);
     }
 
-    // Run the loader
-    setTimeout(() => {
-      loadInitialData();
-    }, 1000);
-  }, []);
+    loadInitialData();
+  }, [supabaseStatus]);
 
   // Update states helper functions
   const saveProductsToDb = (newProds: Product[]) => {
@@ -941,10 +937,10 @@ export default function App() {
     e.preventDefault();
     setLoginError('');
 
-    const cleanUser = loginUsername.trim().toLowerCase();
+    const rawUser = loginUsername.trim();
     const cleanPass = loginPassword.trim();
 
-    if (!cleanUser || !cleanPass) {
+    if (!rawUser || !cleanPass) {
       setLoginError('Both parameters are highly mandatory.');
       return;
     }
@@ -952,7 +948,7 @@ export default function App() {
     const savedUsersStr = localStorage.getItem('kulubadu_users');
     let localUsers: User[] = [];
     if (savedUsersStr) {
-      try { localUsers = JSON.parse(savedUsersStr); } catch {}
+      try { localUsers = JSON.parse(savedUsersStr); } catch { }
     }
 
     const userMap = new Map<string, User>();
@@ -960,9 +956,31 @@ export default function App() {
     localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
     registeredUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
 
-    let matched = Array.from(userMap.values()).find(
-      (u: any) => u.username.toLowerCase() === cleanUser && String(u.password).trim() === cleanPass
-    );
+    // Helper matcher to find user flexible by username, name, or store_id
+    const findMatchingUserInList = (list: User[]) => {
+      const targetStr = rawUser.toLowerCase();
+      const targetAlphaNum = targetStr.replace(/[^a-z0-9]/g, '');
+
+      return list.find((u: any) => {
+        const uName = (u.username || '').toLowerCase().trim();
+        const uStore = (u.store_id || '').toLowerCase().trim();
+        const uNameAlphaNum = uName.replace(/[^a-z0-9]/g, '');
+        const uStoreAlphaNum = uStore.replace(/[^a-z0-9]/g, '');
+
+        const nameMatches =
+          uName === targetStr ||
+          uNameAlphaNum === targetAlphaNum ||
+          uStore === targetStr ||
+          uStoreAlphaNum === targetAlphaNum ||
+          (targetAlphaNum === 'store3' && (uNameAlphaNum === 'store3' || uStoreAlphaNum === 'store3'));
+
+        const passMatches = String(u.password ?? '').trim() === cleanPass;
+
+        return nameMatches && passMatches;
+      });
+    };
+
+    let matched = findMatchingUserInList(Array.from(userMap.values()));
 
     if (!matched) {
       try {
@@ -973,9 +991,7 @@ export default function App() {
           setRegisteredUsers(updatedList);
           localStorage.setItem('kulubadu_users', JSON.stringify(updatedList));
 
-          matched = supaUsers.find(
-            (u: any) => u.username.toLowerCase() === cleanUser && String(u.password).trim() === cleanPass
-          );
+          matched = findMatchingUserInList(updatedList);
         }
       } catch (err) {
         console.warn('Live login fetch error:', err);
@@ -985,8 +1001,8 @@ export default function App() {
     if (matched) {
       const resolvedStoreId = matched.store_id || (
         matched.username === 'jayantha' ? 'store_2' :
-        matched.username === 'lahiru' ? 'store_1' :
-        (matched.username.startsWith('store_') ? matched.username : `store_${matched.username}`)
+          matched.username === 'lahiru' ? 'store_1' :
+            (matched.username.startsWith('store_') ? matched.username : `store_${matched.username}`)
       );
       const userObj: User = {
         id: matched.id,
@@ -1089,8 +1105,23 @@ export default function App() {
         }
 
         if (supaUsers && supaUsers.length > 0) {
-          setRegisteredUsers(supaUsers);
-          localStorage.setItem('kulubadu_users', JSON.stringify(supaUsers));
+          setRegisteredUsers(prev => {
+            const userMap = new Map<string, User>();
+            INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
+            prev.forEach(u => userMap.set(u.username.toLowerCase(), u));
+            supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+
+            const merged = Array.from(userMap.values());
+            merged.forEach(u => {
+              u.store_id = u.store_id || (
+                u.username === 'jayantha' ? 'store_2' :
+                  u.username === 'lahiru' ? 'store_1' :
+                    (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
+              );
+            });
+            localStorage.setItem('kulubadu_users', JSON.stringify(merged));
+            return merged;
+          });
         }
       } catch (err) {
         console.warn('Background sync failed quietly (re-trying in 10s):', err);
