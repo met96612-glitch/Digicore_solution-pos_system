@@ -57,7 +57,8 @@ import {
   Trash2,
   Plus,
   CreditCard,
-  Palette
+  Palette,
+  LogIn
 } from 'lucide-react';
 
 export default function App() {
