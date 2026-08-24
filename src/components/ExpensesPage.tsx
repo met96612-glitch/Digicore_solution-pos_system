@@ -222,8 +222,8 @@ export default function ExpensesPage({
           <button
             onClick={() => setSelectedCategoryFilter('ALL')}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${selectedCategoryFilter === 'ALL'
-                ? 'bg-rose-600 text-white shadow-md'
-                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+              ? 'bg-rose-600 text-white shadow-md'
+              : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
               }`}
           >
             සියලු වර්ග
@@ -233,8 +233,8 @@ export default function ExpensesPage({
               key={cat.id}
               onClick={() => setSelectedCategoryFilter(cat.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${selectedCategoryFilter === cat.id
-                  ? 'bg-rose-600 text-white shadow-md'
-                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                ? 'bg-rose-600 text-white shadow-md'
+                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
                 }`}
             >
               {cat.label.split('(')[0]}
@@ -427,8 +427,8 @@ export default function ExpensesPage({
                         key={cat.id}
                         onClick={() => setCategory(cat.id)}
                         className={`flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-left transition-all border cursor-pointer ${isSelected
-                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-md'
-                            : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200'
+                          ? 'bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-md'
+                          : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:text-slate-200'
                           }`}
                       >
                         <Icon size={15} className={isSelected ? 'text-rose-400' : 'text-slate-500'} />

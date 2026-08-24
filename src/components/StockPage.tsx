@@ -256,8 +256,8 @@ export default function StockPage({
             <button
               onClick={() => setActiveTab('levels')}
               className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${activeTab === 'levels'
-                  ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
+                : 'text-slate-400 hover:text-slate-200'
                 }`}
             >
               <Layers size={14} className="shrink-0" />
@@ -267,8 +267,8 @@ export default function StockPage({
             <button
               onClick={() => setActiveTab('adjustments')}
               className={`px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center ${activeTab === 'adjustments'
-                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                : 'text-slate-400 hover:text-slate-200'
                 }`}
             >
               <TrendingDown size={14} className="shrink-0" />
@@ -349,8 +349,8 @@ export default function StockPage({
                       key={btn}
                       onClick={() => setFilter(btn)}
                       className={`flex-1 sm:flex-none px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition-all uppercase select-none cursor-pointer ${filter === btn
-                          ? 'bg-violet-600/20 text-violet-400 border border-violet-800/40'
-                          : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                        ? 'bg-violet-600/20 text-violet-400 border border-violet-800/40'
+                        : 'text-slate-400 hover:text-slate-200 border border-transparent'
                         }`}
                     >
                       {btn}
@@ -378,10 +378,10 @@ export default function StockPage({
                         <span className="text-[10px] text-slate-400 uppercase font-mono">ඒකකය: {row.unit}</span>
                       </div>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase select-none shrink-0 ${row.status === 'ok'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
-                          : row.status === 'low'
-                            ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
-                            : 'bg-red-500/10 text-red-500 border border-red-500/15'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
+                        : row.status === 'low'
+                          ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
+                          : 'bg-red-500/10 text-red-500 border border-red-500/15'
                         }`}>
                         {row.status === 'ok' && <ShieldCheck size={10} />}
                         {row.status !== 'ok' && <AlertTriangle size={10} />}
@@ -486,10 +486,10 @@ export default function StockPage({
                         {/* Overall Health */}
                         <td className="p-4 text-center">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold uppercase select-none ${row.status === 'ok'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
-                              : row.status === 'low'
-                                ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
-                                : 'bg-red-500/10 text-red-500 border border-red-500/15'
+                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/15'
+                            : row.status === 'low'
+                              ? 'bg-amber-500/10 text-amber-500 border border-amber-500/15'
+                              : 'bg-red-500/10 text-red-500 border border-red-500/15'
                             }`}>
                             {row.status === 'ok' && <ShieldCheck size={11} />}
                             {row.status !== 'ok' && <AlertTriangle size={11} />}
@@ -625,8 +625,8 @@ export default function StockPage({
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${adj.desk === 'jayantha'
-                                ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40'
-                                : 'bg-violet-950 text-violet-400 border border-violet-800/40'
+                              ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40'
+                              : 'bg-violet-950 text-violet-400 border border-violet-800/40'
                               }`}>
                               {adj.desk === 'jayantha' ? 'ජයන්තා' : 'ළහිරු'}
                             </span>
@@ -738,8 +738,8 @@ export default function StockPage({
                           </td>
                           <td className="p-3.5 text-center whitespace-nowrap">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${adj.desk === 'jayantha'
-                                ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40'
-                                : 'bg-violet-950 text-violet-400 border border-violet-800/40'
+                              ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40'
+                              : 'bg-violet-950 text-violet-400 border border-violet-800/40'
                               }`}>
                               {adj.desk === 'jayantha' ? 'ජයන්තා' : 'ළහිරු'}
                             </span>
@@ -850,8 +850,8 @@ export default function StockPage({
                     type="button"
                     onClick={() => setSelectedDesk('lahiru')}
                     className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'lahiru'
-                        ? 'bg-violet-950/40 border-violet-500 text-violet-300 ring-1 ring-violet-500'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      ? 'bg-violet-950/40 border-violet-500 text-violet-300 ring-1 ring-violet-500'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
                       }`}
                   >
                     <span>ළහිරු තොගය (Lahiru)</span>
@@ -864,8 +864,8 @@ export default function StockPage({
                     type="button"
                     onClick={() => setSelectedDesk('jayantha')}
                     className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'jayantha'
-                        ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                      ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
                       }`}
                   >
                     <span>ජයන්තා තොගය (Jayantha)</span>
@@ -888,8 +888,8 @@ export default function StockPage({
                       type="button"
                       onClick={() => setSelectedReason(meta.value)}
                       className={`p-2.5 rounded-xl border text-left text-xs transition-all cursor-pointer ${selectedReason === meta.value
-                          ? 'bg-amber-950/40 border-amber-500 text-amber-300 font-bold ring-1 ring-amber-500'
-                          : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-amber-950/40 border-amber-500 text-amber-300 font-bold ring-1 ring-amber-500'
+                        : 'bg-slate-950/70 border-slate-800 text-slate-400 hover:text-slate-200'
                         }`}
                     >
                       <div className="flex items-center gap-2">
@@ -927,8 +927,8 @@ export default function StockPage({
                         type="button"
                         onClick={() => setAdjustmentUnit('kg')}
                         className={`px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${adjustmentUnit === 'kg'
-                            ? 'bg-amber-600 text-white'
-                            : 'text-slate-400 hover:text-slate-200'
+                          ? 'bg-amber-600 text-white'
+                          : 'text-slate-400 hover:text-slate-200'
                           }`}
                       >
                         kg
@@ -937,8 +937,8 @@ export default function StockPage({
                         type="button"
                         onClick={() => setAdjustmentUnit('g')}
                         className={`px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${adjustmentUnit === 'g'
-                            ? 'bg-amber-600 text-white'
-                            : 'text-slate-400 hover:text-slate-200'
+                          ? 'bg-amber-600 text-white'
+                          : 'text-slate-400 hover:text-slate-200'
                           }`}
                       >
                         g

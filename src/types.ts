@@ -92,6 +92,7 @@ export interface OpeningCashLog {
   timestamp: string;
   amount: number;
   addedBy: string; // username of operator e.g. lahiru, jayantha
+  store_id?: string;
 }
 
 export interface Expense {
@@ -102,6 +103,7 @@ export interface Expense {
   amount: number;
   addedBy: string; // username of user who recorded it
   note?: string;
+  store_id?: string;
 }
 
 export interface ShopProfile {

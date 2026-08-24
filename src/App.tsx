@@ -125,11 +125,13 @@ export default function App() {
   });
 
   const addExpense = (expData: Omit<Expense, 'id' | 'date' | 'addedBy'>) => {
+    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1');
     const newExpense: Expense = {
       ...expData,
       id: `EXP-${Date.now()}`,
       date: new Date().toISOString(),
-      addedBy: sessionUser?.username || 'cashier'
+      addedBy: sessionUser?.username || 'cashier',
+      store_id: userStore
     };
     setExpenses(prev => {
       const updated = [newExpense, ...prev];
@@ -386,16 +388,20 @@ export default function App() {
     return () => clearInterval(interval);
   }, [todayDateString]);
 
+  const isSharedStore = (sId?: string) => !sId || sId === 'store_1' || sId === 'store_2';
+
   const addOpeningCash = (amount: number, userOverride?: string) => {
     if (isNaN(amount) || amount <= 0) return;
     const username = userOverride || sessionUser?.username || 'admin';
+    const userStore = sessionUser?.store_id || (username === 'jayantha' ? 'store_2' : 'store_1');
     const dateStr = todayDateString;
     const newLog: OpeningCashLog = {
       id: `OC-${Date.now()}`,
       date: dateStr,
       timestamp: new Date().toISOString(),
       amount: amount,
-      addedBy: username
+      addedBy: username,
+      store_id: userStore
     };
 
     setOpeningCashLogs(prev => {
@@ -434,35 +440,89 @@ export default function App() {
     if (sessionUser.role === 'superuser' || sessionUser.role === 'admin') {
       return transactions;
     }
-    if (sessionUser.username === 'lahiru') {
-      return transactions.filter(tx => !tx.id.startsWith('J-'));
+    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    if (isSharedStore(userStore)) {
+      if (sessionUser.username === 'lahiru') {
+        return transactions.filter(tx => !tx.id.startsWith('J-'));
+      }
+      if (sessionUser.username === 'jayantha') {
+        return transactions.filter(tx => tx.id.startsWith('J-'));
+      }
+      return transactions.filter(tx => !tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2');
     }
-    if (sessionUser.username === 'jayantha') {
-      return transactions.filter(tx => tx.id.startsWith('J-'));
-    }
-    return transactions;
+    return transactions.filter(tx => tx.store_id === userStore || tx.createdBy === sessionUser.username);
   }, [transactions, sessionUser]);
+
+  const drawerTransactions = useMemo(() => {
+    if (!sessionUser) return [];
+    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    if (sessionUser.role === 'superuser') {
+      return transactions;
+    }
+    if (isSharedStore(userStoreId)) {
+      return transactions.filter(tx => !tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2' || tx.createdBy === 'lahiru' || tx.createdBy === 'jayantha');
+    }
+    return transactions.filter(tx => tx.store_id === userStoreId || tx.createdBy === sessionUser.username);
+  }, [transactions, sessionUser]);
+
+  const drawerOpeningCashLogs = useMemo(() => {
+    if (!sessionUser) return [];
+    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    if (sessionUser.role === 'superuser') {
+      return openingCashLogs;
+    }
+    if (isSharedStore(userStoreId)) {
+      return openingCashLogs.filter(l => !l.store_id || l.store_id === 'store_1' || l.store_id === 'store_2' || l.addedBy === 'lahiru' || l.addedBy === 'jayantha' || l.addedBy === 'admin' || l.addedBy === 'cashier');
+    }
+    return openingCashLogs.filter(l => l.store_id === userStoreId || l.addedBy === sessionUser.username);
+  }, [openingCashLogs, sessionUser]);
+
+  const drawerExpenses = useMemo(() => {
+    if (!sessionUser) return [];
+    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    if (sessionUser.role === 'superuser') {
+      return expenses;
+    }
+    if (isSharedStore(userStoreId)) {
+      return expenses.filter(e => !e.store_id || e.store_id === 'store_1' || e.store_id === 'store_2' || e.addedBy === 'lahiru' || e.addedBy === 'jayantha' || e.addedBy === 'admin' || e.addedBy === 'cashier');
+    }
+    return expenses.filter(e => e.store_id === userStoreId || e.addedBy === sessionUser.username);
+  }, [expenses, sessionUser]);
 
   const filteredOpeningCashLogs = useMemo(() => {
     if (!sessionUser) return [];
-    if (sessionUser.username === 'lahiru') {
-      return openingCashLogs.filter(l => l.addedBy === 'lahiru' || l.addedBy === 'admin' || l.addedBy === 'cashier');
+    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    if (sessionUser.role === 'superuser' || sessionUser.role === 'admin') {
+      return openingCashLogs;
     }
-    if (sessionUser.username === 'jayantha') {
-      return openingCashLogs.filter(l => l.addedBy === 'jayantha');
+    if (isSharedStore(userStoreId)) {
+      if (sessionUser.username === 'lahiru') {
+        return openingCashLogs.filter(l => l.addedBy === 'lahiru' || l.addedBy === 'admin' || l.addedBy === 'cashier' || l.store_id === 'store_1');
+      }
+      if (sessionUser.username === 'jayantha') {
+        return openingCashLogs.filter(l => l.addedBy === 'jayantha' || l.store_id === 'store_2');
+      }
+      return openingCashLogs.filter(l => !l.store_id || l.store_id === 'store_1' || l.store_id === 'store_2');
     }
-    return openingCashLogs;
+    return openingCashLogs.filter(l => l.store_id === userStoreId || l.addedBy === sessionUser.username);
   }, [openingCashLogs, sessionUser]);
 
   const filteredExpenses = useMemo(() => {
     if (!sessionUser) return [];
-    if (sessionUser.username === 'lahiru') {
-      return expenses.filter(e => e.addedBy !== 'jayantha');
+    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
+    if (sessionUser.role === 'superuser') {
+      return expenses;
     }
-    if (sessionUser.username === 'jayantha') {
-      return expenses.filter(e => e.addedBy === 'jayantha');
+    if (isSharedStore(userStoreId)) {
+      if (sessionUser.username === 'lahiru') {
+        return expenses.filter(e => e.addedBy !== 'jayantha' || e.store_id === 'store_1');
+      }
+      if (sessionUser.username === 'jayantha') {
+        return expenses.filter(e => e.addedBy === 'jayantha' || e.store_id === 'store_2');
+      }
+      return expenses.filter(e => !e.store_id || e.store_id === 'store_1' || e.store_id === 'store_2');
     }
-    return expenses;
+    return expenses.filter(e => e.store_id === userStoreId || e.addedBy === sessionUser.username);
   }, [expenses, sessionUser]);
 
   const filteredStockAdjustments = useMemo(() => {
@@ -494,14 +554,12 @@ export default function App() {
   };
 
   const todayCashSales = useMemo(() => {
-    // 1. Regular sales where payment_method is Cash (Combined across all users for shared cash drawer)
-    const directCashSales = transactions
+    const directCashSales = drawerTransactions
       .filter(tx => tx.type === 'sell' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
       .reduce((sum, tx) => sum + tx.total, 0);
 
-    // 2. Down payments or credit recoveries received in Cash today
     let creditCashRecovered = 0;
-    transactions.forEach(tx => {
+    drawerTransactions.forEach(tx => {
       if (tx.type === 'sell' && tx.credit_payments) {
         tx.credit_payments.forEach(pay => {
           if (isToday(pay.date) && pay.payment_method === 'Cash') {
@@ -512,16 +570,14 @@ export default function App() {
     });
 
     return directCashSales + creditCashRecovered;
-  }, [transactions, todayDateString]);
+  }, [drawerTransactions, todayDateString]);
 
   const todayBuysTotal = useMemo(() => {
-    // 1. Regular purchases paid in Cash today (Combined across all users for shared cash drawer)
-    let cashSpentOnBuys = transactions
+    let cashSpentOnBuys = drawerTransactions
       .filter(tx => tx.type === 'buy' && (tx.payment_method === 'Cash' || !tx.payment_method) && isToday(tx.date))
       .reduce((sum, tx) => sum + tx.total, 0);
 
-    // 2. Down payments or supplier credit payments made in Cash today
-    transactions.forEach(tx => {
+    drawerTransactions.forEach(tx => {
       if (tx.type === 'buy' && tx.credit_payments) {
         tx.credit_payments.forEach(pay => {
           if (isToday(pay.date) && pay.payment_method === 'Cash') {
@@ -532,41 +588,44 @@ export default function App() {
     });
 
     return cashSpentOnBuys;
-  }, [transactions, todayDateString]);
+  }, [drawerTransactions, todayDateString]);
 
   const todayExpensesTotal = useMemo(() => {
-    return expenses
+    return drawerExpenses
       .filter(exp => isToday(exp.date))
       .reduce((sum, exp) => sum + exp.amount, 0);
-  }, [expenses, todayDateString]);
+  }, [drawerExpenses, todayDateString]);
 
   const todayOpeningCashTotal = useMemo(() => {
-    const todayLogs = openingCashLogs.filter(l => isToday(l.date));
+    const todayLogs = drawerOpeningCashLogs.filter(l => isToday(l.date));
     return todayLogs.reduce((sum, l) => sum + l.amount, 0);
-  }, [openingCashLogs, todayDateString]);
+  }, [drawerOpeningCashLogs, todayDateString]);
 
   const currentDrawerBalance = todayOpeningCashTotal + todayCashSales - todayExpensesTotal - todayBuysTotal;
 
   const activeModalDrawerData = useMemo(() => {
-    let targetLogs = openingCashLogs;
-    let targetTx = transactions;
-    let targetExp = expenses;
-    let username = 'shared_drawer';
-    let name = 'Shared Cash Drawer (පොදු ලච්චුව)';
+    const userStoreId = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1');
+    let targetLogs = drawerOpeningCashLogs;
+    let targetTx = drawerTransactions;
+    let targetExp = drawerExpenses;
+    let username = sessionUser?.username || 'user';
+    let name = isSharedStore(userStoreId)
+      ? 'Shared Cash Drawer (store_1 & store_2 - පොදු ලච්චුව)'
+      : `${sessionUser?.shop_name || userStoreId.toUpperCase()} Cash Drawer`;
 
     if ((sessionUser?.role === 'superuser' || sessionUser?.role === 'admin') && drawerUserFilter !== 'my') {
       if (drawerUserFilter === 'lahiru') {
         username = 'lahiru';
         name = 'Lahiru Spices Cash Audit';
-        targetLogs = openingCashLogs.filter(l => l.addedBy === 'lahiru');
-        targetTx = transactions.filter(tx => tx.id.startsWith('L-') || tx.createdBy === 'lahiru');
-        targetExp = expenses.filter(e => e.addedBy === 'lahiru');
+        targetLogs = openingCashLogs.filter(l => l.addedBy === 'lahiru' || l.store_id === 'store_1');
+        targetTx = transactions.filter(tx => tx.id.startsWith('L-') || tx.createdBy === 'lahiru' || tx.store_id === 'store_1');
+        targetExp = expenses.filter(e => e.addedBy === 'lahiru' || e.store_id === 'store_1');
       } else if (drawerUserFilter === 'jayantha') {
         username = 'jayantha';
         name = 'Jayantha Spices Cash Audit';
-        targetLogs = openingCashLogs.filter(l => l.addedBy === 'jayantha');
-        targetTx = transactions.filter(tx => tx.id.startsWith('J-') || tx.createdBy === 'jayantha');
-        targetExp = expenses.filter(e => e.addedBy === 'jayantha');
+        targetLogs = openingCashLogs.filter(l => l.addedBy === 'jayantha' || l.store_id === 'store_2');
+        targetTx = transactions.filter(tx => tx.id.startsWith('J-') || tx.createdBy === 'jayantha' || tx.store_id === 'store_2');
+        targetExp = expenses.filter(e => e.addedBy === 'jayantha' || e.store_id === 'store_2');
       }
     }
 
@@ -619,7 +678,7 @@ export default function App() {
       balance,
       todayBuysList: targetTx.filter(tx => tx.type === 'buy' && isToday(tx.date))
     };
-  }, [sessionUser, drawerUserFilter, openingCashLogs, transactions, expenses, todayDateString]);
+  }, [sessionUser, drawerUserFilter, drawerOpeningCashLogs, drawerTransactions, drawerExpenses, openingCashLogs, transactions, expenses, todayDateString]);
 
   // Initial local initialization
   useEffect(() => {

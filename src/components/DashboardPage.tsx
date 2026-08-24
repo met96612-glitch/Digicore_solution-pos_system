@@ -714,8 +714,8 @@ export default function DashboardPage({
           <button
             onClick={setToday}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${isLiveToday
-                ? 'bg-emerald-600 text-white shadow-md border border-emerald-500/40'
-                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+              ? 'bg-emerald-600 text-white shadow-md border border-emerald-500/40'
+              : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
               }`}
           >
             <Sparkles size={13} className={isLiveToday ? 'text-emerald-200' : 'text-slate-400'} />
@@ -725,8 +725,8 @@ export default function DashboardPage({
           <button
             onClick={setYesterday}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${!isLiveToday && selectedDate === getLocalTodayDateString(new Date(Date.now() - 86400000))
-                ? 'bg-indigo-600 text-white shadow-md border border-indigo-500/40'
-                : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+              ? 'bg-indigo-600 text-white shadow-md border border-indigo-500/40'
+              : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
               }`}
           >
             <span>ඊයේ (Yesterday)</span>
@@ -786,8 +786,8 @@ export default function DashboardPage({
             <button
               onClick={() => setSelectedAccount('lahiru')}
               className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${selectedAccount === 'lahiru'
-                  ? 'bg-emerald-600 text-white shadow-lg border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-emerald-600 text-white shadow-lg border border-emerald-500/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
             >
               <Store size={14} />
@@ -797,8 +797,8 @@ export default function DashboardPage({
             <button
               onClick={() => setSelectedAccount('jayantha')}
               className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${selectedAccount === 'jayantha'
-                  ? 'bg-teal-600 text-white shadow-lg border border-teal-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-teal-600 text-white shadow-lg border border-teal-500/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
             >
               <Store size={14} />
@@ -808,8 +808,8 @@ export default function DashboardPage({
             <button
               onClick={() => setSelectedAccount('all')}
               className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${selectedAccount === 'all'
-                  ? 'bg-indigo-600 text-white shadow-lg border border-indigo-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                ? 'bg-indigo-600 text-white shadow-lg border border-indigo-500/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                 }`}
             >
               <Users size={14} />
@@ -1251,8 +1251,8 @@ export default function DashboardPage({
                     <td className="p-3.5 text-slate-400">{formatDateString(tx.date)}</td>
                     <td className="p-3.5">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${tx.type === 'sell' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                          tx.type === 'buy' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                            'bg-red-500/10 text-red-400 border border-red-500/20'
+                        tx.type === 'buy' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                          'bg-red-500/10 text-red-400 border border-red-500/20'
                         }`}>
                         {tx.type}
                       </span>

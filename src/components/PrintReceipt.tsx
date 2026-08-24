@@ -136,12 +136,12 @@ function generateDirectReceiptCanvas(
   const is80 = paperSize === '80mm';
   const width = is80 ? 576 : 384; // 576px for 80mm, 384px for 58mm
 
-  const headerH = is80 ? 360 : 240;
+  const headerH = is80 ? 360 : 280;
   const deductionCount = transaction.items.filter(it => it.deductionQty && it.deductionQty > 0).length;
   const itemsH = transaction.items.length * (is80 ? 68 : 46) + deductionCount * (is80 ? 25 : 16) + (is80 ? 50 : 35);
   const totalsH = transaction.discount > 0 ? (is80 ? 180 : 125) : (is80 ? 140 : 95);
   const footerH = is80 ? 100 : 70;
-  const totalH = headerH + itemsH + totalsH + footerH;
+  const totalH = headerH + itemsH + totalsH + footerH + 40;
 
   canvas.width = width;
   canvas.height = totalH;
@@ -168,26 +168,26 @@ function generateDirectReceiptCanvas(
     cashierName
   } = resolveShopHeaderDetails(transaction, shopProfile);
 
-  // Shop Title: 35px Bold
-  ctx.font = is80 ? 'bold 35px sans-serif' : 'bold 23px sans-serif';
+  // Shop Title: 35px Bold on 80mm, 20px Bold on 58mm
+  ctx.font = is80 ? 'bold 35px sans-serif' : 'bold 20px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(shopName, width / 2, y);
-  y += is80 ? 42 : 28;
+  y += is80 ? 42 : 26;
 
-  // සිංහල නාමය, ලිපිනය සහ දුරකථන: 26px - 28px Bold
+  // සිංහල නාමය, ලිපිනය සහ දුරකථන
   if (shopSinhala) {
-    ctx.font = is80 ? 'bold 27px sans-serif' : 'bold 18px sans-serif';
+    ctx.font = is80 ? 'bold 27px sans-serif' : 'bold 16px sans-serif';
     ctx.fillText(shopSinhala, width / 2, y);
     y += is80 ? 34 : 22;
   }
 
   if (shopAddress) {
-    ctx.font = is80 ? 'bold 26px sans-serif' : 'bold 17px sans-serif';
+    ctx.font = is80 ? 'bold 26px sans-serif' : 'bold 15px sans-serif';
     ctx.fillText(`📍 ${shopAddress}`, width / 2, y);
     y += is80 ? 32 : 20;
   }
   if (shopPhone) {
-    ctx.font = is80 ? 'bold 26px sans-serif' : 'bold 17px sans-serif';
+    ctx.font = is80 ? 'bold 26px sans-serif' : 'bold 15px sans-serif';
     ctx.fillText(`📞 ${shopPhone}`, width / 2, y);
     y += is80 ? 34 : 22;
   }
@@ -195,8 +195,8 @@ function generateDirectReceiptCanvas(
   drawDottedLine(ctx, y, width);
   y += is80 ? 16 : 10;
 
-  // Transaction Info - 24px
-  ctx.font = is80 ? '24px sans-serif' : '16px sans-serif';
+  // Transaction Info
+  ctx.font = is80 ? '24px sans-serif' : '15px sans-serif';
   const rowLineH = is80 ? 30 : 20;
   y = drawLeftRightRow(ctx, 'BILL INVOICE NO:', transaction.id, y, width, rowLineH);
   y = drawLeftRightRow(ctx, 'DATE & TIME:', formatDateString(transaction.date), y, width, rowLineH);
@@ -229,7 +229,7 @@ function generateDirectReceiptCanvas(
   y += is80 ? 16 : 10;
 
   // Item Details Header
-  ctx.font = is80 ? 'bold 22px sans-serif' : 'bold 15px sans-serif';
+  ctx.font = is80 ? 'bold 22px sans-serif' : 'bold 14px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText('ITEM DETAILS (DESCRIPTION & QTY)', 12, y);
   ctx.textAlign = 'right';
@@ -545,22 +545,20 @@ export default function PrintReceipt({ transaction, shopProfile, onClose, onToas
             <button
               type="button"
               onClick={() => setPaperSize('80mm')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                paperSize === '80mm'
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${paperSize === '80mm'
                   ? 'bg-violet-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
+                }`}
             >
               <span>📄 80mm Wide (Standard POS)</span>
             </button>
             <button
               type="button"
               onClick={() => setPaperSize('58mm')}
-              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                paperSize === '58mm'
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${paperSize === '58mm'
                   ? 'bg-violet-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-              }`}
+                }`}
             >
               <span>📱 58mm Mobile</span>
             </button>
@@ -569,9 +567,8 @@ export default function PrintReceipt({ transaction, shopProfile, onClose, onToas
             {/* Thermal Slip Visual Preview */}
             <div
               id="thermalReceipt"
-              className={`bg-slate-50 text-slate-900 py-6 rounded-xl font-mono leading-normal shadow-lg mx-auto border border-slate-200 select-all transition-all ${
-                paperSize === '80mm' ? 'receipt-80mm px-5 text-xs' : 'receipt-58mm px-3 text-[10px]'
-              }`}
+              className={`bg-slate-50 text-slate-900 py-6 rounded-xl font-mono leading-normal shadow-lg mx-auto border border-slate-200 select-all transition-all ${paperSize === '80mm' ? 'receipt-80mm px-5 text-xs' : 'receipt-58mm px-3 text-[10px]'
+                }`}
             >
               {/* Header Info */}
               <div className="text-center space-y-1">
