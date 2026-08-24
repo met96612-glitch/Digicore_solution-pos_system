@@ -14,6 +14,7 @@ export interface User {
   shop_name?: string;
   phone_number?: string;
   invoice_prefix?: string;
+  store_id?: string;
 }
 
 export interface Product {
@@ -29,6 +30,7 @@ export interface Product {
   buying_price: number;
   wholesale_price: number;
   retail_price: number;
+  store_id?: string;
 }
 
 export interface TransactionItem {
@@ -74,6 +76,7 @@ export interface Transaction {
   credit_status?: 'pending' | 'partially_paid' | 'paid';
   credit_paid_amount?: number;
   credit_payments?: CreditPaymentLog[];
+  store_id?: string;
 }
 
 export interface TodayStats {

@@ -81,7 +81,7 @@ export interface SummaryReportPayload {
     date: string;
     amount: number;
     addedBy: string;
-    timestamp: number;
+    timestamp: number | string;
     note?: string;
   }>;
   openingCashUserSummary?: Array<{

@@ -752,6 +752,7 @@ export default function App() {
               setRegisteredUsers(merged);
             } else {
               loadedUsers.forEach(u => {
+                u.store_id = u.store_id || (u.username === 'jayantha' ? 'store_2' : 'store_1');
                 if (!u.shop_name || u.shop_name.includes('Center')) {
                   if (u.username === 'jayantha') {
                     u.shop_name = 'Jayantha Spice Collectors';
@@ -898,7 +899,8 @@ export default function App() {
         role: matched.role,
         shop_name: matched.shop_name,
         phone_number: matched.phone_number,
-        invoice_prefix: matched.invoice_prefix
+        invoice_prefix: matched.invoice_prefix,
+        store_id: matched.store_id || (matched.username === 'jayantha' ? 'store_2' : 'store_1')
       };
       setSessionUser(userObj);
       sessionStorage.setItem('kulubadu_active_session', JSON.stringify(userObj));
@@ -969,7 +971,10 @@ export default function App() {
   }, [supabaseStatus]);
 
   // Inventory logic updating stocks
-  const recordNewReturnTx = async (tx: Transaction) => {
+  const recordNewReturnTx = async (rawTx: Transaction) => {
+    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || (rawTx.id.startsWith('J-') || rawTx.id.startsWith('J') || rawTx.user_id === 'u4' || rawTx.createdBy === 'jayantha' ? 'store_2' : 'store_1');
+    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach };
+
     // 1. Fetch latest products from Supabase if connected
     let latestProducts = [...products];
     const client = createSupabaseClient();
@@ -1033,7 +1038,10 @@ export default function App() {
     setReceiptTx(tx); // Auto trigger print preview
   };
 
-  const recordNewSaleTx = async (tx: Transaction) => {
+  const recordNewSaleTx = async (rawTx: Transaction) => {
+    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || (rawTx.id.startsWith('J-') || rawTx.id.startsWith('J') || rawTx.user_id === 'u4' || rawTx.createdBy === 'jayantha' ? 'store_2' : 'store_1');
+    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach };
+
     if (tx.type === 'return') {
       return recordNewReturnTx(tx);
     }
@@ -1102,7 +1110,10 @@ export default function App() {
     setReceiptTx(tx); // Auto trigger print previews for cashiers
   };
 
-  const recordNewBuyTx = async (tx: Transaction) => {
+  const recordNewBuyTx = async (rawTx: Transaction) => {
+    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || (rawTx.id.startsWith('J-') || rawTx.id.startsWith('J') || rawTx.user_id === 'u4' || rawTx.createdBy === 'jayantha' ? 'store_2' : 'store_1');
+    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach };
+
     // 1. Fetch latest products from Supabase if connected to prevent overwriting other operator's stock changes
     let latestProducts = [...products];
     const client = createSupabaseClient();

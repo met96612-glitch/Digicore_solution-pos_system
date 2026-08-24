@@ -87,7 +87,8 @@ export async function syncDataToSupabase(
         wholesale_price: prod.wholesale_price ?? (prod.sellPrice * 0.9),
         retail_price: prod.retail_price ?? prod.sellPrice ?? 0,
         category: prod.category || 'Spices',
-        image: prod.image || ''
+        image: prod.image || '',
+        store_id: prod.store_id || ''
       });
       if (error) {
         log += `⚠️ Product sync error for ${prod.name}: ${error.message}\n`;
@@ -134,7 +135,8 @@ export async function syncDataToSupabase(
         is_wholesale: tx.is_wholesale ?? false,
         credit_status: tx.credit_status || defaultStatus,
         credit_paid_amount: creditPaidAmt,
-        credit_payments: tx.credit_payments ? (typeof tx.credit_payments === 'string' ? tx.credit_payments : JSON.stringify(tx.credit_payments)) : null
+        credit_payments: tx.credit_payments ? (typeof tx.credit_payments === 'string' ? tx.credit_payments : JSON.stringify(tx.credit_payments)) : null,
+        store_id: tx.store_id || ''
       });
       if (error) {
         log += `⚠️ Transaction sync error for ${tx.id}: ${error.message}\n`;
@@ -155,7 +157,8 @@ export async function syncDataToSupabase(
         password: u.password,
         shop_name: u.shop_name || '',
         phone_number: u.phone_number || '',
-        invoice_prefix: u.invoice_prefix || ''
+        invoice_prefix: u.invoice_prefix || '',
+        store_id: u.store_id || (u.username === 'jayantha' ? 'store_2' : 'store_1')
       });
       if (error) {
         log += `⚠️ User sync error for ${u.username}: ${error.message}\n`;
@@ -239,7 +242,8 @@ export async function pushProductToSupabase(prodOrProds: any) {
       wholesale_price: prod.wholesale_price ?? (prod.sellPrice * 0.9),
       retail_price: prod.retail_price ?? prod.sellPrice ?? 0,
       category: prod.category || 'Spices',
-      image: prod.image || ''
+      image: prod.image || '',
+      store_id: prod.store_id || ''
     }));
 
     const { error } = await safeUpsert(client, 'products', records);
@@ -300,7 +304,8 @@ export async function pushTransactionToSupabase(tx: any) {
       is_wholesale: tx.is_wholesale ?? false,
       credit_status: tx.credit_status || defaultStatus,
       credit_paid_amount: creditPaidAmt,
-      credit_payments: tx.credit_payments ? (typeof tx.credit_payments === 'string' ? tx.credit_payments : JSON.stringify(tx.credit_payments)) : null
+      credit_payments: tx.credit_payments ? (typeof tx.credit_payments === 'string' ? tx.credit_payments : JSON.stringify(tx.credit_payments)) : null,
+      store_id: tx.store_id || ''
     });
     if (error) {
       console.error(`Supabase transaction upsert error for ${tx.id}:`, error.message, error.details, error);
@@ -332,7 +337,8 @@ export async function pushUserToSupabase(u: any) {
       password: u.password,
       shop_name: u.shop_name || '',
       phone_number: u.phone_number || '',
-      invoice_prefix: u.invoice_prefix || ''
+      invoice_prefix: u.invoice_prefix || '',
+      store_id: u.store_id || (u.username === 'jayantha' ? 'store_2' : 'store_1')
     });
     if (error) {
       console.error(`Supabase user upsert error for ${u.username}:`, error.message, error.details, error);
@@ -432,7 +438,8 @@ export async function resetProductsInSupabase(productsList: any[]) {
         wholesale_price: prod.wholesale_price ?? (prod.sellPrice * 0.9),
         retail_price: prod.retail_price ?? prod.sellPrice ?? 0,
         category: prod.category || 'Spices',
-        image: prod.image || ''
+        image: prod.image || '',
+        store_id: prod.store_id || ''
       }));
       await safeUpsert(client, 'products', records);
     }
@@ -462,7 +469,8 @@ export async function resetUsersInSupabase(usersList: any[]) {
         password: u.password,
         shop_name: u.shop_name || '',
         phone_number: u.phone_number || '',
-        invoice_prefix: u.invoice_prefix || ''
+        invoice_prefix: u.invoice_prefix || '',
+        store_id: u.store_id || (u.username === 'jayantha' ? 'store_2' : 'store_1')
       }));
       await safeUpsert(client, 'users', records);
     }
@@ -494,14 +502,19 @@ export function normalizeProduct(p: any): any {
     buying_price: Number(p.buying_price ?? buyPrice),
     wholesale_price: Number(p.wholesale_price ?? (sellPrice * 0.9)),
     retail_price: Number(p.retail_price ?? sellPrice),
+    store_id: p.store_id || '',
   };
 }
 
-export async function fetchProductsFromSupabase(): Promise<any[] | null> {
+export async function fetchProductsFromSupabase(storeId?: string): Promise<any[] | null> {
   const client = createSupabaseClient();
   if (!client) return null;
   try {
-    const { data, error } = await client.from('products').select('*');
+    let query = client.from('products').select('*');
+    if (storeId) {
+      query = query.eq('store_id', storeId);
+    }
+    const { data, error } = await query;
     if (error) {
       console.warn('Failed to fetch products from Supabase:', error.message || error);
       return null;
@@ -514,11 +527,15 @@ export async function fetchProductsFromSupabase(): Promise<any[] | null> {
   }
 }
 
-export async function fetchTransactionsFromSupabase(): Promise<any[] | null> {
+export async function fetchTransactionsFromSupabase(storeId?: string): Promise<any[] | null> {
   const client = createSupabaseClient();
   if (!client) return null;
   try {
-    const { data, error } = await client.from('transactions').select('*');
+    let query = client.from('transactions').select('*');
+    if (storeId) {
+      query = query.eq('store_id', storeId);
+    }
+    const { data, error } = await query;
     if (error) {
       console.warn('Failed to fetch transactions from Supabase:', error.message || error);
       return null;
@@ -558,6 +575,7 @@ export async function fetchTransactionsFromSupabase(): Promise<any[] | null> {
 
       return {
         ...tx,
+        store_id: tx.store_id || '',
         items: parsedItems || [],
         payment_method: pm,
         paymentMethod: pm,
@@ -573,11 +591,15 @@ export async function fetchTransactionsFromSupabase(): Promise<any[] | null> {
   }
 }
 
-export async function fetchUsersFromSupabase(): Promise<any[] | null> {
+export async function fetchUsersFromSupabase(storeId?: string): Promise<any[] | null> {
   const client = createSupabaseClient();
   if (!client) return null;
   try {
-    const { data, error } = await client.from('users').select('*');
+    let query = client.from('users').select('*');
+    if (storeId) {
+      query = query.eq('store_id', storeId);
+    }
+    const { data, error } = await query;
     if (error) {
       console.warn('Failed to fetch users from Supabase:', error.message || error);
       return null;
