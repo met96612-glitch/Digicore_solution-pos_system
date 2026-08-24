@@ -448,16 +448,21 @@ export default function BuyPage({
             </div>
 
             {/* Net Weight Badge when deduction is active */}
-            {qty !== '' && deductionQty !== '' && Number(deductionQty) > 0 && (
-              <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-medium">
-                  Net Weight Calculation (ශුද්ධ බර):
-                </span>
-                <span className="font-mono font-bold text-amber-300">
-                  {qty} {unit} - <span className="text-rose-400">{deductionQty} {unit}</span> = <span className="text-emerald-400 underline">{netQty} {unit}</span>
-                </span>
-              </div>
-            )}
+            {(() => {
+              const gross = Number(qty) || 0;
+              const deduct = Number(deductionQty) || 0;
+              const netQtyVal = Math.max(0, gross - deduct);
+              return qty !== '' && deductionQty !== '' && deduct > 0 ? (
+                <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-medium">
+                    Net Weight Calculation (ශුද්ධ බර):
+                  </span>
+                  <span className="font-mono font-bold text-amber-300">
+                    {qty} {unit} - <span className="text-rose-400">{deductionQty} {unit}</span> = <span className="text-emerald-400 underline">{netQtyVal} {unit}</span>
+                  </span>
+                </div>
+              ) : null;
+            })()}
 
             {/* Buy Unit Cost field */}
             <div className="space-y-1.5">

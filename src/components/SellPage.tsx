@@ -41,6 +41,7 @@ export default function SellPage({
   // Transaction Type: 'sell' or 'return'
   const [transactionType, setTransactionType] = useState<'sell' | 'return'>('sell');
   const [refInvoiceNo, setRefInvoiceNo] = useState('');
+  const [returnReason, setReturnReason] = useState('');
 
   const currentUserId = safeUsername === 'jayantha' ? 'u4' : (safeUsername === 'lahiru' ? 'u3' : safeUsername);
   const currentStoreId = safeUsername === 'jayantha' ? 'store_2' : (safeUsername === 'lahiru' ? 'store_1' : safeUsername);
@@ -169,6 +170,7 @@ export default function SellPage({
     setDiscount(0);
     setCustomerName('');
     setRefInvoiceNo('');
+    setReturnReason('');
     setPaymentMethod('Cash');
     setInitialPaidAmount('');
     setCurrentBillId(generateNextInvoiceNumber(activePrefix, transactions));
@@ -532,16 +534,21 @@ export default function SellPage({
             </div>
 
             {/* Net Weight Badge when deduction is active */}
-            {qty !== '' && deductionQty !== '' && Number(deductionQty) > 0 && (
-              <div className="p-2.5 rounded-xl bg-violet-950/40 border border-violet-800/60 flex items-center justify-between text-xs">
-                <span className="text-slate-300 font-medium">
-                  Net Weight Calculation (ශුද්ධ බර):
-                </span>
-                <span className="font-mono font-bold text-violet-300">
-                  {qty} {unit} - <span className="text-rose-400">{deductionQty} {unit}</span> = <span className="text-emerald-400 underline">{netQty} {unit}</span>
-                </span>
-              </div>
-            )}
+            {(() => {
+              const gross = Number(qty) || 0;
+              const deduct = Number(deductionQty) || 0;
+              const netQtyVal = Math.max(0, gross - deduct);
+              return qty !== '' && deductionQty !== '' && deduct > 0 ? (
+                <div className="p-2.5 rounded-xl bg-violet-950/40 border border-violet-800/60 flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-medium">
+                    Net Weight Calculation (ශුද්ධ බර):
+                  </span>
+                  <span className="font-mono font-bold text-violet-300">
+                    {qty} {unit} - <span className="text-rose-400">{deductionQty} {unit}</span> = <span className="text-emerald-400 underline">{netQtyVal} {unit}</span>
+                  </span>
+                </div>
+              ) : null;
+            })()}
 
             {/* Sell Unit Price field */}
             <div className="space-y-1.5">

@@ -44,6 +44,9 @@ export interface TransactionItem {
   total: number;
   new_wholesale_price?: number;
   new_retail_price?: number;
+  buyingPrice?: number;
+  wholesalePrice?: number;
+  retailPrice?: number;
 }
 
 export interface CreditPaymentLog {
