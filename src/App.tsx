@@ -705,7 +705,10 @@ export default function App() {
             const mappedProds = supaProds.map(normalizeProduct);
             const savedProducts = localStorage.getItem('kulubadu_products');
             const localProds = savedProducts ? JSON.parse(savedProducts) : INITIAL_PRODUCTS;
-            const mergedProds = mergeProducts(mappedProds, localProds);
+            let mergedProds = mergeProducts(mappedProds, localProds);
+            if (mergedProds.length === 0) {
+              mergedProds = INITIAL_PRODUCTS.map(p => ({ ...p, store_id: initStoreId || 'store_1' }));
+            }
             setProducts(mergedProds);
             localStorage.setItem('kulubadu_products', JSON.stringify(mergedProds));
           } else {
@@ -1067,8 +1070,25 @@ export default function App() {
 
         if (supaProds !== null) {
           const mappedProds = supaProds.map(normalizeProduct);
-          setProducts(mappedProds);
-          localStorage.setItem('kulubadu_products', JSON.stringify(mappedProds));
+          const savedProducts = localStorage.getItem('kulubadu_products');
+          let baseProds: Product[] = INITIAL_PRODUCTS;
+          if (savedProducts) {
+            try {
+              const parsed = JSON.parse(savedProducts);
+              if (Array.isArray(parsed) && parsed.length > 0) baseProds = parsed;
+            } catch { }
+          }
+          let mergedProds = mergeProducts(mappedProds, baseProds);
+          if (mergedProds.length === 0) {
+            mergedProds = INITIAL_PRODUCTS.map(p => ({ ...p, store_id: userStoreId || 'store_1' }));
+          }
+          setProducts(mergedProds);
+          localStorage.setItem('kulubadu_products', JSON.stringify(mergedProds));
+
+          // If Supabase had zero products for this store, push initial products to Supabase
+          if (mappedProds.length === 0 && mergedProds.length > 0) {
+            pushProductToSupabase(mergedProds);
+          }
         }
 
         if (supaTx !== null) {

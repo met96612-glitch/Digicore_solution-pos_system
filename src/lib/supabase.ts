@@ -539,7 +539,7 @@ export async function fetchProductsFromSupabase(storeId?: string): Promise<any[]
         query = query.or('store_id.eq.store_1,store_id.eq.store_2,store_id.is.null,store_id.eq.');
       } else {
         const cleanStore = targetStoreId.replace('store_', '');
-        query = query.or(`store_id.eq.${targetStoreId},store_id.eq.${cleanStore}`);
+        query = query.or(`store_id.eq.${targetStoreId},store_id.eq.${cleanStore},store_id.is.null,store_id.eq.`);
       }
     }
     const { data, error } = await query;
