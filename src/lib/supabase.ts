@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const DEFAULT_SUPABASE_URL = 'https://vmwjofihygzmcurumvsq.supabase.co';
+export const DEFAULT_SUPABASE_URL = 'https://xztonbgwwbswovfnryyj.supabase.co';
 export const DEFAULT_SUPABASE_KEY = 'sb_publishable_3OTfY2AkPnWIVgalizjKag_w9JPyUVP';
 
 // Get keys from either import.meta.env, localStorage, or default fallback
