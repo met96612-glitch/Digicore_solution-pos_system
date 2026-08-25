@@ -432,11 +432,8 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return products;
     }
-    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : (sessionUser.username === 'lahiru' ? 'store_1' : sessionUser.username));
-    if (isSharedStore(userStore)) {
-      return products.filter(p => !p.store_id || p.store_id === 'store_1' || p.store_id === 'store_2');
-    }
-    return products.filter(p => p.store_id === userStore);
+    const userStore = sessionUser.store_id || 'store_1';
+    return products.filter(p => !p.store_id || p.store_id === userStore);
   }, [products, sessionUser]);
 
   const filteredTransactions = useMemo(() => {
@@ -444,104 +441,72 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return transactions;
     }
-    const userStore = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : (sessionUser.username === 'lahiru' ? 'store_1' : sessionUser.username));
-    if (isSharedStore(userStore)) {
-      if (sessionUser.username === 'lahiru') {
-        return transactions.filter(tx => !tx.id.startsWith('J-') && (!tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2'));
-      }
-      if (sessionUser.username === 'jayantha') {
-        return transactions.filter(tx => tx.id.startsWith('J-') && (!tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2'));
-      }
-      return transactions.filter(tx => !tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2');
-    }
-    return transactions.filter(tx => tx.store_id === userStore || tx.createdBy === sessionUser.username);
+    const userStore = sessionUser.store_id || 'store_1';
+    return transactions.filter(tx => !tx.store_id || tx.store_id === userStore || tx.createdBy === sessionUser.username);
   }, [transactions, sessionUser]);
 
   const drawerTransactions = useMemo(() => {
     if (!sessionUser) return [];
-    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
     if (sessionUser.role === 'superuser') {
       return transactions;
     }
-    if (isSharedStore(userStoreId)) {
-      return transactions.filter(tx => !tx.store_id || tx.store_id === 'store_1' || tx.store_id === 'store_2' || tx.createdBy === 'lahiru' || tx.createdBy === 'jayantha');
-    }
-    return transactions.filter(tx => tx.store_id === userStoreId || tx.createdBy === sessionUser.username);
+    const userStoreId = sessionUser.store_id || 'store_1';
+    return transactions.filter(tx => !tx.store_id || tx.store_id === userStoreId || tx.createdBy === sessionUser.username);
   }, [transactions, sessionUser]);
 
   const drawerOpeningCashLogs = useMemo(() => {
     if (!sessionUser) return [];
-    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
     if (sessionUser.role === 'superuser') {
       return openingCashLogs;
     }
-    if (isSharedStore(userStoreId)) {
-      return openingCashLogs.filter(l => !l.store_id || l.store_id === 'store_1' || l.store_id === 'store_2' || l.addedBy === 'lahiru' || l.addedBy === 'jayantha' || l.addedBy === 'admin' || l.addedBy === 'cashier');
-    }
-    return openingCashLogs.filter(l => l.store_id === userStoreId || l.addedBy === sessionUser.username);
+    const userStoreId = sessionUser.store_id || 'store_1';
+    return openingCashLogs.filter(l => !l.store_id || l.store_id === userStoreId || l.addedBy === sessionUser.username);
   }, [openingCashLogs, sessionUser]);
 
   const drawerExpenses = useMemo(() => {
     if (!sessionUser) return [];
-    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
     if (sessionUser.role === 'superuser') {
       return expenses;
     }
-    if (isSharedStore(userStoreId)) {
-      return expenses.filter(e => !e.store_id || e.store_id === 'store_1' || e.store_id === 'store_2' || e.addedBy === 'lahiru' || e.addedBy === 'jayantha' || e.addedBy === 'admin' || e.addedBy === 'cashier');
-    }
-    return expenses.filter(e => e.store_id === userStoreId || e.addedBy === sessionUser.username);
+    const userStoreId = sessionUser.store_id || 'store_1';
+    return expenses.filter(e => !e.store_id || e.store_id === userStoreId || e.addedBy === sessionUser.username);
   }, [expenses, sessionUser]);
 
   const filteredOpeningCashLogs = useMemo(() => {
     if (!sessionUser) return [];
-    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
-    if (sessionUser.role === 'superuser' || sessionUser.role === 'admin') {
+    if (sessionUser.role === 'superuser') {
       return openingCashLogs;
     }
-    if (isSharedStore(userStoreId)) {
-      if (sessionUser.username === 'lahiru') {
-        return openingCashLogs.filter(l => l.addedBy === 'lahiru' || l.addedBy === 'admin' || l.addedBy === 'cashier' || l.store_id === 'store_1');
-      }
-      if (sessionUser.username === 'jayantha') {
-        return openingCashLogs.filter(l => l.addedBy === 'jayantha' || l.store_id === 'store_2');
-      }
-      return openingCashLogs.filter(l => !l.store_id || l.store_id === 'store_1' || l.store_id === 'store_2');
-    }
-    return openingCashLogs.filter(l => l.store_id === userStoreId || l.addedBy === sessionUser.username);
+    const userStoreId = sessionUser.store_id || 'store_1';
+    return openingCashLogs.filter(l => !l.store_id || l.store_id === userStoreId || l.addedBy === sessionUser.username);
   }, [openingCashLogs, sessionUser]);
 
   const filteredExpenses = useMemo(() => {
     if (!sessionUser) return [];
-    const userStoreId = sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : 'store_1');
     if (sessionUser.role === 'superuser') {
       return expenses;
     }
-    if (isSharedStore(userStoreId)) {
-      if (sessionUser.username === 'lahiru') {
-        return expenses.filter(e => e.addedBy !== 'jayantha' || e.store_id === 'store_1');
-      }
-      if (sessionUser.username === 'jayantha') {
-        return expenses.filter(e => e.addedBy === 'jayantha' || e.store_id === 'store_2');
-      }
-      return expenses.filter(e => !e.store_id || e.store_id === 'store_1' || e.store_id === 'store_2');
-    }
-    return expenses.filter(e => e.store_id === userStoreId || e.addedBy === sessionUser.username);
+    const userStoreId = sessionUser.store_id || 'store_1';
+    return expenses.filter(e => !e.store_id || e.store_id === userStoreId || e.addedBy === sessionUser.username);
   }, [expenses, sessionUser]);
 
   const filteredStockAdjustments = useMemo(() => {
     if (!sessionUser) return [];
-    if (sessionUser.role === 'superuser' || sessionUser.role === 'admin') {
+    if (sessionUser.role === 'superuser') {
       return stockAdjustments;
     }
-    if (sessionUser.username === 'lahiru') {
-      return stockAdjustments.filter(a => a.desk === 'lahiru');
-    }
-    if (sessionUser.username === 'jayantha') {
-      return stockAdjustments.filter(a => a.desk === 'jayantha');
-    }
-    return stockAdjustments;
+    const userStore = sessionUser.store_id || 'store_1';
+    return stockAdjustments.filter(a => a.desk === userStore || a.desk === sessionUser.username || (userStore === 'store_1' && a.desk === 'lahiru'));
   }, [stockAdjustments, sessionUser]);
+
+  const filteredUsers = useMemo(() => {
+    if (!sessionUser) return [];
+    if (sessionUser.role === 'superuser') {
+      return registeredUsers;
+    }
+    const userStore = sessionUser.store_id || 'store_1';
+    return registeredUsers.filter(u => !u.store_id || u.store_id === userStore);
+  }, [registeredUsers, sessionUser]);
 
   const isToday = (dateStr: string) => {
     if (!dateStr) return false;
@@ -1335,15 +1300,16 @@ export default function App() {
 
   // User list actions
   const addUser = (username: string, name: string, role: 'superuser' | 'admin' | 'cashier') => {
-    const list = JSON.parse(localStorage.getItem('kulubadu_users') || JSON.stringify(INITIAL_USERS));
-    const newAccount = {
+    const userStore = sessionUser?.store_id || 'store_1';
+    const newAccount: User = {
       id: Math.random().toString(36).substring(2, 9),
       name,
       username,
-      password: '123', // Static initial passwords
-      role
+      password: '123',
+      role,
+      store_id: userStore
     };
-    saveUsersToDb([...list, newAccount]);
+    saveUsersToDb([...registeredUsers, newAccount]);
   };
 
   const removeUser = (id: string) => {
@@ -1995,7 +1961,7 @@ export default function App() {
 
           {currentTab === 'expenses' && (
             <ExpensesPage
-              expenses={expenses}
+              expenses={filteredExpenses}
               currentUserUsername={sessionUser.username}
               currentUserRole={sessionUser.role}
               onAddExpense={addExpense}
@@ -2040,9 +2006,9 @@ export default function App() {
 
           {currentTab === 'admin' && (sessionUser.role === 'admin' || sessionUser.role === 'superuser') && (
             <AdminPage
-              users={registeredUsers}
-              products={products}
-              transactions={transactions}
+              users={filteredUsers}
+              products={filteredProducts}
+              transactions={filteredTransactions}
               shopProfile={shopProfile}
               onUpdateShopProfile={updateShopProfile}
               onAddUser={addUser}
