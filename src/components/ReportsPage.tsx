@@ -1379,10 +1379,10 @@ export default function ReportsPage({
             ) : (
               salesTransactions.map(t => {
                 if (!t) return null;
-                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha') || t.store_id === 'store_2';
-                const isL = (t.id && t.id.startsWith('L-')) || (t.invoice_no && t.invoice_no.startsWith('L-')) || (t.createdBy && t.createdBy.toLowerCase() === 'lahiru') || t.store_id === 'store_1';
+                const isJ = (t.id && t.id.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha') || t.store_id === 'store_2';
+                const isL = (t.id && t.id.startsWith('L-')) || (t.createdBy && t.createdBy.toLowerCase() === 'lahiru');
                 const badgeLabel = isJ ? 'Jayantha' : (isL ? 'Lahiru' : (t.createdBy || 'Store'));
-                const badgeColor = isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (isL ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20');
+                const badgeColor = isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (isL ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20');
                 return (
                   <div key={t.id || Math.random().toString()} className="py-3 flex justify-between items-center text-xs">
                     <div>
@@ -1414,10 +1414,10 @@ export default function ReportsPage({
             ) : (
               purchaseTransactions.map(t => {
                 if (!t) return null;
-                const isJ = (t.id && t.id.startsWith('J-')) || (t.invoice_no && t.invoice_no.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha') || t.store_id === 'store_2';
-                const isL = (t.id && t.id.startsWith('L-')) || (t.invoice_no && t.invoice_no.startsWith('L-')) || (t.createdBy && t.createdBy.toLowerCase() === 'lahiru') || t.store_id === 'store_1';
+                const isJ = (t.id && t.id.startsWith('J-')) || (t.createdBy && t.createdBy.toLowerCase() === 'jayantha') || t.store_id === 'store_2';
+                const isL = (t.id && t.id.startsWith('L-')) || (t.createdBy && t.createdBy.toLowerCase() === 'lahiru');
                 const badgeLabel = isJ ? 'Jayantha Stock' : (isL ? 'Lahiru Stock' : `${t.createdBy || 'Store'} Stock`);
-                const badgeColor = isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (isL ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20');
+                const badgeColor = isJ ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (isL ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20');
                 return (
                   <div key={t.id || Math.random().toString()} className="py-3 flex justify-between items-center text-xs">
                     <div>

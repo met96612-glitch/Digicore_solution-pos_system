@@ -565,7 +565,7 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
     let query = client.from('transactions').select('*');
     if (targetStoreId) {
       if (targetStoreId === 'store_1' || targetStoreId === 'store_2') {
-        query = query.or('store_id.eq.store_1,store_id.eq.store_2,store_id.is.null,store_id.eq.');
+        query = query.or('store_id.eq.store_1,store_id.eq.store_2,createdBy.eq.lahiru,createdBy.eq.jayantha');
       } else {
         const cleanStore = targetStoreId.replace('store_', '');
         query = query.or(`store_id.eq.${targetStoreId},createdBy.eq.${targetStoreId},createdBy.eq.${cleanStore},store_id.eq.${cleanStore}`);

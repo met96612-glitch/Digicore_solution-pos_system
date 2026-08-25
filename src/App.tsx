@@ -1104,8 +1104,9 @@ export default function App() {
 
   // Inventory logic updating stocks
   const recordNewReturnTx = async (rawTx: Transaction) => {
-    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || 'store_1';
-    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach };
+    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : 'store_1')));
+    const storeIdToAttach = rawTx.store_id || userStore;
+    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
 
     // 1. Fetch latest products from Supabase if connected
     let latestProducts = [...products];
@@ -1122,8 +1123,6 @@ export default function App() {
     }
 
     // 2. Increase stock because returned items go back into store inventory!
-    const isJayantha = tx.id.startsWith('J-') || tx.id.startsWith('J') || tx.user_id === 'u4' || tx.createdBy === 'jayantha';
-
     const updatedProductsList = latestProducts.map(p => {
       const returnedItem = tx.items.find(item => {
         const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
@@ -1159,8 +1158,9 @@ export default function App() {
   };
 
   const recordNewSaleTx = async (rawTx: Transaction) => {
-    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || (rawTx.id.startsWith('J-') || rawTx.id.startsWith('J') || rawTx.user_id === 'u4' || rawTx.createdBy === 'jayantha' ? 'store_2' : 'store_1');
-    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach };
+    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : 'store_1')));
+    const storeIdToAttach = rawTx.store_id || userStore;
+    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
 
     if (tx.type === 'return') {
       return recordNewReturnTx(tx);
@@ -1181,8 +1181,6 @@ export default function App() {
     }
 
     // 2. Reduce products stock level
-    const isJayantha = tx.id.startsWith('J-') || tx.id.startsWith('J') || tx.user_id === 'u4' || tx.createdBy === 'jayantha';
-
     const updatedProductsList = latestProducts.map(p => {
       const soldItem = tx.items.find(item => {
         const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
@@ -1219,8 +1217,9 @@ export default function App() {
   };
 
   const recordNewBuyTx = async (rawTx: Transaction) => {
-    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || (rawTx.id.startsWith('J-') || rawTx.id.startsWith('J') || rawTx.user_id === 'u4' || rawTx.createdBy === 'jayantha' ? 'store_2' : 'store_1');
-    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach };
+    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : 'store_1')));
+    const storeIdToAttach = rawTx.store_id || userStore;
+    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
 
     // 1. Fetch latest products from Supabase if connected to prevent overwriting other operator's stock changes
     let latestProducts = [...products];

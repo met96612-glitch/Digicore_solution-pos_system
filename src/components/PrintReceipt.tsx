@@ -59,23 +59,9 @@ function drawLeftRightRow(
 // Bulletproof direct 2D Canvas receipt generator (Zero CSS / html2canvas dependency)
 export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?: ShopProfile) {
   const createdByLower = (transaction.createdBy || '').toLowerCase();
-  const isJayanthaTx = transaction.id.startsWith('J') || createdByLower === 'jayantha' || transaction.user_id === 'u4' || transaction.store_id === 'store_2';
-  const isLahiruTx = transaction.id.startsWith('L') || createdByLower === 'lahiru' || transaction.user_id === 'u3' || transaction.store_id === 'store_1';
 
-  // Independent store check: not shared Lahiru/Jayantha desk
-  const isIndependentStore = (!isJayanthaTx && !isLahiruTx) ||
-    (transaction.store_id && transaction.store_id !== 'store_1' && transaction.store_id !== 'store_2') ||
-    (createdByLower !== 'lahiru' && createdByLower !== 'jayantha' && createdByLower !== 'superuser');
-
-  const defaultLahiruName = 'LAHIYA SPICE COLLECTORS';
-  const defaultLahiruSinhala = 'ළහියා කුළුබඩු එකතු කිරීම්';
-  const defaultLahiruAddress = 'Wewalwatta, Rathnapura';
-  const defaultLahiruPhone = '074 0050211 / 076 0808246';
-
-  const defaultJayanthaName = 'JAYANTHA SPICE COLLECTORS';
-  const defaultJayanthaSinhala = 'ජයන්ත කුළුබඩු එකතු කිරීම්';
-  const defaultJayanthaAddress = 'Wewalwatta, Rathnapura';
-  const defaultJayanthaPhone = '077 602 1831';
+  const isExplicitJayantha = createdByLower === 'jayantha' || transaction.user_id === 'u4';
+  const isExplicitLahiru = createdByLower === 'lahiru' || transaction.user_id === 'u3';
 
   const configuredName = shopProfile?.shopName?.trim() || '';
   const configuredSinhala = shopProfile?.shopSinhalaName?.trim() || '';
@@ -84,31 +70,33 @@ export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?:
   const footerNote = shopProfile?.footerNote || '*** THANK YOU! COME AGAIN ***';
   const footerSubNote = shopProfile?.footerSubNote || 'Software Powered by Digicore Solution';
 
-  let shopName = '';
-  let shopSinhala = '';
-  let shopAddress = '';
-  let shopPhone = '';
+  let shopName = configuredName;
+  let shopSinhala = configuredSinhala;
+  let shopAddress = configuredAddress;
+  let shopPhone = configuredPhone;
 
-  if (isIndependentStore) {
-    shopName = configuredName || `${(transaction.createdBy || 'STORE').toUpperCase()} SPICES CENTER`;
-    shopSinhala = configuredSinhala || `${transaction.createdBy || 'කුළුබඩු'} වෙළඳසැල`;
-    shopAddress = configuredAddress || 'Wewalwatta, Rathnapura';
-    shopPhone = configuredPhone || '074 0050211';
-  } else if (isJayanthaTx) {
-    shopName = (configuredName && configuredName !== defaultLahiruName) ? configuredName : defaultJayanthaName;
-    shopSinhala = configuredSinhala || defaultJayanthaSinhala;
-    shopAddress = configuredAddress || defaultJayanthaAddress;
-    shopPhone = configuredPhone || defaultJayanthaPhone;
-  } else {
-    shopName = (configuredName && configuredName !== defaultJayanthaName) ? configuredName : defaultLahiruName;
-    shopSinhala = configuredSinhala || defaultLahiruSinhala;
-    shopAddress = configuredAddress || defaultLahiruAddress;
-    shopPhone = configuredPhone || defaultLahiruPhone;
+  if (!shopName) {
+    if (isExplicitJayantha) {
+      shopName = 'JAYANTHA SPICE COLLECTORS';
+      shopSinhala = shopSinhala || 'ජයන්ත කුළුබඩු එකතු කිරීම්';
+      shopAddress = shopAddress || 'Wewalwatta, Rathnapura';
+      shopPhone = shopPhone || '077 602 1831';
+    } else if (isExplicitLahiru) {
+      shopName = 'LAHIYA SPICE COLLECTORS';
+      shopSinhala = shopSinhala || 'ළහියා කුළුබඩු එකතු කිරීම්';
+      shopAddress = shopAddress || 'Wewalwatta, Rathnapura';
+      shopPhone = shopPhone || '074 0050211 / 076 0808246';
+    } else {
+      shopName = `${(transaction.createdBy || 'STORE').toUpperCase()} POS CENTER`;
+      shopSinhala = shopSinhala || `${transaction.createdBy || 'කඩය'} මුදල් කවුන්ටරය`;
+      shopAddress = shopAddress || 'Sri Lanka';
+      shopPhone = shopPhone || '';
+    }
   }
 
-  const cashierName = isJayanthaTx
+  const cashierName = isExplicitJayantha
     ? 'Jayantha De Silva (@jayantha)'
-    : (isLahiruTx ? 'Lahiru Kumara (@lahiru)' : `@${transaction.createdBy || 'cashier'}`);
+    : (isExplicitLahiru ? 'Lahiru Kumara (@lahiru)' : `@${transaction.createdBy || 'cashier'}`);
 
   return {
     shopName,

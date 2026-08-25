@@ -297,7 +297,7 @@ export default function BuyPage({
             <Landmark className="text-amber-500" size={18} />
             <div>
               <h4 className="text-sm font-bold text-slate-100">
-                Warehouse Entity: {activePrefix === 'J-BUY' ? 'Jayantha Spices' : 'Lahiru Spices'}
+                Warehouse Entity: {activePrefix === 'J-BUY' ? 'Jayantha Spices' : (activePrefix === 'L-BUY' ? 'Lahiru Spices' : `${safeUsername.toUpperCase()} Stock Warehouse`)}
               </h4>
               <p className="text-[10px] text-slate-500">Stock updates will increase your assigned warehouse columns</p>
             </div>
