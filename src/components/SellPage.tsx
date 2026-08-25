@@ -32,7 +32,7 @@ export default function SellPage({
 
   // Active Desk Prefix: Defaults to J for Jayantha, L for Lahiru, or username prefix for independent stores
   const safeUsername = currentUserUsername || 'cashier';
-  const defaultPrefix = safeUsername === 'jayantha' ? 'J' : (safeUsername === 'lahiru' ? 'L' : safeUsername.toUpperCase().slice(0, 3));
+  const defaultPrefix = shopProfile?.invoice_prefix || safeUsername.toUpperCase().slice(0, 3);
   const [activePrefix, setActivePrefix] = useState<string>(defaultPrefix);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card' | 'Credit'>('Cash');
   const [initialPaidAmount, setInitialPaidAmount] = useState<number | ''>('');
@@ -43,8 +43,8 @@ export default function SellPage({
   const [refInvoiceNo, setRefInvoiceNo] = useState('');
   const [returnReason, setReturnReason] = useState('');
 
-  const currentUserId = safeUsername === 'jayantha' ? 'u4' : (safeUsername === 'lahiru' ? 'u3' : safeUsername);
-  const currentStoreId = safeUsername === 'jayantha' ? 'store_2' : (safeUsername === 'lahiru' ? 'store_1' : safeUsername);
+  const currentUserId = safeUsername;
+  const currentStoreId = shopProfile?.store_id || 'store_1';
 
   const [currentBillId, setCurrentBillId] = useState('');
   const [billItems, setBillItems] = useState<TransactionItem[]>([]);
@@ -356,7 +356,7 @@ export default function SellPage({
             <Landmark className="text-violet-400" size={18} />
             <div>
               <h4 className="text-sm font-bold text-slate-100">
-                POS Desk: {currentUserUsername === 'jayantha' ? 'Jayantha Spices' : currentUserUsername === 'lahiru' ? 'Lahiru Spices' : (shopProfile?.shopName || currentUserUsername || 'Main Store Desk')}
+                POS Desk: {shopProfile?.shopName || currentUserUsername || 'Main Store Desk'}
               </h4>
               <p className="text-[10px] text-slate-500">Cashier session locked to your assigned series</p>
             </div>

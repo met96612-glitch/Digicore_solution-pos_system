@@ -117,6 +117,8 @@ export interface ShopProfile {
   phone2: string;
   footerNote: string;
   footerSubNote?: string;
+  invoice_prefix?: string;
+  store_id?: string;
 }
 
 export type StockAdjustmentReason = 'wastage' | 'drying_loss' | 'damage' | 'audit_loss' | 'other';

@@ -734,14 +734,7 @@ export default function App() {
           }
 
           if (supaUsers && supaUsers.length > 0) {
-            const savedUsersStr = localStorage.getItem('kulubadu_users');
-            let localUsers: User[] = [];
-            if (savedUsersStr) {
-              try { localUsers = JSON.parse(savedUsersStr); } catch { }
-            }
             const userMap = new Map<string, User>();
-            INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
-            localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
             supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
 
             const merged = Array.from(userMap.values());
@@ -754,12 +747,6 @@ export default function App() {
             });
             setRegisteredUsers(merged);
             localStorage.setItem('kulubadu_users', JSON.stringify(merged));
-            // Push missing users to Supabase
-            merged.forEach(u => {
-              if (!supaUsers.some(su => su.username.toLowerCase() === u.username.toLowerCase())) {
-                pushUserToSupabase(u);
-              }
-            });
           } else {
             loadLocalUsers();
           }
@@ -949,16 +936,36 @@ export default function App() {
       return;
     }
 
-    const savedUsersStr = localStorage.getItem('kulubadu_users');
-    let localUsers: User[] = [];
-    if (savedUsersStr) {
-      try { localUsers = JSON.parse(savedUsersStr); } catch { }
+    // 1. If connected to Supabase, query live users first to immediately sync any deleted accounts
+    const userMap = new Map<string, User>();
+    if (supabaseStatus === 'connected') {
+      try {
+        const supaUsers = await fetchUsersFromSupabase();
+        if (supaUsers !== null) {
+          const remoteUsers = supaUsers.map(u => ({
+            ...u,
+            store_id: u.store_id || 'store_1'
+          }));
+          setRegisteredUsers(remoteUsers);
+          localStorage.setItem('kulubadu_users', JSON.stringify(remoteUsers));
+          remoteUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+        }
+      } catch (err) {
+        console.warn('Live login Supabase query error, falling back to local state:', err);
+      }
     }
 
-    const userMap = new Map<string, User>();
-    INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
-    localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
-    registeredUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+    // 2. Fallback to local storage if offline or Supabase produced no result
+    if (userMap.size === 0) {
+      const savedUsersStr = localStorage.getItem('kulubadu_users');
+      let localUsers: User[] = [];
+      if (savedUsersStr) {
+        try { localUsers = JSON.parse(savedUsersStr); } catch { }
+      }
+      INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
+      localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+      registeredUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+    }
 
     // Helper matcher to find user flexible by username, name, or store_id
     const findMatchingUserInList = (list: User[]) => {
@@ -975,9 +982,7 @@ export default function App() {
           uName === targetStr ||
           uNameAlphaNum === targetAlphaNum ||
           uStore === targetStr ||
-          uStoreAlphaNum === targetAlphaNum ||
-          (targetAlphaNum === 'suresh' && (uNameAlphaNum === 'suresh' || uStoreAlphaNum === 'store3' || uNameAlphaNum === 'store3')) ||
-          (targetAlphaNum === 'store3' && (uNameAlphaNum === 'store3' || uNameAlphaNum === 'suresh' || uStoreAlphaNum === 'store3'));
+          uStoreAlphaNum === targetAlphaNum;
 
         const uPass = String(u.password ?? '').trim();
         const passMatches =
@@ -990,22 +995,6 @@ export default function App() {
     };
 
     let matched = findMatchingUserInList(Array.from(userMap.values()));
-
-    if (!matched) {
-      try {
-        const supaUsers = await fetchUsersFromSupabase();
-        if (supaUsers && supaUsers.length > 0) {
-          supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
-          const updatedList = Array.from(userMap.values());
-          setRegisteredUsers(updatedList);
-          localStorage.setItem('kulubadu_users', JSON.stringify(updatedList));
-
-          matched = findMatchingUserInList(updatedList);
-        }
-      } catch (err) {
-        console.warn('Live login fetch error:', err);
-      }
-    }
 
     if (matched) {
       const resolvedStoreId = matched.store_id || (
@@ -1144,23 +1133,19 @@ export default function App() {
         }
 
         if (supaUsers && supaUsers.length > 0) {
-          setRegisteredUsers(prev => {
-            const userMap = new Map<string, User>();
-            INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
-            prev.forEach(u => userMap.set(u.username.toLowerCase(), u));
-            supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+          const userMap = new Map<string, User>();
+          supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
 
-            const merged = Array.from(userMap.values());
-            merged.forEach(u => {
-              u.store_id = u.store_id || (
-                u.username === 'jayantha' ? 'store_2' :
-                  u.username === 'lahiru' ? 'store_1' :
-                    (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
-              );
-            });
-            localStorage.setItem('kulubadu_users', JSON.stringify(merged));
-            return merged;
+          const merged = Array.from(userMap.values());
+          merged.forEach(u => {
+            u.store_id = u.store_id || (
+              u.username === 'jayantha' ? 'store_2' :
+                u.username === 'lahiru' ? 'store_1' :
+                  (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
+            );
           });
+          setRegisteredUsers(merged);
+          localStorage.setItem('kulubadu_users', JSON.stringify(merged));
         }
       } catch (err) {
         console.warn('Background sync failed quietly (re-trying in 10s):', err);
