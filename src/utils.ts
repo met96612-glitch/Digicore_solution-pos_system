@@ -138,6 +138,26 @@ export const DEFAULT_SHOP_PROFILE: ShopProfile = {
   footerSubNote: 'Software Powered by Digicore Solution'
 };
 
+export function resolveStoreId(username?: string, storeId?: string): string {
+  const u = (username || '').toLowerCase().trim();
+  if (u === 'jayantha') return 'store_2';
+  if (u === 'lahiru') return 'store_1';
+  
+  if (storeId && storeId.trim() && storeId !== 'store_1' && storeId !== 'store_2' && storeId !== 'undefined') {
+    return storeId.trim();
+  }
+  
+  if (storeId === 'store_1' || storeId === 'store_2') {
+    if (u && u !== 'lahiru' && u !== 'jayantha' && u !== 'admin' && u !== 'superuser') {
+      return u.startsWith('store_') ? u : `store_${u}`;
+    }
+    return storeId;
+  }
+
+  if (!u || u === 'admin' || u === 'superuser') return 'store_1';
+  return u.startsWith('store_') ? u : `store_${u}`;
+}
+
 export function getLocalTodayDateString(dateObj: Date = new Date()): string {
   const y = dateObj.getFullYear();
   const m = String(dateObj.getMonth() + 1).padStart(2, '0');

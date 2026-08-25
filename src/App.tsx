@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product, Transaction, User, OpeningCashLog, Expense, ShopProfile, StockAdjustment } from './types';
-import { INITIAL_PRODUCTS, INITIAL_TRANSACTIONS, INITIAL_USERS, DEFAULT_SHOP_PROFILE, toSinhalaProductName, mergeTransactions, mergeProducts, getLocalTodayDateString } from './utils';
+import { INITIAL_PRODUCTS, INITIAL_TRANSACTIONS, INITIAL_USERS, DEFAULT_SHOP_PROFILE, toSinhalaProductName, mergeTransactions, mergeProducts, getLocalTodayDateString, resolveStoreId } from './utils';
 import DashboardPage from './components/DashboardPage';
 import SellPage from './components/SellPage';
 import BuyPage from './components/BuyPage';
@@ -1012,7 +1012,7 @@ export default function App() {
     });
 
     if (matched) {
-      const resolvedStoreId = matched.store_id || 'store_1';
+      const resolvedStoreId = resolveStoreId(matched.username, matched.store_id);
       const userObj: User = {
         id: matched.id,
         name: matched.name,
@@ -1054,7 +1054,7 @@ export default function App() {
     if (!sessionUser) return;
     const userStoreId = sessionUser.role === 'superuser'
       ? undefined
-      : (sessionUser.store_id || (sessionUser.username === 'jayantha' ? 'store_2' : (sessionUser.username === 'lahiru' ? 'store_1' : (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`))));
+      : resolveStoreId(sessionUser.username, sessionUser.store_id);
 
     async function syncUserDataOnLogin() {
       try {
@@ -1167,8 +1167,8 @@ export default function App() {
 
   // Inventory logic updating stocks
   const recordNewReturnTx = async (rawTx: Transaction) => {
-    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : 'store_1')));
-    const storeIdToAttach = rawTx.store_id || userStore;
+    const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
+    const storeIdToAttach = resolveStoreId(rawTx.createdBy || sessionUser?.username, rawTx.store_id || userStore);
     const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
 
     // 1. Fetch latest products from Supabase if connected
@@ -1223,8 +1223,8 @@ export default function App() {
   };
 
   const recordNewSaleTx = async (rawTx: Transaction) => {
-    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : 'store_1')));
-    const storeIdToAttach = rawTx.store_id || userStore;
+    const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
+    const storeIdToAttach = resolveStoreId(rawTx.createdBy || sessionUser?.username, rawTx.store_id || userStore);
     const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
 
     if (tx.type === 'return') {
@@ -1284,8 +1284,8 @@ export default function App() {
   };
 
   const recordNewBuyTx = async (rawTx: Transaction) => {
-    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : 'store_1')));
-    const storeIdToAttach = rawTx.store_id || userStore;
+    const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
+    const storeIdToAttach = resolveStoreId(rawTx.createdBy || sessionUser?.username, rawTx.store_id || userStore);
     const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
 
     // 1. Fetch latest products from Supabase if connected to prevent overwriting other operator's stock changes
@@ -1387,7 +1387,7 @@ export default function App() {
 
   // User list actions
   const addUser = (username: string, name: string, role: 'superuser' | 'admin' | 'cashier') => {
-    const userStore = sessionUser?.store_id || 'store_1';
+    const userStore = resolveStoreId(username);
     const newAccount: User = {
       id: Math.random().toString(36).substring(2, 9),
       name,

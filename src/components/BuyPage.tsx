@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Product, TransactionItem, Transaction } from '../types';
-import { generateNextInvoiceNumber, formatCurrency } from '../utils';
+import { generateNextInvoiceNumber, formatCurrency, resolveStoreId } from '../utils';
 import { Search, Scale, Trash2, Import, Plus, Save, Sparkles, Landmark, Banknote, Wallet } from 'lucide-react';
 
 interface BuyPageProps {
@@ -38,7 +38,7 @@ export default function BuyPage({
   const [activePrefix, setActivePrefix] = useState<string>(defaultPrefix);
 
   const currentUserId = safeUsername === 'jayantha' ? 'u4' : (safeUsername === 'lahiru' ? 'u3' : safeUsername);
-  const currentStoreId = safeUsername === 'jayantha' ? 'store_2' : (safeUsername === 'lahiru' ? 'store_1' : safeUsername);
+  const currentStoreId = resolveStoreId(safeUsername);
 
   const [currentBillId, setCurrentBillId] = useState('');
   const [billItems, setBillItems] = useState<TransactionItem[]>([]);

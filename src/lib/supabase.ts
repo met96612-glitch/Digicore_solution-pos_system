@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { resolveStoreId } from '../utils';
 
 export const DEFAULT_SUPABASE_URL = 'https://xztonbgwwbswovfnryyj.supabase.co';
 export const DEFAULT_SUPABASE_KEY = 'sb_publishable_ZHUMToqDOX9vaNCq1of_7Q_vNh4fhYZ';
@@ -47,7 +48,7 @@ export function getActiveStoreId(): string | undefined {
     if (rawSession) {
       const parsed = JSON.parse(rawSession);
       if (parsed?.role === 'superuser') return undefined;
-      if (parsed?.store_id) return parsed.store_id;
+      return resolveStoreId(parsed?.username, parsed?.store_id);
     }
   } catch (e) {
     // fallback
@@ -308,7 +309,7 @@ export async function pushTransactionToSupabase(tx: any) {
       else defaultStatus = 'pending';
     }
 
-    const activeStore = tx.store_id || getActiveStoreId() || 'store_1';
+    const activeStore = resolveStoreId(tx.createdBy || tx.user_id, tx.store_id) || getActiveStoreId() || 'store_1';
 
     const { error } = await safeUpsert(client, 'transactions', {
       id: tx.id,
@@ -330,7 +331,7 @@ export async function pushTransactionToSupabase(tx: any) {
       credit_status: tx.credit_status || defaultStatus,
       credit_paid_amount: creditPaidAmt,
       credit_payments: tx.credit_payments ? (typeof tx.credit_payments === 'string' ? tx.credit_payments : JSON.stringify(tx.credit_payments)) : null,
-      store_id: tx.store_id || activeStore
+      store_id: activeStore
     });
     if (error) {
       console.error(`Supabase transaction upsert error for ${tx.id}:`, error.message, error.details, error);
@@ -611,7 +612,7 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
 
       return {
         ...tx,
-        store_id: tx.store_id || '',
+        store_id: resolveStoreId(tx.createdBy || tx.user_id, tx.store_id),
         items: parsedItems || [],
         payment_method: pm,
         paymentMethod: pm,

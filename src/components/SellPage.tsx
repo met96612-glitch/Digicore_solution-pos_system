@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Product, TransactionItem, Transaction, ShopProfile } from '../types';
-import { generateNextInvoiceNumber, formatCurrency } from '../utils';
+import { generateNextInvoiceNumber, formatCurrency, resolveStoreId } from '../utils';
 import { Search, Scale, BadgePercent, Trash2, Save, ShoppingBag, Plus, Sparkles, Landmark, Wallet, RotateCcw, Coins } from 'lucide-react';
 
 interface SellPageProps {
@@ -44,7 +44,7 @@ export default function SellPage({
   const [returnReason, setReturnReason] = useState('');
 
   const currentUserId = safeUsername;
-  const currentStoreId = shopProfile?.store_id || 'store_1';
+  const currentStoreId = resolveStoreId(safeUsername, shopProfile?.store_id);
 
   const [currentBillId, setCurrentBillId] = useState('');
   const [billItems, setBillItems] = useState<TransactionItem[]>([]);
