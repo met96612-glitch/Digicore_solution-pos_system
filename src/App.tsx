@@ -1479,34 +1479,6 @@ export default function App() {
           </div>
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
-            {registeredUsers.length > 0 && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Select Supabase User Account
-                </label>
-                <div className="flex items-center gap-2 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 focus-within:border-violet-600 focus-within:ring-1 focus-within:ring-violet-600 transition-all">
-                  <UserIcon size={14} className="text-slate-500 shrink-0" />
-                  <select
-                    value={loginUsername}
-                    onChange={(e) => {
-                      setLoginUsername(e.target.value);
-                      const sel = registeredUsers.find(u => u.username === e.target.value);
-                      if (sel && sel.password) {
-                        setLoginPassword(sel.password);
-                      }
-                    }}
-                    className="w-full bg-transparent text-xs text-slate-200 outline-none font-medium cursor-pointer"
-                  >
-                    <option value="" className="bg-slate-900 text-slate-400">-- Select User from Database --</option>
-                    {registeredUsers.map((u) => (
-                      <option key={u.id || u.username} value={u.username} className="bg-slate-900 text-slate-200">
-                        {u.name} (@{u.username}) {u.shop_name ? `- ${u.shop_name}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
 
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Username</label>
