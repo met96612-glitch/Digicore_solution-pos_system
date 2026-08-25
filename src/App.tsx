@@ -733,16 +733,13 @@ export default function App() {
             loadLocalTransactions();
           }
 
-          if (supaUsers && supaUsers.length > 0) {
-            const userMap = new Map<string, User>();
-            supaUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
-
-            const merged = Array.from(userMap.values());
-            merged.forEach(u => {
-              u.store_id = u.store_id || 'store_1';
-            });
-            setRegisteredUsers(merged);
-            localStorage.setItem('kulubadu_users', JSON.stringify(merged));
+          if (supaUsers !== null && Array.isArray(supaUsers)) {
+            const cleanUsers = supaUsers.map(u => ({
+              ...u,
+              store_id: u.store_id || 'store_1'
+            }));
+            setRegisteredUsers(cleanUsers);
+            localStorage.setItem('kulubadu_users', JSON.stringify(cleanUsers));
           } else {
             loadLocalUsers();
           }
@@ -917,65 +914,53 @@ export default function App() {
       return;
     }
 
-    // 1. If connected to Supabase, query live users first to immediately sync any deleted accounts
+    const targetStr = rawUser.toLowerCase();
+    const targetAlphaNum = targetStr.replace(/[^a-z0-9]/g, '');
+
+    // ALWAYS query Supabase live first to get current database users
+    let liveFetchedFromSupabase = false;
     const userMap = new Map<string, User>();
-    if (supabaseStatus === 'connected') {
-      try {
-        const supaUsers = await fetchUsersFromSupabase();
-        if (supaUsers !== null) {
-          const remoteUsers = supaUsers.map(u => ({
-            ...u,
-            store_id: u.store_id || 'store_1'
-          }));
-          setRegisteredUsers(remoteUsers);
-          localStorage.setItem('kulubadu_users', JSON.stringify(remoteUsers));
-          remoteUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
-        }
-      } catch (err) {
-        console.warn('Live login Supabase query error, falling back to local state:', err);
+
+    try {
+      const supaUsers = await fetchUsersFromSupabase();
+      if (supaUsers !== null && Array.isArray(supaUsers)) {
+        liveFetchedFromSupabase = true;
+        const remoteUsers: User[] = supaUsers.map(u => ({
+          ...u,
+          store_id: u.store_id || 'store_1'
+        }));
+        setRegisteredUsers(remoteUsers);
+        localStorage.setItem('kulubadu_users', JSON.stringify(remoteUsers));
+        remoteUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
       }
+    } catch (err) {
+      console.warn('Live login Supabase query error:', err);
     }
 
-    // 2. Fallback to local storage if offline or Supabase produced no result
-    if (userMap.size === 0) {
+    // ONLY fallback to local storage if Supabase API query failed (offline)
+    if (!liveFetchedFromSupabase) {
       const savedUsersStr = localStorage.getItem('kulubadu_users');
-      let localUsers: User[] = [];
       if (savedUsersStr) {
-        try { localUsers = JSON.parse(savedUsersStr); } catch { }
+        try {
+          const localUsers: User[] = JSON.parse(savedUsersStr);
+          localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
+        } catch { }
       }
-      INITIAL_USERS.forEach(u => userMap.set(u.username.toLowerCase(), u));
-      localUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
-      registeredUsers.forEach(u => userMap.set(u.username.toLowerCase(), u));
     }
 
-    // Helper matcher to find user flexible by username, name, or store_id
-    const findMatchingUserInList = (list: User[]) => {
-      const targetStr = rawUser.toLowerCase();
-      const targetAlphaNum = targetStr.replace(/[^a-z0-9]/g, '');
+    const list = Array.from(userMap.values());
+    const matched = list.find((u: User) => {
+      const uName = (u.username || '').toLowerCase().trim();
+      const uNameAlphaNum = uName.replace(/[^a-z0-9]/g, '');
+      const uPass = String(u.password ?? '').trim();
 
-      return list.find((u: any) => {
-        const uName = (u.username || '').toLowerCase().trim();
-        const uStore = (u.store_id || '').toLowerCase().trim();
-        const uNameAlphaNum = uName.replace(/[^a-z0-9]/g, '');
-        const uStoreAlphaNum = uStore.replace(/[^a-z0-9]/g, '');
+      const nameMatches = uName === targetStr || uNameAlphaNum === targetAlphaNum;
+      const passMatches = uPass === cleanPass ||
+        (cleanPass === '1234' && (uPass === '123' || uPass === '1234')) ||
+        (cleanPass === '123' && (uPass === '1234' || uPass === '123'));
 
-        const nameMatches =
-          uName === targetStr ||
-          uNameAlphaNum === targetAlphaNum ||
-          uStore === targetStr ||
-          uStoreAlphaNum === targetAlphaNum;
-
-        const uPass = String(u.password ?? '').trim();
-        const passMatches =
-          uPass === cleanPass ||
-          (cleanPass === '1234' && (uPass === '123' || uPass === '1234')) ||
-          (cleanPass === '123' && (uPass === '1234' || uPass === '123'));
-
-        return nameMatches && passMatches;
-      });
-    };
-
-    let matched = findMatchingUserInList(Array.from(userMap.values()));
+      return nameMatches && passMatches;
+    });
 
     if (matched) {
       const resolvedStoreId = matched.store_id || 'store_1';
@@ -993,19 +978,16 @@ export default function App() {
       sessionStorage.setItem('kulubadu_active_session', JSON.stringify(userObj));
       triggerToast(`Welcome back, ${matched.name}! Clearance active.`, 'success');
     } else {
-      const userFoundWithoutPass = Array.from(userMap.values()).find((u: any) => {
+      const userFoundWithoutPass = list.find((u: User) => {
         const uName = (u.username || '').toLowerCase().trim();
-        const uStore = (u.store_id || '').toLowerCase().trim();
         const uNameAlphaNum = uName.replace(/[^a-z0-9]/g, '');
-        const targetStr = rawUser.toLowerCase();
-        const targetAlphaNum = targetStr.replace(/[^a-z0-9]/g, '');
-        return uName === targetStr || uNameAlphaNum === targetAlphaNum || uStore === targetStr;
+        return uName === targetStr || uNameAlphaNum === targetAlphaNum;
       });
 
       if (userFoundWithoutPass) {
-        setLoginError(`පරිශීලක (${userFoundWithoutPass.username}) සොයා ගන්නා ලදී. නමුත් ඔබ ඇතුළත් කළ Password එක වැරදිය. (Hint: 123)`);
+        setLoginError(`පරිශීලක (${userFoundWithoutPass.username}) සොයා ගන්නා ලදී. නමුත් ඔබ ඇතුළත් කළ Password එක වැරදිය.`);
       } else {
-        setLoginError(`"${rawUser}" නමින් පරිශීලකයෙකු හමු නොවිණි. පහත Dropdown එකෙන් ගිණුම තෝරන්න. (Hint: 123)`);
+        setLoginError(`"${rawUser}" නමින් පරිශීලකයෙකු හමු නොවිණි. (Supabase හි මෙම පරිශීලකයා නොපවතී)`);
       }
     }
   };
