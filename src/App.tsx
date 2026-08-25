@@ -1114,8 +1114,10 @@ export default function App() {
     if (client && supabaseStatus === 'connected') {
       try {
         const supaProds = await fetchProductsFromSupabase(tx.store_id);
-        if (supaProds !== null) {
-          latestProducts = supaProds.map(normalizeProduct);
+        if (supaProds !== null && supaProds.length > 0) {
+          const supaMap = new Map<string, Product>();
+          supaProds.forEach(sp => supaMap.set(sp.id, sp));
+          latestProducts = products.map(p => supaMap.get(p.id) || p);
         }
       } catch (err) {
         console.warn('Could not fetch latest products before return transaction:', err);
@@ -1127,8 +1129,7 @@ export default function App() {
       const returnedItem = tx.items.find(item => {
         const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
         const matchesName = item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase();
-        const matchesStore = !p.store_id || !tx.store_id || p.store_id === tx.store_id;
-        return (matchesId || matchesName) && matchesStore;
+        return matchesId || matchesName;
       });
       if (returnedItem) {
         let quantityInBaseUnit = returnedItem.qty;
@@ -1143,7 +1144,8 @@ export default function App() {
           ...p,
           stock: newStock,
           lahiru_stock: newStock,
-          jayantha_stock: newStock
+          jayantha_stock: newStock,
+          store_id: p.store_id || tx.store_id
         };
       }
       return p;
@@ -1172,8 +1174,10 @@ export default function App() {
     if (client && supabaseStatus === 'connected') {
       try {
         const supaProds = await fetchProductsFromSupabase(tx.store_id);
-        if (supaProds !== null) {
-          latestProducts = supaProds.map(normalizeProduct);
+        if (supaProds !== null && supaProds.length > 0) {
+          const supaMap = new Map<string, Product>();
+          supaProds.forEach(sp => supaMap.set(sp.id, sp));
+          latestProducts = products.map(p => supaMap.get(p.id) || p);
         }
       } catch (err) {
         console.warn('Could not fetch latest products before sale transaction:', err);
@@ -1185,8 +1189,7 @@ export default function App() {
       const soldItem = tx.items.find(item => {
         const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
         const matchesName = item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase();
-        const matchesStore = !p.store_id || !tx.store_id || p.store_id === tx.store_id;
-        return (matchesId || matchesName) && matchesStore;
+        return matchesId || matchesName;
       });
       if (soldItem) {
         let quantityInBaseUnit = soldItem.qty;
@@ -1202,7 +1205,8 @@ export default function App() {
           ...p,
           stock: newStock,
           lahiru_stock: newStock,
-          jayantha_stock: newStock
+          jayantha_stock: newStock,
+          store_id: p.store_id || tx.store_id
         };
       }
       return p;
@@ -1227,8 +1231,10 @@ export default function App() {
     if (client && supabaseStatus === 'connected') {
       try {
         const supaProds = await fetchProductsFromSupabase(tx.store_id);
-        if (supaProds !== null) {
-          latestProducts = supaProds.map(normalizeProduct);
+        if (supaProds !== null && supaProds.length > 0) {
+          const supaMap = new Map<string, Product>();
+          supaProds.forEach(sp => supaMap.set(sp.id, sp));
+          latestProducts = products.map(p => supaMap.get(p.id) || p);
         }
       } catch (err) {
         console.warn('Could not fetch latest products before buy transaction:', err);
@@ -1236,14 +1242,11 @@ export default function App() {
     }
 
     // 2. Increase stock reserves & update current daily prices
-    const isJayantha = tx.id.startsWith('J-') || tx.id.startsWith('J') || tx.user_id === 'u4' || tx.createdBy === 'jayantha';
-
     const updatedProductsList = latestProducts.map(p => {
       const boughtItem = tx.items.find(item => {
         const matchesId = item.productId === p.id || String(item.productId) === String(p.id);
         const matchesName = item.productName && item.productName.trim().toLowerCase() === p.name.trim().toLowerCase();
-        const matchesStore = !p.store_id || !tx.store_id || p.store_id === tx.store_id;
-        return (matchesId || matchesName) && matchesStore;
+        return matchesId || matchesName;
       });
       if (boughtItem) {
         let quantityInBaseUnit = boughtItem.qty;
@@ -1268,7 +1271,8 @@ export default function App() {
           sellPrice: updatedRetailPrice,
           stock: newStock,
           lahiru_stock: newStock,
-          jayantha_stock: newStock
+          jayantha_stock: newStock,
+          store_id: p.store_id || tx.store_id
         };
       }
       return p;
