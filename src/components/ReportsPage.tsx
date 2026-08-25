@@ -84,6 +84,21 @@ export default function ReportsPage({
     }
   }, [defaultDate, hasManuallySelected]);
 
+  const effectiveShopName = useMemo(() => {
+    const rawName = shopProfile?.shopName?.trim() || '';
+    const isLegacyBranding = rawName === 'JAYANTHA SPICE COLLECTORS' || rawName === 'LAHIYA SPICE COLLECTORS';
+    const isJayanthaOrLahiru = currentUserUsername === 'jayantha' || currentUserUsername === 'lahiru';
+    if (isLegacyBranding && !isJayanthaOrLahiru) {
+      const displayUser = currentUserUsername ? currentUserUsername.toUpperCase().replace(/_/g, ' ') : 'STORE';
+      return `${displayUser} POS CENTER`;
+    }
+    if (!rawName) {
+      const displayUser = currentUserUsername ? currentUserUsername.toUpperCase().replace(/_/g, ' ') : 'STORE';
+      return `${displayUser} POS CENTER`;
+    }
+    return rawName;
+  }, [shopProfile, currentUserUsername]);
+
   // Filter transactions by date/month
   const filteredTransactions = useMemo(() => {
     return (transactions || []).filter(tx => {
@@ -418,7 +433,7 @@ export default function ReportsPage({
       ? 'Jayantha Spices (ජයන්ත කුළුබඩු)'
       : isLahiru
         ? 'Lahiya Spices (ලහියා කුළුබඩු)'
-        : ((currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Enterprise Consolidated (සමස්ත ව්‍යාපාරය)' : (shopProfile?.shopName || 'Store Financial Report'));
+        : ((currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Enterprise Consolidated (සමස්ත ව්‍යාපාරය)' : effectiveShopName);
 
     const reportTitle = `${brandName} - ${reportType.toUpperCase()} FINANCIAL REPORT`;
     const timeFrameStr = reportType === 'daily'
@@ -648,7 +663,7 @@ export default function ReportsPage({
   const openThermalSummaryModal = (entityType: 'lahiru' | 'jayantha' | 'combined') => {
     const brandName = entityType === 'lahiru'
       ? 'Lahiru Spices'
-      : (entityType === 'jayantha' ? 'Jayantha Spices' : ((currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Kulubadu Enterprise' : (shopProfile?.shopName || 'Store Spices Center')));
+      : (entityType === 'jayantha' ? 'Jayantha Spices' : ((currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Kulubadu Enterprise' : effectiveShopName));
 
     const timeFrameStr = reportType === 'daily'
       ? formatDateString(selectedDate)
@@ -1013,11 +1028,11 @@ export default function ReportsPage({
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 bg-indigo-400 rounded-full inline-block"></span>
               <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-                {shopProfile?.shopName || 'Store Audit Report'}
+                {effectiveShopName}
               </h4>
             </div>
             <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold">
-              {currentUserRole === 'superuser' ? 'Consolidated' : (shopProfile?.shopName || currentUserUsername)}
+              {currentUserRole === 'superuser' ? 'Consolidated' : `@${currentUserUsername}`}
             </span>
           </div>
 

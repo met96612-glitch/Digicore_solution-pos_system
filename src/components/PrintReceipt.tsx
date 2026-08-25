@@ -63,12 +63,19 @@ export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?:
   const isExplicitJayantha = createdByLower === 'jayantha' || transaction.user_id === 'u4';
   const isExplicitLahiru = createdByLower === 'lahiru' || transaction.user_id === 'u3';
 
-  const configuredName = shopProfile?.shopName?.trim() || '';
-  const configuredSinhala = shopProfile?.shopSinhalaName?.trim() || '';
-  const configuredAddress = shopProfile?.address?.trim() || '';
-  const configuredPhone = [shopProfile?.phone1, shopProfile?.phone2].filter(Boolean).map(p => p?.trim()).filter(Boolean).join(' / ');
-  const footerNote = shopProfile?.footerNote || '*** THANK YOU! COME AGAIN ***';
-  const footerSubNote = shopProfile?.footerSubNote || 'Software Powered by Digicore Solution';
+  let configuredName = shopProfile?.shopName?.trim() || '';
+  let configuredSinhala = shopProfile?.shopSinhalaName?.trim() || '';
+  let configuredAddress = shopProfile?.address?.trim() || '';
+  let configuredPhone = [shopProfile?.phone1, shopProfile?.phone2].filter(Boolean).map(p => p?.trim()).filter(Boolean).join(' / ');
+
+  // CRITICAL PROTECTION: If shopProfile contains legacy Lahiru/Jayantha branding but transaction belongs to a custom tenant, ignore legacy defaults
+  const isLegacyProfileBranding = configuredName === 'JAYANTHA SPICE COLLECTORS' || configuredName === 'LAHIYA SPICE COLLECTORS';
+  if (isLegacyProfileBranding && !isExplicitJayantha && !isExplicitLahiru) {
+    configuredName = '';
+    configuredSinhala = '';
+    configuredAddress = '';
+    configuredPhone = '';
+  }
 
   let shopName = configuredName;
   let shopSinhala = configuredSinhala;
@@ -87,12 +94,16 @@ export function resolveShopHeaderDetails(transaction: Transaction, shopProfile?:
       shopAddress = shopAddress || 'Wewalwatta, Rathnapura';
       shopPhone = shopPhone || '074 0050211 / 076 0808246';
     } else {
-      shopName = `${(transaction.createdBy || 'STORE').toUpperCase()} POS CENTER`;
+      const displayUser = (transaction.createdBy || 'STORE').toUpperCase().replace(/_/g, ' ');
+      shopName = `${displayUser} POS CENTER`;
       shopSinhala = shopSinhala || `${transaction.createdBy || 'කඩය'} මුදල් කවුන්ටරය`;
       shopAddress = shopAddress || 'Sri Lanka';
       shopPhone = shopPhone || '';
     }
   }
+
+  const footerNote = shopProfile?.footerNote || '*** THANK YOU! COME AGAIN ***';
+  const footerSubNote = shopProfile?.footerSubNote || 'Software Powered by Digicore Solution';
 
   const cashierName = isExplicitJayantha
     ? 'Jayantha De Silva (@jayantha)'

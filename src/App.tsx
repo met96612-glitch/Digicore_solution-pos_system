@@ -282,7 +282,10 @@ export default function App() {
     const saved = localStorage.getItem('kulubadu_shop_profile');
     if (saved) {
       try {
-        return { ...DEFAULT_SHOP_PROFILE, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        if (parsed.shopName && parsed.shopName !== 'JAYANTHA SPICE COLLECTORS' && parsed.shopName !== 'LAHIYA SPICE COLLECTORS') {
+          return { ...DEFAULT_SHOP_PROFILE, ...parsed };
+        }
       } catch (e) {
         console.error('Failed to parse saved shop profile:', e);
       }
@@ -290,8 +293,68 @@ export default function App() {
     return DEFAULT_SHOP_PROFILE;
   });
 
+  const effectiveShopProfile = useMemo(() => {
+    if (!sessionUser) return DEFAULT_SHOP_PROFILE;
+    const userStore = sessionUser.store_id || 'store_1';
+    const username = sessionUser.username.toLowerCase();
+    const isJayantha = username === 'jayantha';
+    const isLahiru = username === 'lahiru';
+
+    const savedStoreProfile = localStorage.getItem(`kulubadu_shop_profile_${userStore}`) || localStorage.getItem('kulubadu_shop_profile');
+    if (savedStoreProfile) {
+      try {
+        const parsed = JSON.parse(savedStoreProfile);
+        if (parsed && parsed.shopName) {
+          const isLegacy = parsed.shopName === 'JAYANTHA SPICE COLLECTORS' || parsed.shopName === 'LAHIYA SPICE COLLECTORS';
+          if (!isLegacy || (isLegacy && (isJayantha || isLahiru))) {
+            return { ...DEFAULT_SHOP_PROFILE, ...parsed };
+          }
+        }
+      } catch (e) {
+        console.error('Failed to parse store shop profile:', e);
+      }
+    }
+
+    if (isJayantha) {
+      return {
+        shopName: 'JAYANTHA SPICE COLLECTORS',
+        shopSinhalaName: 'ජයන්ත කුළුබඩු එකතු කිරීම්',
+        address: 'Wewalwatta, Rathnapura',
+        phone1: '077 602 1831',
+        phone2: '',
+        footerNote: '*** THANK YOU! COME AGAIN ***',
+        footerSubNote: 'Software Powered by Digicore Solution'
+      };
+    }
+
+    if (isLahiru) {
+      return {
+        shopName: 'LAHIYA SPICE COLLECTORS',
+        shopSinhalaName: 'ළහියා කුළුබඩු එකතු කිරීම්',
+        address: 'Wewalwatta, Rathnapura',
+        phone1: '074 0050211',
+        phone2: '076 0808246',
+        footerNote: '*** THANK YOU! COME AGAIN ***',
+        footerSubNote: 'Software Powered by Digicore Solution'
+      };
+    }
+
+    const displayName = sessionUser.username.toUpperCase().replace(/_/g, ' ');
+    return {
+      shopName: `${displayName} POS CENTER`,
+      shopSinhalaName: `${sessionUser.username} මුදල් කවුන්ටරය`,
+      address: 'Sri Lanka',
+      phone1: '',
+      phone2: '',
+      footerNote: '*** THANK YOU! COME AGAIN ***',
+      footerSubNote: 'Software Powered by Digicore Solution'
+    };
+  }, [sessionUser]);
+
   const updateShopProfile = (newProfile: ShopProfile) => {
     setShopProfile(newProfile);
+    const userStore = sessionUser?.store_id || 'store_1';
+    localStorage.setItem(`kulubadu_shop_profile_${userStore}`, JSON.stringify(newProfile));
     localStorage.setItem('kulubadu_shop_profile', JSON.stringify(newProfile));
   };
 
@@ -1928,7 +1991,7 @@ export default function App() {
               currentUserUsername={sessionUser.username}
               currentUserRole={sessionUser.role}
               stockAdjustments={stockAdjustments}
-              shopProfile={shopProfile}
+              shopProfile={effectiveShopProfile}
               openingCashLogs={openingCashLogs}
               onToast={triggerToast}
             />
@@ -1942,7 +2005,7 @@ export default function App() {
               transactions={filteredTransactions}
               onSaveBill={recordNewSaleTx}
               onToast={triggerToast}
-              shopProfile={shopProfile}
+              shopProfile={effectiveShopProfile}
             />
           )}
 
@@ -2014,7 +2077,7 @@ export default function App() {
               currentOpeningCash={openingCash}
               expenses={filteredExpenses}
               stockAdjustments={filteredStockAdjustments}
-              shopProfile={shopProfile}
+              shopProfile={effectiveShopProfile}
               onToast={triggerToast}
             />
           )}
@@ -2033,7 +2096,7 @@ export default function App() {
               users={filteredUsers}
               products={filteredProducts}
               transactions={filteredTransactions}
-              shopProfile={shopProfile}
+              shopProfile={effectiveShopProfile}
               onUpdateShopProfile={updateShopProfile}
               onAddUser={addUser}
               onRemoveUser={removeUser}
@@ -2105,7 +2168,7 @@ export default function App() {
       {receiptTx && (
         <PrintReceipt
           transaction={receiptTx}
-          shopProfile={shopProfile}
+          shopProfile={effectiveShopProfile}
           onClose={() => setReceiptTx(null)}
           onToast={triggerToast}
           onDelete={deleteTransaction}
