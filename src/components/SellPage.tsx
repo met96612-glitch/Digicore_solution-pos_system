@@ -329,26 +329,28 @@ export default function SellPage({
               <p className="text-[10px] text-slate-500">As supervisor, select active store entity to bill for</p>
             </div>
           </div>
-          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full sm:w-auto">
-            <button
-              onClick={() => setActivePrefix('L')}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${activePrefix === 'L'
-                ? 'bg-violet-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
-                }`}
-            >
-              <span>Lahiru Spices Desk (L)</span>
-            </button>
-            <button
-              onClick={() => setActivePrefix('J')}
-              className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${activePrefix === 'J'
-                ? 'bg-emerald-600 text-white shadow'
-                : 'text-slate-400 hover:text-slate-200'
-                }`}
-            >
-              <span>Jayantha Spices Desk (J)</span>
-            </button>
-          </div>
+          {(currentUserUsername === 'lahiru' || currentUserUsername === 'jayantha' || currentUserRole === 'superuser') && (
+            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80 w-full sm:w-auto">
+              <button
+                onClick={() => setActivePrefix('L')}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${activePrefix === 'L'
+                  ? 'bg-violet-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+                  }`}
+              >
+                <span>Lahiru Spices Desk (L)</span>
+              </button>
+              <button
+                onClick={() => setActivePrefix('J')}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${activePrefix === 'J'
+                  ? 'bg-emerald-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+                  }`}
+              >
+                <span>Jayantha Spices Desk (J)</span>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
@@ -604,7 +606,7 @@ export default function SellPage({
               <div className="bg-slate-950/40 rounded-xl p-3 border border-slate-800 flex justify-between items-center">
                 <div className="flex items-center gap-1.5 text-xs text-slate-400">
                   <Sparkles size={14} className="text-violet-400" />
-                  <span>Available reserve ({activePrefix === 'J' ? 'Jayantha' : 'Lahiru'}):</span>
+                  <span>Available stock reserve:</span>
                 </div>
                 {(() => {
                   const activeStock = matchedProduct.stock;

@@ -868,7 +868,7 @@ export default function ReportsPage({
               <span>Audit Reports & Ledger Summaries (මුදල් සහ තොග වාර්තා)</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              ළහිරු Spices, ජයන්තා Spices සහ මුළු ආයතනයේම (Consolidated) මූල්‍ය සහ තොග වාර්තා.
+              ලොග් වී සිටින Store එක සඳහා සජීවී මූල්‍ය සහ තොග Audit වාර්තා.
             </p>
           </div>
         </div>
@@ -1000,281 +1000,109 @@ export default function ReportsPage({
         )}
       </div>
 
-      {/* Entity Split Dashboard */}
-      <div className={`grid grid-cols-1 ${(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'lg:grid-cols-3' : ''} gap-6`}>
-        {/* Lahiru Spices Card */}
-        {(currentUserUsername === 'superuser' || currentUserUsername === 'lahiru') && (
-          <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/5 rounded-full blur-2xl"></div>
-            <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
+      {/* Entity Dashboard Card */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Active Store Financial Audit Card */}
+        <div className="bg-gradient-to-br from-indigo-950/15 to-slate-900/60 border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl"></div>
+          <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-indigo-400 rounded-full inline-block"></span>
+              <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
+                {shopProfile?.shopName || 'Store Audit Report'}
+              </h4>
+            </div>
+            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold">
+              {currentUserRole === 'superuser' ? 'Consolidated' : (shopProfile?.shopName || currentUserUsername)}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-violet-500 rounded-full inline-block"></span>
-                <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">Lahiru Spices</h4>
+                <TrendingUp size={14} className="text-emerald-400 font-extrabold" />
+                <span className="text-xs text-slate-400">Total Sales (විකුණුම් එකතුව):</span>
               </div>
-              <span className="text-[10px] bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded font-mono font-bold">L Series</span>
+              <strong className="text-sm font-mono text-emerald-400 font-extrabold">{formatCurrency(combinedStats.sales)}</strong>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                <div className="flex items-center gap-2">
-                  <TrendingUp size={14} className="text-emerald-400" />
-                  <span className="text-xs text-slate-400">Total Sales:</span>
-                </div>
-                <strong className="text-sm font-mono text-emerald-400">{formatCurrency(lahiruStats.sales)}</strong>
+            <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
+              <div className="flex items-center gap-2">
+                <ShoppingBag size={14} className="text-amber-500 font-extrabold" />
+                <span className="text-xs text-slate-400">Restocking (මිලදී ගැනීම් එකතුව):</span>
               </div>
-
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag size={14} className="text-amber-500" />
-                  <span className="text-xs text-slate-400">Restocking:</span>
-                </div>
-                <strong className="text-sm font-mono text-amber-500">{formatCurrency(lahiruStats.buys)}</strong>
-              </div>
-
-              {lahiruAdjStats.totalLoss > 0 && (
-                <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                  <div className="flex items-center gap-2">
-                    <TrendingDown size={14} className="text-rose-400" />
-                    <span className="text-xs text-rose-400 font-semibold">Wastage Loss (තොග අඩුවීම්):</span>
-                  </div>
-                  <strong className="text-sm font-mono text-rose-400 font-bold">-{formatCurrency(lahiruAdjStats.totalLoss)}</strong>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center pt-2">
-                <div className="flex items-center gap-2">
-                  <DollarSign size={14} className="text-violet-400" />
-                  <span className="text-xs text-slate-200 font-bold">Net Profit (ශුද්ධ ලාභය):</span>
-                </div>
-                <strong className="text-base font-mono text-violet-400 font-bold">{formatCurrency(lahiruStats.profit)}</strong>
-              </div>
+              <strong className="text-sm font-mono text-amber-500 font-extrabold">{formatCurrency(combinedStats.buys)}</strong>
             </div>
 
-            <div className="pt-3 border-t border-slate-800/60 space-y-2">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                Export / Print Summary (වාර්තා ලබාගන්න):
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  onClick={() => openThermalSummaryModal('lahiru')}
-                  className="py-2 px-2 bg-gradient-to-r from-violet-600/30 to-indigo-600/30 hover:from-violet-600/40 hover:to-indigo-600/40 text-violet-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-violet-500/40 shadow-sm"
-                  title="80mm Bluetooth Thermal Printer එකෙන් සාරාංශ බිල ලබාගන්න"
-                >
-                  <Bluetooth size={13} className="text-violet-400" />
-                  <span>80mm Thermal</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('lahiru', 'pdf')}
-                  className="py-2 px-2 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-violet-500/30 shadow-sm"
-                  title="Print or Save as PDF Report"
-                >
-                  <Printer size={13} />
-                  <span>PDF / Print</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('lahiru', 'excel')}
-                  className="py-2 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/20"
-                  title="Export Excel Report (.xls)"
-                >
-                  <FileSpreadsheet size={13} />
-                  <span>Excel</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('lahiru', 'csv')}
-                  className="py-2 px-2 bg-slate-800/60 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700/50"
-                  title="Export raw CSV"
-                >
-                  <FileText size={13} />
-                  <span>CSV</span>
-                </button>
+            {combinedAdjStats.totalLoss > 0 && (
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
+                <div className="flex items-center gap-2">
+                  <TrendingDown size={14} className="text-rose-400 font-semibold" />
+                  <span className="text-xs text-rose-400 font-bold">Wastage Loss (තොග අඩුවීම්):</span>
+                </div>
+                <strong className="text-sm font-mono text-rose-400 font-extrabold">-{formatCurrency(combinedAdjStats.totalLoss)}</strong>
               </div>
+            )}
+
+            {periodExpensesTotal > 0 && (
+              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
+                <div className="flex items-center gap-2">
+                  <TrendingDown size={14} className="text-rose-400 font-semibold" />
+                  <span className="text-xs text-rose-400 font-bold">Operating Expenses (වියදම් එකතුව):</span>
+                </div>
+                <strong className="text-sm font-mono text-rose-400 font-extrabold">-{formatCurrency(periodExpensesTotal)}</strong>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-2">
+              <div className="flex items-center gap-2">
+                <DollarSign size={14} className="text-indigo-400 font-extrabold" />
+                <span className="text-xs text-slate-200 font-bold">Net Profit (ශුද්ධ ලාභය):</span>
+              </div>
+              <strong className="text-base font-mono text-indigo-400 font-extrabold">{formatCurrency(combinedStats.profit)}</strong>
             </div>
           </div>
-        )}
 
-        {/* Jayantha Spices Card */}
-        {(currentUserUsername === 'superuser' || currentUserUsername === 'jayantha') && (
-          <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-600/5 rounded-full blur-2xl"></div>
-            <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full inline-block"></span>
-                <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">Jayantha Spices</h4>
-              </div>
-              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-mono font-bold">J Series</span>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                <div className="flex items-center gap-2">
-                  <TrendingUp size={14} className="text-emerald-400" />
-                  <span className="text-xs text-slate-400">Total Sales:</span>
-                </div>
-                <strong className="text-sm font-mono text-emerald-400">{formatCurrency(jayanthaStats.sales)}</strong>
-              </div>
-
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag size={14} className="text-amber-500" />
-                  <span className="text-xs text-slate-400">Restocking:</span>
-                </div>
-                <strong className="text-sm font-mono text-amber-500">{formatCurrency(jayanthaStats.buys)}</strong>
-              </div>
-
-              {jayanthaAdjStats.totalLoss > 0 && (
-                <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                  <div className="flex items-center gap-2">
-                    <TrendingDown size={14} className="text-rose-400" />
-                    <span className="text-xs text-rose-400 font-semibold">Wastage Loss (තොග අඩුවීම්):</span>
-                  </div>
-                  <strong className="text-sm font-mono text-rose-400 font-bold">-{formatCurrency(jayanthaAdjStats.totalLoss)}</strong>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center pt-2">
-                <div className="flex items-center gap-2">
-                  <DollarSign size={14} className="text-emerald-400" />
-                  <span className="text-xs text-slate-200 font-bold">Net Profit (ශුද්ධ ලාභය):</span>
-                </div>
-                <strong className="text-base font-mono text-emerald-400 font-bold">{formatCurrency(jayanthaStats.profit)}</strong>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-800/60 space-y-2">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                Export / Print Summary (වාර්තා ලබාගන්න):
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  onClick={() => openThermalSummaryModal('jayantha')}
-                  className="py-2 px-2 bg-gradient-to-r from-emerald-600/30 to-teal-600/30 hover:from-emerald-600/40 hover:to-teal-600/40 text-emerald-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/40 shadow-sm"
-                  title="80mm Bluetooth Thermal Printer එකෙන් සාරාංශ බිල ලබාගන්න"
-                >
-                  <Bluetooth size={13} className="text-emerald-400" />
-                  <span>80mm Thermal</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('jayantha', 'pdf')}
-                  className="py-2 px-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/30 shadow-sm"
-                  title="Print or Save as PDF Report"
-                >
-                  <Printer size={13} />
-                  <span>PDF / Print</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('jayantha', 'excel')}
-                  className="py-2 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/20"
-                  title="Export Excel Report (.xls)"
-                >
-                  <FileSpreadsheet size={13} />
-                  <span>Excel</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('jayantha', 'csv')}
-                  className="py-2 px-2 bg-slate-800/60 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700/50"
-                  title="Export raw CSV"
-                >
-                  <FileText size={13} />
-                  <span>CSV</span>
-                </button>
-              </div>
+          <div className="pt-3 border-t border-slate-800/60 space-y-2">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+              Export / Print Summary (වාර්තා ලබාගන්න):
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                onClick={() => openThermalSummaryModal('combined')}
+                className="py-2 px-2 bg-gradient-to-r from-indigo-600/30 to-violet-600/30 hover:from-indigo-600/40 hover:to-violet-600/40 text-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-indigo-500/40 shadow-sm"
+                title="80mm Bluetooth Thermal Printer එකෙන් සාරාංශ බිල ලබාගන්න"
+              >
+                <Bluetooth size={13} className="text-indigo-400" />
+                <span>80mm Thermal</span>
+              </button>
+              <button
+                onClick={() => exportDetailedReport('combined', 'pdf')}
+                className="py-2 px-2 bg-indigo-600/25 hover:bg-indigo-600/35 text-indigo-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-indigo-500/30 shadow-sm"
+                title="Print or Save as PDF Report"
+              >
+                <Printer size={13} />
+                <span>PDF / Print</span>
+              </button>
+              <button
+                onClick={() => exportDetailedReport('combined', 'excel')}
+                className="py-2 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/20"
+                title="Export Excel Report (.xls)"
+              >
+                <FileSpreadsheet size={13} />
+                <span>Excel</span>
+              </button>
+              <button
+                onClick={() => exportDetailedReport('combined', 'csv')}
+                className="py-2 px-2 bg-slate-800/60 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700/50"
+                title="Export raw CSV"
+              >
+                <FileText size={13} />
+                <span>CSV</span>
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Store / Consolidated Enterprise Card */}
-        {(currentUserUsername === 'superuser' || (currentUserUsername !== 'lahiru' && currentUserUsername !== 'jayantha')) && (
-          <div className="bg-gradient-to-br from-indigo-950/15 to-slate-900/60 border border-slate-800/90 rounded-2xl p-5 shadow-lg relative overflow-hidden space-y-4">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl"></div>
-            <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-indigo-400 rounded-full inline-block"></span>
-                <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-                  {(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'Enterprise Consolidated' : (shopProfile?.shopName || 'Store Audit Report')}
-                </h4>
-              </div>
-              <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold">
-                {(currentUserRole === 'superuser' || currentUserUsername === 'superuser') ? 'All Series' : (shopProfile?.shopName || currentUserUsername)}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                <div className="flex items-center gap-2">
-                  <TrendingUp size={14} className="text-emerald-400 font-extrabold" />
-                  <span className="text-xs text-slate-400">Total Sales:</span>
-                </div>
-                <strong className="text-sm font-mono text-emerald-400 font-extrabold">{formatCurrency(combinedStats.sales)}</strong>
-              </div>
-
-              <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag size={14} className="text-amber-500 font-extrabold" />
-                  <span className="text-xs text-slate-400">Restocking:</span>
-                </div>
-                <strong className="text-sm font-mono text-amber-500 font-extrabold">{formatCurrency(combinedStats.buys)}</strong>
-              </div>
-
-              {combinedAdjStats.totalLoss > 0 && (
-                <div className="flex justify-between items-center py-1.5 border-b border-slate-800/30">
-                  <div className="flex items-center gap-2">
-                    <TrendingDown size={14} className="text-rose-400 font-semibold" />
-                    <span className="text-xs text-rose-400 font-bold">Wastage Loss (තොග අඩුවීම්):</span>
-                  </div>
-                  <strong className="text-sm font-mono text-rose-400 font-extrabold">-{formatCurrency(combinedAdjStats.totalLoss)}</strong>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center pt-2">
-                <div className="flex items-center gap-2">
-                  <DollarSign size={14} className="text-indigo-400 font-extrabold" />
-                  <span className="text-xs text-slate-200 font-bold">Net Profit (ශුද්ධ ලාභය):</span>
-                </div>
-                <strong className="text-base font-mono text-indigo-400 font-extrabold">{formatCurrency(combinedStats.profit)}</strong>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-800/60 space-y-2">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                Export / Print Summary (වාර්තා ලබාගන්න):
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  onClick={() => openThermalSummaryModal('combined')}
-                  className="py-2 px-2 bg-gradient-to-r from-indigo-600/30 to-violet-600/30 hover:from-indigo-600/40 hover:to-violet-600/40 text-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-indigo-500/40 shadow-sm"
-                  title="80mm Bluetooth Thermal Printer එකෙන් සාරාංශ බිල ලබාගන්න"
-                >
-                  <Bluetooth size={13} className="text-indigo-400" />
-                  <span>80mm Thermal</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('combined', 'pdf')}
-                  className="py-2 px-2 bg-indigo-600/25 hover:bg-indigo-600/35 text-indigo-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-indigo-500/30 shadow-sm"
-                  title="Print or Save as PDF Report"
-                >
-                  <Printer size={13} />
-                  <span>PDF / Print</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('combined', 'excel')}
-                  className="py-2 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-500/20"
-                  title="Export Excel Report (.xls)"
-                >
-                  <FileSpreadsheet size={13} />
-                  <span>Excel</span>
-                </button>
-                <button
-                  onClick={() => exportDetailedReport('combined', 'csv')}
-                  className="py-2 px-2 bg-slate-800/60 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-slate-700/50"
-                  title="Export raw CSV"
-                >
-                  <FileText size={13} />
-                  <span>CSV</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* STOCK ADJUSTMENT & WASTAGE LOSS SUMMARY SECTION */}

@@ -838,47 +838,49 @@ export default function StockPage({
                 >
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (දැනට: {p.lahiru_stock ?? p.stock} kg L / {p.jayantha_stock ?? p.stock} kg J)
+                      {p.name} (දැනට තොගය: {p.stock} {p.unit})
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Desk Selection */}
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  අඩු වන තොගය (Inventory Desk) *
-                </label>
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDesk('lahiru')}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'lahiru'
-                      ? 'bg-violet-950/40 border-violet-500 text-violet-300 ring-1 ring-violet-500'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                      }`}
-                  >
-                    <span>ළහිරු තොගය (Lahiru)</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {selectedProduct ? (selectedProduct.lahiru_stock ?? selectedProduct.stock) : 0} {selectedProduct?.unit || 'kg'}
-                    </span>
-                  </button>
+              {/* Desk Selection (Only for Lahiru/Jayantha split desks) */}
+              {(currentUserUsername === 'lahiru' || currentUserUsername === 'jayantha') && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    අඩු වන තොගය (Inventory Desk) *
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDesk('lahiru')}
+                      className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'lahiru'
+                        ? 'bg-violet-950/40 border-violet-500 text-violet-300 ring-1 ring-violet-500'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                    >
+                      <span>ළහිරු තොගය (Lahiru)</span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {selectedProduct ? (selectedProduct.lahiru_stock ?? selectedProduct.stock) : 0} {selectedProduct?.unit || 'kg'}
+                      </span>
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDesk('jayantha')}
-                    className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'jayantha'
-                      ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
-                      }`}
-                  >
-                    <span>ජයන්තා තොගය (Jayantha)</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {selectedProduct ? (selectedProduct.jayantha_stock ?? selectedProduct.stock) : 0} {selectedProduct?.unit || 'kg'}
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDesk('jayantha')}
+                      className={`p-2.5 sm:p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${selectedDesk === 'jayantha'
+                        ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                    >
+                      <span>ජයන්තා තොගය (Jayantha)</span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {selectedProduct ? (selectedProduct.jayantha_stock ?? selectedProduct.stock) : 0} {selectedProduct?.unit || 'kg'}
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Reason Selection */}
               <div>
