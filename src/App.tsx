@@ -739,11 +739,7 @@ export default function App() {
 
             const merged = Array.from(userMap.values());
             merged.forEach(u => {
-              u.store_id = u.store_id || (
-                u.username === 'jayantha' ? 'store_2' :
-                  u.username === 'lahiru' ? 'store_1' :
-                    (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
-              );
+              u.store_id = u.store_id || 'store_1';
             });
             setRegisteredUsers(merged);
             localStorage.setItem('kulubadu_users', JSON.stringify(merged));
@@ -811,22 +807,7 @@ export default function App() {
 
       const merged = Array.from(userMap.values());
       merged.forEach(u => {
-        u.store_id = u.store_id || (
-          u.username === 'jayantha' ? 'store_2' :
-            u.username === 'lahiru' ? 'store_1' :
-              (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
-        );
-        if (!u.shop_name || u.shop_name.includes('Center')) {
-          if (u.username === 'jayantha') {
-            u.shop_name = 'Jayantha Spice Collectors';
-            u.phone_number = '077 602 1831';
-            u.invoice_prefix = 'J';
-          } else {
-            u.shop_name = 'Lahiya Spice Collectors';
-            u.phone_number = '074 0050211 / 076 0808246';
-            u.invoice_prefix = 'L';
-          }
-        }
+        u.store_id = u.store_id || 'store_1';
       });
       localStorage.setItem('kulubadu_users', JSON.stringify(merged));
       setRegisteredUsers(merged);
@@ -997,19 +978,15 @@ export default function App() {
     let matched = findMatchingUserInList(Array.from(userMap.values()));
 
     if (matched) {
-      const resolvedStoreId = matched.store_id || (
-        matched.username === 'jayantha' ? 'store_2' :
-          matched.username === 'lahiru' ? 'store_1' :
-            (matched.username.startsWith('store_') ? matched.username : `store_${matched.username}`)
-      );
+      const resolvedStoreId = matched.store_id || 'store_1';
       const userObj: User = {
         id: matched.id,
         name: matched.name,
         username: matched.username,
-        role: matched.role || (matched.username === 'superuser' ? 'superuser' : 'admin'),
-        shop_name: matched.shop_name || (matched.username === 'jayantha' ? 'Jayantha Spice Collectors' : 'Lahiya Spice Collectors'),
+        role: matched.role || 'admin',
+        shop_name: matched.shop_name || matched.name,
         phone_number: matched.phone_number || '',
-        invoice_prefix: matched.invoice_prefix || (matched.username === 'jayantha' ? 'J' : 'L'),
+        invoice_prefix: matched.invoice_prefix || matched.username.toUpperCase().slice(0, 1),
         store_id: resolvedStoreId
       };
       setSessionUser(userObj);
@@ -1138,11 +1115,7 @@ export default function App() {
 
           const merged = Array.from(userMap.values());
           merged.forEach(u => {
-            u.store_id = u.store_id || (
-              u.username === 'jayantha' ? 'store_2' :
-                u.username === 'lahiru' ? 'store_1' :
-                  (u.username.startsWith('store_') ? u.username : `store_${u.username}`)
-            );
+            u.store_id = u.store_id || 'store_1';
           });
           setRegisteredUsers(merged);
           localStorage.setItem('kulubadu_users', JSON.stringify(merged));
@@ -1163,7 +1136,7 @@ export default function App() {
 
   // Inventory logic updating stocks
   const recordNewReturnTx = async (rawTx: Transaction) => {
-    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || (rawTx.id.startsWith('J-') || rawTx.id.startsWith('J') || rawTx.user_id === 'u4' || rawTx.createdBy === 'jayantha' ? 'store_2' : 'store_1');
+    const storeIdToAttach = rawTx.store_id || sessionUser?.store_id || 'store_1';
     const tx: Transaction = { ...rawTx, store_id: storeIdToAttach };
 
     // 1. Fetch latest products from Supabase if connected
@@ -1506,13 +1479,42 @@ export default function App() {
           </div>
 
           <form onSubmit={handleLoginSubmit} className="space-y-4">
+            {registeredUsers.length > 0 && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Select Supabase User Account
+                </label>
+                <div className="flex items-center gap-2 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 focus-within:border-violet-600 focus-within:ring-1 focus-within:ring-violet-600 transition-all">
+                  <UserIcon size={14} className="text-slate-500 shrink-0" />
+                  <select
+                    value={loginUsername}
+                    onChange={(e) => {
+                      setLoginUsername(e.target.value);
+                      const sel = registeredUsers.find(u => u.username === e.target.value);
+                      if (sel && sel.password) {
+                        setLoginPassword(sel.password);
+                      }
+                    }}
+                    className="w-full bg-transparent text-xs text-slate-200 outline-none font-medium cursor-pointer"
+                  >
+                    <option value="" className="bg-slate-900 text-slate-400">-- Select User from Database --</option>
+                    {registeredUsers.map((u) => (
+                      <option key={u.id || u.username} value={u.username} className="bg-slate-900 text-slate-200">
+                        {u.name} (@{u.username}) {u.shop_name ? `- ${u.shop_name}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Username</label>
               <div className="flex items-center gap-2 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2.5 focus-within:border-violet-600 focus-within:ring-1 focus-within:ring-violet-600 transition-all">
-                <UserIcon size={14} className="text-slate-500" />
+                <UserIcon size={14} className="text-slate-500 shrink-0" />
                 <input
                   type="text"
-                  placeholder="Username (e.g. suresh, lahiru, superuser)"
+                  placeholder="Enter username"
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   className="w-full bg-transparent text-xs text-slate-200 outline-none font-medium"
