@@ -245,11 +245,12 @@ export default function ReportsPage({
 
     filteredTransactions.forEach(tx => {
       if (!tx) return;
-      const isTxJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
+      const isTxJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha') || tx.store_id === 'store_2';
+      const isTxLahiru = (tx.id && tx.id.startsWith('L-')) || (tx.invoice_no && tx.invoice_no.startsWith('L-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'lahiru') || tx.store_id === 'store_1';
       const matches =
         entityType === 'combined' ||
         (entityType === 'jayantha' && isTxJayantha) ||
-        (entityType === 'lahiru' && !isTxJayantha);
+        (entityType === 'lahiru' && isTxLahiru);
 
       if (!matches) return;
 
@@ -308,11 +309,12 @@ export default function ReportsPage({
 
     (filteredTransactions || []).forEach(tx => {
       if (!tx) return;
-      const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
+      const isTxJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha') || tx.store_id === 'store_2';
+      const isTxLahiru = (tx.id && tx.id.startsWith('L-')) || (tx.invoice_no && tx.invoice_no.startsWith('L-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'lahiru') || tx.store_id === 'store_1';
       const matches =
         entityType === 'combined' ||
-        (entityType === 'jayantha' && isJayantha) ||
-        (entityType === 'lahiru' && !isJayantha);
+        (entityType === 'jayantha' && isTxJayantha) ||
+        (entityType === 'lahiru' && isTxLahiru);
 
       if (!matches) return;
 
@@ -359,8 +361,9 @@ export default function ReportsPage({
 
     (filteredTransactions || []).forEach(tx => {
       if (!tx) return;
-      const isJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha');
-      const matches = (entityType === 'jayantha' && isJayantha) || (entityType === 'lahiru' && !isJayantha);
+      const isTxJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha') || tx.store_id === 'store_2';
+      const isTxLahiru = (tx.id && tx.id.startsWith('L-')) || (tx.invoice_no && tx.invoice_no.startsWith('L-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'lahiru') || tx.store_id === 'store_1';
+      const matches = (entityType === 'jayantha' && isTxJayantha) || (entityType === 'lahiru' && isTxLahiru);
 
       if (!matches || tx.type !== 'sell' || !tx.is_wholesale) return;
 
@@ -425,11 +428,12 @@ export default function ReportsPage({
     const filename = `${entity}_spices_${reportType}_report_${reportType === 'daily' ? selectedDate : selectedMonth}`;
 
     const entityTransactions = filteredTransactions.filter(tx => {
-      const isTxJayantha = tx.id.startsWith('J-') || tx.invoice_no?.startsWith('J-');
+      const isTxJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha') || tx.store_id === 'store_2';
+      const isTxLahiru = (tx.id && tx.id.startsWith('L-')) || (tx.invoice_no && tx.invoice_no.startsWith('L-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'lahiru') || tx.store_id === 'store_1';
       return (
         entity === 'combined' ||
         (entity === 'jayantha' && isTxJayantha) ||
-        (entity === 'lahiru' && !isTxJayantha)
+        (entity === 'lahiru' && isTxLahiru)
       );
     });
 

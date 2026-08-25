@@ -433,7 +433,7 @@ export default function App() {
       return products;
     }
     const userStore = sessionUser.store_id || 'store_1';
-    return products.filter(p => !p.store_id || p.store_id === userStore);
+    return products.filter(p => (p.store_id || 'store_1') === userStore);
   }, [products, sessionUser]);
 
   const filteredTransactions = useMemo(() => {
@@ -442,7 +442,10 @@ export default function App() {
       return transactions;
     }
     const userStore = sessionUser.store_id || 'store_1';
-    return transactions.filter(tx => !tx.store_id || tx.store_id === userStore || tx.createdBy === sessionUser.username);
+    return transactions.filter(tx => {
+      const txStore = tx.store_id || (tx.createdBy === 'jayantha' || (tx.id && tx.id.startsWith('J')) ? 'store_2' : 'store_1');
+      return txStore === userStore;
+    });
   }, [transactions, sessionUser]);
 
   const drawerTransactions = useMemo(() => {
@@ -450,8 +453,11 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return transactions;
     }
-    const userStoreId = sessionUser.store_id || 'store_1';
-    return transactions.filter(tx => !tx.store_id || tx.store_id === userStoreId || tx.createdBy === sessionUser.username);
+    const userStore = sessionUser.store_id || 'store_1';
+    return transactions.filter(tx => {
+      const txStore = tx.store_id || (tx.createdBy === 'jayantha' || (tx.id && tx.id.startsWith('J')) ? 'store_2' : 'store_1');
+      return txStore === userStore;
+    });
   }, [transactions, sessionUser]);
 
   const drawerOpeningCashLogs = useMemo(() => {
@@ -459,8 +465,11 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return openingCashLogs;
     }
-    const userStoreId = sessionUser.store_id || 'store_1';
-    return openingCashLogs.filter(l => !l.store_id || l.store_id === userStoreId || l.addedBy === sessionUser.username);
+    const userStore = sessionUser.store_id || 'store_1';
+    return openingCashLogs.filter(l => {
+      const lStore = l.store_id || (l.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      return lStore === userStore;
+    });
   }, [openingCashLogs, sessionUser]);
 
   const drawerExpenses = useMemo(() => {
@@ -468,8 +477,11 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return expenses;
     }
-    const userStoreId = sessionUser.store_id || 'store_1';
-    return expenses.filter(e => !e.store_id || e.store_id === userStoreId || e.addedBy === sessionUser.username);
+    const userStore = sessionUser.store_id || 'store_1';
+    return expenses.filter(e => {
+      const eStore = e.store_id || (e.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      return eStore === userStore;
+    });
   }, [expenses, sessionUser]);
 
   const filteredOpeningCashLogs = useMemo(() => {
@@ -477,8 +489,11 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return openingCashLogs;
     }
-    const userStoreId = sessionUser.store_id || 'store_1';
-    return openingCashLogs.filter(l => !l.store_id || l.store_id === userStoreId || l.addedBy === sessionUser.username);
+    const userStore = sessionUser.store_id || 'store_1';
+    return openingCashLogs.filter(l => {
+      const lStore = l.store_id || (l.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      return lStore === userStore;
+    });
   }, [openingCashLogs, sessionUser]);
 
   const filteredExpenses = useMemo(() => {
@@ -486,8 +501,11 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return expenses;
     }
-    const userStoreId = sessionUser.store_id || 'store_1';
-    return expenses.filter(e => !e.store_id || e.store_id === userStoreId || e.addedBy === sessionUser.username);
+    const userStore = sessionUser.store_id || 'store_1';
+    return expenses.filter(e => {
+      const eStore = e.store_id || (e.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      return eStore === userStore;
+    });
   }, [expenses, sessionUser]);
 
   const filteredStockAdjustments = useMemo(() => {
@@ -496,7 +514,10 @@ export default function App() {
       return stockAdjustments;
     }
     const userStore = sessionUser.store_id || 'store_1';
-    return stockAdjustments.filter(a => a.desk === userStore || a.desk === sessionUser.username || (userStore === 'store_1' && a.desk === 'lahiru'));
+    return stockAdjustments.filter(a => {
+      const aStore = a.desk === 'jayantha' ? 'store_2' : (a.desk === 'lahiru' ? 'store_1' : a.desk);
+      return aStore === userStore;
+    });
   }, [stockAdjustments, sessionUser]);
 
   const filteredUsers = useMemo(() => {
@@ -505,7 +526,7 @@ export default function App() {
       return registeredUsers;
     }
     const userStore = sessionUser.store_id || 'store_1';
-    return registeredUsers.filter(u => !u.store_id || u.store_id === userStore);
+    return registeredUsers.filter(u => (u.store_id || 'store_1') === userStore);
   }, [registeredUsers, sessionUser]);
 
   const isToday = (dateStr: string) => {
