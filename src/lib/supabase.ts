@@ -1,12 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
 export const DEFAULT_SUPABASE_URL = 'https://xztonbgwwbswovfnryyj.supabase.co';
-export const DEFAULT_SUPABASE_KEY = 'sb_publishable_3OTfY2AkPnWIVgalizjKag_w9JPyUVP';
+export const DEFAULT_SUPABASE_KEY = 'sb_publishable_ZHUMToqDOX9vaNCq1of_7Q_vNh4fhYZ';
 
 // Get keys from either import.meta.env, localStorage, or default fallback
 export function getSupabaseKeys() {
-  const customUrl = localStorage.getItem('lahiya_supabase_url') || '';
-  const customKey = localStorage.getItem('lahiya_supabase_key') || '';
+  let customUrl = localStorage.getItem('lahiya_supabase_url') || '';
+  let customKey = localStorage.getItem('lahiya_supabase_key') || '';
+
+  if (customUrl.includes('vmwjofihygzmcurumvsq')) {
+    localStorage.removeItem('lahiya_supabase_url');
+    localStorage.removeItem('lahiya_supabase_key');
+    customUrl = '';
+    customKey = '';
+  }
 
   const metaEnv = (import.meta as any).env || {};
   const envUrl = metaEnv.VITE_SUPABASE_URL || '';
