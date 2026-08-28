@@ -457,7 +457,7 @@ export default function App() {
   const addOpeningCash = (amount: number, userOverride?: string) => {
     if (isNaN(amount) || amount <= 0) return;
     const username = userOverride || sessionUser?.username || 'admin';
-    const userStore = sessionUser?.store_id || (username === 'jayantha' ? 'store_2' : 'store_1');
+    const userStore = resolveStoreId(username, sessionUser?.store_id);
     const dateStr = todayDateString;
     const newLog: OpeningCashLog = {
       id: `OC-${Date.now()}`,
@@ -657,7 +657,7 @@ export default function App() {
   const currentDrawerBalance = todayOpeningCashTotal + todayCashSales - todayExpensesTotal - todayBuysTotal;
 
   const activeModalDrawerData = useMemo(() => {
-    const userStoreId = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1');
+    const userStoreId = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
     let targetLogs = drawerOpeningCashLogs;
     let targetTx = drawerTransactions;
     let targetExp = drawerExpenses;
@@ -885,10 +885,10 @@ export default function App() {
 
   // Update states helper functions
   const saveProductsToDb = (newProds: Product[]) => {
-    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : sessionUser?.username || 'store_1'));
+    const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
     const prodsWithStore = newProds.map(p => ({
       ...p,
-      store_id: p.store_id ? p.store_id : userStore
+      store_id: resolveStoreId(undefined, p.store_id || userStore)
     }));
     setProducts(prodsWithStore);
     localStorage.setItem('kulubadu_products', JSON.stringify(prodsWithStore));

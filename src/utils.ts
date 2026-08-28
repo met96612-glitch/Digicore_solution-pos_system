@@ -140,22 +140,21 @@ export const DEFAULT_SHOP_PROFILE: ShopProfile = {
 
 export function resolveStoreId(username?: string, storeId?: string): string {
   const u = (username || '').toLowerCase().trim();
+  const s = (storeId || '').trim();
+
   if (u === 'jayantha') return 'store_2';
   if (u === 'lahiru') return 'store_1';
-  
-  if (storeId && storeId.trim() && storeId !== 'store_1' && storeId !== 'store_2' && storeId !== 'undefined') {
-    return storeId.trim();
-  }
-  
-  if (storeId === 'store_1' || storeId === 'store_2') {
-    if (u && u !== 'lahiru' && u !== 'jayantha' && u !== 'admin' && u !== 'superuser') {
-      return u.startsWith('store_') ? u : `store_${u}`;
-    }
-    return storeId;
+
+  if (u && u !== 'admin' && u !== 'superuser') {
+    return u.startsWith('store_') ? u : `store_${u}`;
   }
 
-  if (!u || u === 'admin' || u === 'superuser') return 'store_1';
-  return u.startsWith('store_') ? u : `store_${u}`;
+  if (s && s !== 'undefined' && s !== 'null') {
+    if (s === 'store_1' || s === 'store_2') return s;
+    return s.startsWith('store_') ? s : `store_${s}`;
+  }
+
+  return 'store_1';
 }
 
 export function getLocalTodayDateString(dateObj: Date = new Date()): string {

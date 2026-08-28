@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Product, ProductUnit } from '../types';
-import { formatCurrency } from '../utils';
+import { formatCurrency, resolveStoreId } from '../utils';
 import { Plus, Edit2, Trash2, Search, X, Layers, AlertTriangle, Database, Lock, RefreshCw, Copy } from 'lucide-react';
 
 interface ProductsPageProps {
@@ -115,7 +115,7 @@ export default function ProductsPage({
       });
       onToast('Product updated successfully.', 'success');
     } else {
-      const userStore = currentUserUsername === 'jayantha' ? 'store_2' : (currentUserUsername === 'lahiru' ? 'store_1' : currentUserUsername);
+      const userStore = resolveStoreId(currentUserUsername);
       const newProduct: Product = {
         id: Math.random().toString(36).substring(2, 9),
         name: name.trim(),

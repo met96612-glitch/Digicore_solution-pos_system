@@ -181,7 +181,7 @@ export async function syncDataToSupabase(
         shop_name: u.shop_name || '',
         phone_number: u.phone_number || '',
         invoice_prefix: u.invoice_prefix || '',
-        store_id: u.store_id || 'store_1'
+        store_id: resolveStoreId(u.username, u.store_id)
       });
       if (error) {
         log += `⚠️ User sync error for ${u.username}: ${error.message}\n`;
@@ -355,7 +355,7 @@ export async function pushUserToSupabase(u: any) {
   const client = createSupabaseClient();
   if (!client) return;
   try {
-    const userStoreId = u.store_id || 'store_1';
+    const userStoreId = resolveStoreId(u.username, u.store_id);
     const { error } = await safeUpsert(client, 'users', {
       id: u.id,
       name: u.name,
@@ -656,7 +656,7 @@ export async function fetchUsersFromSupabase(storeId?: string): Promise<any[] | 
     if (!data) return [];
     return data.map(u => ({
       ...u,
-      store_id: u.store_id || 'store_1'
+      store_id: resolveStoreId(u.username, u.store_id)
     }));
   } catch (e) {
     console.warn(e);
