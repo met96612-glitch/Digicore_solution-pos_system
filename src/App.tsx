@@ -126,7 +126,7 @@ export default function App() {
   });
 
   const addExpense = (expData: Omit<Expense, 'id' | 'date' | 'addedBy'>) => {
-    const userStore = sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : 'store_1');
+    const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
     const newExpense: Expense = {
       ...expData,
       id: `EXP-${Date.now()}`,
@@ -295,7 +295,7 @@ export default function App() {
 
   const effectiveShopProfile = useMemo(() => {
     if (!sessionUser) return DEFAULT_SHOP_PROFILE;
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     const username = sessionUser.username.toLowerCase();
     const isJayantha = username === 'jayantha';
     const isLahiru = username === 'lahiru';
@@ -353,7 +353,7 @@ export default function App() {
 
   const updateShopProfile = (newProfile: ShopProfile) => {
     setShopProfile(newProfile);
-    const userStore = sessionUser?.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
     localStorage.setItem(`kulubadu_shop_profile_${userStore}`, JSON.stringify(newProfile));
     localStorage.setItem('kulubadu_shop_profile', JSON.stringify(newProfile));
   };
@@ -495,8 +495,8 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return products;
     }
-    const userStore = sessionUser.store_id || 'store_1';
-    return products.filter(p => (p.store_id || 'store_1') === userStore);
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
+    return products.filter(p => resolveStoreId(undefined, p.store_id) === userStore);
   }, [products, sessionUser]);
 
   const filteredTransactions = useMemo(() => {
@@ -504,9 +504,9 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return transactions;
     }
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return transactions.filter(tx => {
-      const txStore = tx.store_id || (tx.createdBy === 'jayantha' || (tx.id && tx.id.startsWith('J')) ? 'store_2' : 'store_1');
+      const txStore = resolveStoreId(tx.createdBy, tx.store_id);
       return txStore === userStore;
     });
   }, [transactions, sessionUser]);
@@ -516,9 +516,9 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return transactions;
     }
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return transactions.filter(tx => {
-      const txStore = tx.store_id || (tx.createdBy === 'jayantha' || (tx.id && tx.id.startsWith('J')) ? 'store_2' : 'store_1');
+      const txStore = resolveStoreId(tx.createdBy, tx.store_id);
       return txStore === userStore;
     });
   }, [transactions, sessionUser]);
@@ -528,9 +528,9 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return openingCashLogs;
     }
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return openingCashLogs.filter(l => {
-      const lStore = l.store_id || (l.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      const lStore = resolveStoreId(l.addedBy, l.store_id);
       return lStore === userStore;
     });
   }, [openingCashLogs, sessionUser]);
@@ -540,9 +540,9 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return expenses;
     }
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return expenses.filter(e => {
-      const eStore = e.store_id || (e.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      const eStore = resolveStoreId(e.addedBy, e.store_id);
       return eStore === userStore;
     });
   }, [expenses, sessionUser]);
@@ -552,9 +552,9 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return openingCashLogs;
     }
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return openingCashLogs.filter(l => {
-      const lStore = l.store_id || (l.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      const lStore = resolveStoreId(l.addedBy, l.store_id);
       return lStore === userStore;
     });
   }, [openingCashLogs, sessionUser]);
@@ -564,9 +564,9 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return expenses;
     }
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return expenses.filter(e => {
-      const eStore = e.store_id || (e.addedBy === 'jayantha' ? 'store_2' : 'store_1');
+      const eStore = resolveStoreId(e.addedBy, e.store_id);
       return eStore === userStore;
     });
   }, [expenses, sessionUser]);
@@ -576,9 +576,9 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return stockAdjustments;
     }
-    const userStore = sessionUser.store_id || 'store_1';
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return stockAdjustments.filter(a => {
-      const aStore = a.desk === 'jayantha' ? 'store_2' : (a.desk === 'lahiru' ? 'store_1' : a.desk);
+      const aStore = resolveStoreId(a.adjustedBy, a.desk);
       return aStore === userStore;
     });
   }, [stockAdjustments, sessionUser]);
@@ -588,8 +588,8 @@ export default function App() {
     if (sessionUser.role === 'superuser') {
       return registeredUsers;
     }
-    const userStore = sessionUser.store_id || 'store_1';
-    return registeredUsers.filter(u => (u.store_id || 'store_1') === userStore);
+    const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
+    return registeredUsers.filter(u => resolveStoreId(u.username, u.store_id) === userStore);
   }, [registeredUsers, sessionUser]);
 
   const isToday = (dateStr: string) => {
