@@ -563,13 +563,25 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
   if (!client) return null;
   try {
     const targetStoreId = storeId !== undefined ? storeId : getActiveStoreId();
+    let activeUsername = '';
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = sessionStorage.getItem('kulubadu_active_session');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.username) activeUsername = parsed.username.toLowerCase().trim();
+        }
+      } catch (e) { }
+    }
+
     let query = client.from('transactions').select('*');
     if (targetStoreId) {
       if (targetStoreId === 'store_1' || targetStoreId === 'store_2') {
         query = query.or('store_id.eq.store_1,store_id.eq.store_2,createdBy.eq.lahiru,createdBy.eq.jayantha');
       } else {
         const cleanStore = targetStoreId.replace('store_', '');
-        query = query.or(`store_id.eq.${targetStoreId},createdBy.eq.${targetStoreId},createdBy.eq.${cleanStore},store_id.eq.${cleanStore}`);
+        const extraUserCond = activeUsername ? `,createdBy.eq.${activeUsername}` : '';
+        query = query.or(`store_id.eq.${targetStoreId},createdBy.eq.${targetStoreId},createdBy.eq.${cleanStore},store_id.eq.${cleanStore}${extraUserCond}`);
       }
     }
     const { data, error } = await query;

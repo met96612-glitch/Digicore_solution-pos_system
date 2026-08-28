@@ -742,7 +742,7 @@ export default function App() {
           console.log('Supabase client detected. Attempting to fetch live data...');
           const activeSessionRaw = sessionStorage.getItem('kulubadu_active_session');
           const activeSession = activeSessionRaw ? JSON.parse(activeSessionRaw) : null;
-          const initStoreId = activeSession?.role === 'superuser' ? undefined : (activeSession?.store_id || (activeSession?.username === 'jayantha' ? 'store_2' : 'store_1'));
+          const initStoreId = activeSession?.role === 'superuser' ? undefined : resolveStoreId(activeSession?.username, activeSession?.store_id);
 
           const [supaProds, supaTx, supaUsers] = await Promise.all([
             fetchProductsFromSupabase(initStoreId),
@@ -1091,8 +1091,16 @@ export default function App() {
         if (supaTx !== null) {
           const DEMO_IDS = ['S-260524-1001', 'S-260524-1002', 'B-260524-1001'];
           const cleanSupaTx = supaTx.filter(tx => !DEMO_IDS.includes(tx.id));
-          setTransactions(cleanSupaTx);
-          localStorage.setItem('kulubadu_transactions', JSON.stringify(cleanSupaTx));
+          setTransactions(prev => {
+            const merged = mergeTransactions(cleanSupaTx, prev);
+            localStorage.setItem('kulubadu_transactions', JSON.stringify(merged));
+            merged.forEach(tx => {
+              if (!cleanSupaTx.some(st => st.id === tx.id)) {
+                pushTransactionToSupabase(tx);
+              }
+            });
+            return merged;
+          });
         }
       } catch (err) {
         console.warn('Failed to sync data for user session:', err);
@@ -1114,7 +1122,7 @@ export default function App() {
 
         const activeStoreId = sessionUser?.role === 'superuser'
           ? undefined
-          : (sessionUser?.store_id || (sessionUser?.username === 'jayantha' ? 'store_2' : (sessionUser?.username === 'lahiru' ? 'store_1' : (sessionUser?.username ? (sessionUser.username.startsWith('store_') ? sessionUser.username : `store_${sessionUser.username}`) : undefined))));
+          : resolveStoreId(sessionUser?.username, sessionUser?.store_id);
 
         // Fetch products, transactions and users in background
         const [supaProds, supaTx, supaUsers] = await Promise.all([
