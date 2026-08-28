@@ -142,19 +142,18 @@ export function resolveStoreId(username?: string, storeId?: string): string {
   const u = (username || '').toLowerCase().trim();
   const s = (storeId || '').trim();
 
-  if (u === 'jayantha') return 'store_2';
-  if (u === 'lahiru') return 'store_1';
-
-  if (u && u !== 'admin' && u !== 'superuser') {
-    return u.startsWith('store_') ? u : `store_${u}`;
-  }
-
-  if (s && s !== 'undefined' && s !== 'null') {
+  // 1. If explicit valid storeId is provided, honor it
+  if (s && s !== 'undefined' && s !== 'null' && s !== '') {
     if (s === 'store_1' || s === 'store_2') return s;
     return s.startsWith('store_') ? s : `store_${s}`;
   }
 
-  return 'store_1';
+  // 2. Otherwise resolve from username
+  if (u === 'jayantha') return 'store_2';
+  if (u === 'lahiru') return 'store_1';
+  if (!u || u === 'admin' || u === 'superuser') return 'store_1';
+
+  return u.startsWith('store_') ? u : `store_${u}`;
 }
 
 export function getLocalTodayDateString(dateObj: Date = new Date()): string {

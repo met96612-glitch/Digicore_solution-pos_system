@@ -496,7 +496,17 @@ export default function App() {
       return products;
     }
     const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
-    return products.filter(p => resolveStoreId(undefined, p.store_id) === userStore);
+    return products.filter(p => {
+      if (!p.store_id || p.store_id === 'undefined' || p.store_id === 'null' || p.store_id === '') {
+        return true;
+      }
+      const pStore = resolveStoreId(undefined, p.store_id);
+      if (pStore === userStore) return true;
+      if ((userStore === 'store_1' || userStore === 'store_2') && (pStore === 'store_1' || pStore === 'store_2')) {
+        return true;
+      }
+      return false;
+    });
   }, [products, sessionUser]);
 
   const filteredTransactions = useMemo(() => {
@@ -507,7 +517,11 @@ export default function App() {
     const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
     return transactions.filter(tx => {
       const txStore = resolveStoreId(tx.createdBy, tx.store_id);
-      return txStore === userStore;
+      if (txStore === userStore) return true;
+      if ((userStore === 'store_1' || userStore === 'store_2') && (txStore === 'store_1' || txStore === 'store_2')) {
+        return true;
+      }
+      return false;
     });
   }, [transactions, sessionUser]);
 
