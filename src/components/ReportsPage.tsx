@@ -84,9 +84,13 @@ export default function ReportsPage({
     }
   }, [defaultDate, hasManuallySelected]);
 
+  const isLegacyBranding = useMemo(() => {
+    const rawName = shopProfile?.shopName?.trim() || '';
+    return rawName === 'JAYANTHA SPICE COLLECTORS' || rawName === 'LAHIYA SPICE COLLECTORS';
+  }, [shopProfile]);
+
   const effectiveShopName = useMemo(() => {
     const rawName = shopProfile?.shopName?.trim() || '';
-    const isLegacyBranding = rawName === 'JAYANTHA SPICE COLLECTORS' || rawName === 'LAHIYA SPICE COLLECTORS';
     const isJayanthaOrLahiru = currentUserUsername === 'jayantha' || currentUserUsername === 'lahiru';
     if (isLegacyBranding && !isJayanthaOrLahiru) {
       const displayUser = currentUserUsername ? currentUserUsername.toUpperCase().replace(/_/g, ' ') : 'STORE';
@@ -97,7 +101,7 @@ export default function ReportsPage({
       return `${displayUser} POS CENTER`;
     }
     return rawName;
-  }, [shopProfile, currentUserUsername]);
+  }, [shopProfile, currentUserUsername, isLegacyBranding]);
 
   // Filter transactions by date/month
   const filteredTransactions = useMemo(() => {
@@ -316,6 +320,28 @@ export default function ReportsPage({
     };
   };
 
+  const getTxStoreId = (tx: Transaction): string => {
+    if (tx.store_id) return tx.store_id;
+    if (tx.createdBy === 'jayantha' || (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-'))) {
+      return 'store_2';
+    }
+    if (tx.createdBy === 'lahiru' || (tx.id && tx.id.startsWith('L-')) || (tx.invoice_no && tx.invoice_no.startsWith('L-'))) {
+      return 'store_1';
+    }
+    return 'store_1';
+  };
+
+  const storeIds = useMemo(() => {
+    if (currentUserRole !== 'superuser') return [];
+    const set = new Set<string>();
+    (filteredTransactions || []).forEach(tx => {
+      if (tx) {
+        set.add(getTxStoreId(tx));
+      }
+    });
+    return Array.from(set);
+  }, [filteredTransactions, currentUserRole]);
+
   // Wholesale metrics
   const computeWholesaleStats = (entityType: 'lahiru' | 'jayantha' | 'combined') => {
     let sales = 0;
@@ -368,17 +394,63 @@ export default function ReportsPage({
     };
   };
 
+  const computeWholesaleStatsForStore = (targetStoreId?: string) => {
+    let sales = 0;
+    let profit = 0;
+    let count = 0;
+
+    (filteredTransactions || []).forEach(tx => {
+      if (!tx) return;
+      if (targetStoreId) {
+        if (getTxStoreId(tx) !== targetStoreId) return;
+      }
+
+      if (tx.type === 'sell' && tx.is_wholesale) {
+        sales += (tx.total || 0);
+        count += 1;
+
+        if (typeof tx.total_profit === 'number' && tx.total_profit > 0) {
+          profit += tx.total_profit;
+        } else {
+          let txCost = 0;
+          (tx.items || []).forEach(item => {
+            if (!item) return;
+            const prod = (products || []).find(p => p && p.id === item.productId);
+            const bPrice = prod ? (prod.buying_price ?? prod.buyPrice ?? 0) : 0;
+            let qtyInBase = item.qty || 0;
+            if (prod && prod.unit === 'kg' && item.unit === 'g') {
+              qtyInBase = (item.qty || 0) * 0.001;
+            }
+            txCost += bPrice * qtyInBase;
+          });
+          const itemRevenue = (tx.items || []).reduce((acc, item) => acc + (item ? item.total || 0 : 0), 0);
+          const itemProfit = itemRevenue - txCost;
+          const sub = tx.subtotal || tx.total || 0;
+          const disc = tx.discount || 0;
+          const ratio = sub > 0 ? (sub - disc) / sub : 1;
+          profit += itemProfit * ratio;
+        }
+      }
+    });
+
+    return { sales, profit: Math.max(0, profit), count };
+  };
+
   const lahiruWholesale = useMemo(() => computeWholesaleStats('lahiru'), [filteredTransactions, products]);
   const jayanthaWholesale = useMemo(() => computeWholesaleStats('jayantha'), [filteredTransactions, products]);
+  const combinedWholesale = useMemo(() => computeWholesaleStats('combined'), [filteredTransactions, products]);
 
-  const computeWholesaleProductBreakdown = (entityType: 'lahiru' | 'jayantha') => {
+  const computeWholesaleProductBreakdown = (entityType: 'lahiru' | 'jayantha' | 'combined') => {
     const breakdown: Record<string, { name: string; qty: number; sales: number; profit: number; unit: string }> = {};
 
     (filteredTransactions || []).forEach(tx => {
       if (!tx) return;
       const isTxJayantha = (tx.id && tx.id.startsWith('J-')) || (tx.invoice_no && tx.invoice_no.startsWith('J-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'jayantha') || tx.store_id === 'store_2';
       const isTxLahiru = (tx.id && tx.id.startsWith('L-')) || (tx.invoice_no && tx.invoice_no.startsWith('L-')) || (tx.createdBy && tx.createdBy.toLowerCase() === 'lahiru') || tx.store_id === 'store_1';
-      const matches = (entityType === 'jayantha' && isTxJayantha) || (entityType === 'lahiru' && isTxLahiru);
+      const matches =
+        entityType === 'combined' ||
+        (entityType === 'jayantha' && isTxJayantha) ||
+        (entityType === 'lahiru' && isTxLahiru);
 
       if (!matches || tx.type !== 'sell' || !tx.is_wholesale) return;
 
@@ -417,8 +489,55 @@ export default function ReportsPage({
     return Object.values(breakdown);
   };
 
+  const computeWholesaleProductBreakdownForStore = (targetStoreId?: string) => {
+    const breakdown: Record<string, { name: string; qty: number; sales: number; profit: number; unit: string }> = {};
+
+    (filteredTransactions || []).forEach(tx => {
+      if (!tx) return;
+      if (targetStoreId) {
+        if (getTxStoreId(tx) !== targetStoreId) return;
+      }
+
+      if (tx.type !== 'sell' || !tx.is_wholesale) return;
+
+      (tx.items || []).forEach(item => {
+        if (!item) return;
+        const prod = (products || []).find(p => p && p.id === item.productId);
+        const prodName = prod ? prod.name : item.productId;
+        const prodUnit = prod ? prod.unit : 'kg';
+        const bPrice = prod ? (prod.buying_price ?? prod.buyPrice ?? 0) : 0;
+
+        let qtyInBase = item.qty || 0;
+        if (prod && prod.unit === 'kg' && item.unit === 'g') {
+          qtyInBase = (item.qty || 0) * 0.001;
+        }
+
+        const itemCost = bPrice * qtyInBase;
+        const itemRevenue = item.total || 0;
+        const itemProfit = Math.max(0, itemRevenue - itemCost);
+
+        if (!breakdown[item.productId]) {
+          breakdown[item.productId] = {
+            name: prodName,
+            qty: 0,
+            sales: 0,
+            profit: 0,
+            unit: prodUnit
+          };
+        }
+
+        breakdown[item.productId].qty += qtyInBase;
+        breakdown[item.productId].sales += itemRevenue;
+        breakdown[item.productId].profit += itemProfit;
+      });
+    });
+
+    return Object.values(breakdown);
+  };
+
   const lahiruWholesaleProducts = useMemo(() => computeWholesaleProductBreakdown('lahiru'), [filteredTransactions, products]);
   const jayanthaWholesaleProducts = useMemo(() => computeWholesaleProductBreakdown('jayantha'), [filteredTransactions, products]);
+  const combinedWholesaleProducts = useMemo(() => computeWholesaleProductBreakdown('combined'), [filteredTransactions, products]);
 
   const salesTransactions = useMemo(() => filteredTransactions.filter(t => t.type === 'sell'), [filteredTransactions]);
   const purchaseTransactions = useMemo(() => filteredTransactions.filter(t => t.type === 'buy'), [filteredTransactions]);
@@ -1230,154 +1349,159 @@ export default function ReportsPage({
           </span>
         </div>
 
-        {/* Side-by-side or Single View depending on logged in user */}
-        <div className={`grid grid-cols-1 ${currentUserUsername === 'lahiru' || currentUserUsername === 'jayantha' ? '' : 'lg:grid-cols-2'} gap-6`}>
-          {/* Lahiru Wholesale block */}
-          {currentUserUsername !== 'jayantha' && (
-            <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
-              <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
-                <span className="text-xs font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-violet-500"></span>
-                  Lahiru Wholesale (ළහිරු තොග විකුණුම්)
-                </span>
-                <span className="text-[10px] bg-violet-500/10 text-violet-400 px-2.5 py-0.5 rounded-full font-mono font-bold">
-                  {lahiruWholesale.count} Bills
-                </span>
-              </div>
+        {/* Dynamic Store View or Superuser Multi-Store View */}
+        {currentUserRole === 'superuser' && storeIds.length > 1 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {storeIds.map(sId => {
+              const sStats = computeWholesaleStatsForStore(sId);
+              const sProducts = computeWholesaleProductBreakdownForStore(sId);
+              const sName = sId === 'store_1'
+                ? 'Lahiru Spices (store_1)'
+                : (sId === 'store_2' ? 'Jayantha Spices (store_2)' : `${sId.toUpperCase().replace(/_/g, ' ')} Wholesale`);
+              return (
+                <div key={sId} className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                      {sName} ({sName} තොග විකුණුම්)
+                    </span>
+                    <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                      {sStats.count} Bills
+                    </span>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
-                  <span className="text-[10px] text-slate-400 block">Wholesale Revenue</span>
-                  <strong className="text-sm font-mono text-emerald-400 mt-0.5 block">
-                    {formatCurrency(lahiruWholesale.sales)}
-                  </strong>
-                </div>
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
-                  <span className="text-[10px] text-slate-400 block">Wholesale Profit</span>
-                  <strong className="text-sm font-mono text-violet-400 mt-0.5 block">
-                    {formatCurrency(lahiruWholesale.profit)}
-                  </strong>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block">Wholesale Revenue</span>
+                      <strong className="text-sm font-mono text-emerald-400 mt-0.5 block">
+                        {formatCurrency(sStats.sales)}
+                      </strong>
+                    </div>
+                    <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
+                      <span className="text-[10px] text-slate-400 block">Wholesale Profit</span>
+                      <strong className="text-sm font-mono text-amber-400 mt-0.5 block">
+                        {formatCurrency(sStats.profit)}
+                      </strong>
+                    </div>
+                  </div>
 
-              {/* Product breakdown table */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Spice Breakdown (කුළුබඩු විස්තරය)
-                </span>
-                <div className="bg-slate-950/80 border border-slate-800/60 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
-                  <table className="w-full text-left text-[11px] border-collapse">
-                    <thead>
-                      <tr className="bg-slate-900/50 text-slate-400 border-b border-slate-800 font-bold">
-                        <th className="p-2.5">Spice</th>
-                        <th className="p-2.5 text-center">Qty</th>
-                        <th className="p-2.5 text-right">Revenue</th>
-                        <th className="p-2.5 text-right">Profit</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/40">
-                      {lahiruWholesaleProducts.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="p-4 text-center text-slate-500 font-sans text-xs">
-                            No wholesale transactions found.
-                          </td>
-                        </tr>
-                      ) : (
-                        lahiruWholesaleProducts.map(p => (
-                          <tr key={p.name} className="hover:bg-slate-900/20">
-                            <td className="p-2.5 font-medium text-slate-300">{p.name}</td>
-                            <td className="p-2.5 text-center font-mono font-bold text-slate-200">
-                              {p.qty} {p.unit}
-                            </td>
-                            <td className="p-2.5 text-right font-mono text-emerald-400 font-semibold">
-                              {formatCurrency(p.sales)}
-                            </td>
-                            <td className="p-2.5 text-right font-mono text-violet-400">
-                              {formatCurrency(p.profit)}
-                            </td>
+                  {/* Product breakdown table */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Spice Breakdown (කුළුබඩු විස්තරය)
+                    </span>
+                    <div className="bg-slate-950/80 border border-slate-800/60 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                      <table className="w-full text-left text-[11px] border-collapse">
+                        <thead>
+                          <tr className="bg-slate-900/50 text-slate-400 border-b border-slate-800 font-bold">
+                            <th className="p-2.5">Spice</th>
+                            <th className="p-2.5 text-center">Qty</th>
+                            <th className="p-2.5 text-right">Revenue</th>
+                            <th className="p-2.5 text-right">Profit</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/40">
+                          {sProducts.length === 0 ? (
+                            <tr>
+                              <td colSpan={4} className="p-4 text-center text-slate-500 font-sans text-xs">
+                                No wholesale transactions found.
+                              </td>
+                            </tr>
+                          ) : (
+                            sProducts.map(p => (
+                              <tr key={p.name} className="hover:bg-slate-900/20">
+                                <td className="p-2.5 font-medium text-slate-300">{p.name}</td>
+                                <td className="p-2.5 text-center font-mono font-bold text-slate-200">
+                                  {p.qty} {p.unit}
+                                </td>
+                                <td className="p-2.5 text-right font-mono text-emerald-400 font-semibold">
+                                  {formatCurrency(p.sales)}
+                                </td>
+                                <td className="p-2.5 text-right font-mono text-amber-400">
+                                  {formatCurrency(p.profit)}
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
+              <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                {effectiveShopName} Wholesale ({effectiveShopName} තොග විකුණුම්)
+              </span>
+              <span className="text-[10px] bg-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded-full font-mono font-bold">
+                {combinedWholesale.count} Bills
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
+                <span className="text-[10px] text-slate-400 block">Wholesale Revenue</span>
+                <strong className="text-sm font-mono text-emerald-400 mt-0.5 block">
+                  {formatCurrency(combinedWholesale.sales)}
+                </strong>
+              </div>
+              <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
+                <span className="text-[10px] text-slate-400 block">Wholesale Profit</span>
+                <strong className="text-sm font-mono text-amber-400 mt-0.5 block">
+                  {formatCurrency(combinedWholesale.profit)}
+                </strong>
               </div>
             </div>
-          )}
 
-          {/* Jayantha Wholesale block */}
-          {currentUserUsername !== 'lahiru' && (
-            <div className="bg-slate-950/40 border border-slate-800/80 rounded-xl p-5 space-y-4">
-              <div className="flex justify-between items-center border-b border-slate-800/60 pb-2">
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  Jayantha Wholesale (ජයන්ත තොග විකුණුම්)
-                </span>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full font-mono font-bold">
-                  {jayanthaWholesale.count} Bills
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
-                  <span className="text-[10px] text-slate-400 block">Wholesale Revenue</span>
-                  <strong className="text-sm font-mono text-emerald-400 mt-0.5 block">
-                    {formatCurrency(jayanthaWholesale.sales)}
-                  </strong>
-                </div>
-                <div className="bg-slate-900/40 p-3 rounded-lg border border-slate-800">
-                  <span className="text-[10px] text-slate-400 block">Wholesale Profit</span>
-                  <strong className="text-sm font-mono text-emerald-400 mt-0.5 block">
-                    {formatCurrency(jayanthaWholesale.profit)}
-                  </strong>
-                </div>
-              </div>
-
-              {/* Product breakdown table */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Spice Breakdown (කුළුබඩු විස්තරය)
-                </span>
-                <div className="bg-slate-950/80 border border-slate-800/60 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
-                  <table className="w-full text-left text-[11px] border-collapse">
-                    <thead>
-                      <tr className="bg-slate-900/50 text-slate-400 border-b border-slate-800 font-bold">
-                        <th className="p-2.5">Spice</th>
-                        <th className="p-2.5 text-center">Qty</th>
-                        <th className="p-2.5 text-right">Revenue</th>
-                        <th className="p-2.5 text-right">Profit</th>
+            {/* Product breakdown table */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Spice Breakdown (කුළුබඩු විස්තරය)
+              </span>
+              <div className="bg-slate-950/80 border border-slate-800/60 rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                <table className="w-full text-left text-[11px] border-collapse">
+                  <thead>
+                    <tr className="bg-slate-900/50 text-slate-400 border-b border-slate-800 font-bold">
+                      <th className="p-2.5">Spice</th>
+                      <th className="p-2.5 text-center">Qty</th>
+                      <th className="p-2.5 text-right">Revenue</th>
+                      <th className="p-2.5 text-right">Profit</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/40">
+                    {combinedWholesaleProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-4 text-center text-slate-500 font-sans text-xs">
+                          No wholesale transactions found.
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/40">
-                      {jayanthaWholesaleProducts.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="p-4 text-center text-slate-500 font-sans text-xs">
-                            No wholesale transactions found.
+                    ) : (
+                      combinedWholesaleProducts.map(p => (
+                        <tr key={p.name} className="hover:bg-slate-900/20">
+                          <td className="p-2.5 font-medium text-slate-300">{p.name}</td>
+                          <td className="p-2.5 text-center font-mono font-bold text-slate-200">
+                            {p.qty} {p.unit}
+                          </td>
+                          <td className="p-2.5 text-right font-mono text-emerald-400 font-semibold">
+                            {formatCurrency(p.sales)}
+                          </td>
+                          <td className="p-2.5 text-right font-mono text-amber-400">
+                            {formatCurrency(p.profit)}
                           </td>
                         </tr>
-                      ) : (
-                        jayanthaWholesaleProducts.map(p => (
-                          <tr key={p.name} className="hover:bg-slate-900/20">
-                            <td className="p-2.5 font-medium text-slate-300">{p.name}</td>
-                            <td className="p-2.5 text-center font-mono font-bold text-slate-200">
-                              {p.qty} {p.unit}
-                            </td>
-                            <td className="p-2.5 text-right font-mono text-emerald-400 font-semibold">
-                              {formatCurrency(p.sales)}
-                            </td>
-                            <td className="p-2.5 text-right font-mono text-emerald-400">
-                              {formatCurrency(p.profit)}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Details Lists */}
