@@ -576,17 +576,7 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
       } catch (e) { }
     }
 
-    let query = client.from('transactions').select('*');
-    if (targetStoreId) {
-      if (targetStoreId === 'store_1' || targetStoreId === 'store_2') {
-        query = query.or('store_id.eq.store_1,store_id.eq.store_2,createdBy.eq.lahiru,createdBy.eq.jayantha');
-      } else {
-        const cleanStore = targetStoreId.replace('store_', '');
-        const extraUserCond = activeUsername ? `,createdBy.eq.${activeUsername}` : '';
-        query = query.or(`store_id.eq.${targetStoreId},createdBy.eq.${targetStoreId},createdBy.eq.${cleanStore},store_id.eq.${cleanStore}${extraUserCond}`);
-      }
-    }
-    const { data, error } = await query;
+    let { data, error } = await client.from('transactions').select('*');
     if (error) {
       console.warn('Failed to fetch transactions from Supabase:', error.message || error);
       return null;
