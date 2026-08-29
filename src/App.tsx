@@ -515,7 +515,13 @@ export default function App() {
       return transactions;
     }
     const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
+    const uName = (sessionUser.username || '').toLowerCase().trim();
+
     return transactions.filter(tx => {
+      if (!tx) return false;
+      const creator = (tx.createdBy || '').toLowerCase().trim();
+      if (uName && creator && creator === uName) return true;
+
       const txStore = resolveStoreId(tx.createdBy, tx.store_id);
       if (txStore === userStore) return true;
       if ((userStore === 'store_1' || userStore === 'store_2') && (txStore === 'store_1' || txStore === 'store_2')) {
@@ -531,7 +537,13 @@ export default function App() {
       return transactions;
     }
     const userStore = resolveStoreId(sessionUser.username, sessionUser.store_id);
+    const uName = (sessionUser.username || '').toLowerCase().trim();
+
     return transactions.filter(tx => {
+      if (!tx) return false;
+      const creator = (tx.createdBy || '').toLowerCase().trim();
+      if (uName && creator && creator === uName) return true;
+
       const txStore = resolveStoreId(tx.createdBy, tx.store_id);
       return txStore === userStore;
     });
@@ -910,10 +922,15 @@ export default function App() {
   };
 
   const saveTransactionsToDb = (newTx: Transaction[]) => {
-    setTransactions(newTx);
-    localStorage.setItem('kulubadu_transactions', JSON.stringify(newTx));
-    if (newTx.length > 0) {
-      pushTransactionToSupabase(newTx[0]);
+    const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
+    const txsWithStore = newTx.map(tx => ({
+      ...tx,
+      store_id: tx.store_id || userStore
+    }));
+    setTransactions(txsWithStore);
+    localStorage.setItem('kulubadu_transactions', JSON.stringify(txsWithStore));
+    if (txsWithStore.length > 0) {
+      pushTransactionToSupabase(txsWithStore[0]);
     }
   };
 
@@ -1246,8 +1263,11 @@ export default function App() {
 
   const recordNewSaleTx = async (rawTx: Transaction) => {
     const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
-    const storeIdToAttach = resolveStoreId(rawTx.createdBy || sessionUser?.username, rawTx.store_id || userStore);
-    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
+    const tx: Transaction = {
+      ...rawTx,
+      store_id: userStore,
+      createdBy: rawTx.createdBy || sessionUser?.username || 'cashier'
+    };
 
     if (tx.type === 'return') {
       return recordNewReturnTx(tx);
@@ -1307,8 +1327,11 @@ export default function App() {
 
   const recordNewBuyTx = async (rawTx: Transaction) => {
     const userStore = resolveStoreId(sessionUser?.username, sessionUser?.store_id);
-    const storeIdToAttach = resolveStoreId(rawTx.createdBy || sessionUser?.username, rawTx.store_id || userStore);
-    const tx: Transaction = { ...rawTx, store_id: storeIdToAttach, createdBy: rawTx.createdBy || sessionUser?.username || 'cashier' };
+    const tx: Transaction = {
+      ...rawTx,
+      store_id: userStore,
+      createdBy: rawTx.createdBy || sessionUser?.username || 'cashier'
+    };
 
     // 1. Fetch latest products from Supabase if connected to prevent overwriting other operator's stock changes
     let latestProducts = [...products];
@@ -1962,8 +1985,11 @@ export default function App() {
                     if (supaTx !== null) {
                       const DEMO_IDS = ['S-260524-1001', 'S-260524-1002', 'B-260524-1001'];
                       const cleanSupaTx = supaTx.filter(tx => !DEMO_IDS.includes(tx.id));
-                      setTransactions(cleanSupaTx);
-                      localStorage.setItem('kulubadu_transactions', JSON.stringify(cleanSupaTx));
+                      setTransactions(prev => {
+                        const merged = mergeTransactions(cleanSupaTx, prev);
+                        localStorage.setItem('kulubadu_transactions', JSON.stringify(merged));
+                        return merged;
+                      });
                     }
                     if (supaUsers && supaUsers.length > 0) {
                       setRegisteredUsers(supaUsers);
@@ -2579,7 +2605,11 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;`}
                     setProducts(supaProds.map(normalizeProduct));
                   }
                   if (supaTx) {
-                    setTransactions(supaTx);
+                    setTransactions(prev => {
+                      const merged = mergeTransactions(supaTx, prev);
+                      localStorage.setItem('kulubadu_transactions', JSON.stringify(merged));
+                      return merged;
+                    });
                   }
                 } catch (loadErr) {
                   console.warn(loadErr);
