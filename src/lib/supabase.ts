@@ -146,7 +146,8 @@ export async function syncDataToSupabase(
         total: tx.total,
         subtotal: tx.subtotal,
         discount: tx.discount,
-        contactName: tx.contactName || '',
+        contactName: tx.contactName || tx.contact_name || '',
+        contact_name: tx.contactName || tx.contact_name || '',
         paymentMethod: tx.payment_method || tx.paymentMethod || 'cash',
         createdBy: tx.createdBy,
         items: typeof tx.items === 'string' ? tx.items : JSON.stringify(tx.items),
@@ -159,7 +160,7 @@ export async function syncDataToSupabase(
         credit_status: tx.credit_status || defaultStatus,
         credit_paid_amount: creditPaidAmt,
         credit_payments: tx.credit_payments ? (typeof tx.credit_payments === 'string' ? tx.credit_payments : JSON.stringify(tx.credit_payments)) : null,
-        store_id: tx.store_id || ''
+        store_id: resolveStoreId(tx.createdBy || tx.user_id, tx.store_id)
       });
       if (error) {
         log += `⚠️ Transaction sync error for ${tx.id}: ${error.message}\n`;
@@ -318,7 +319,8 @@ export async function pushTransactionToSupabase(tx: any) {
       total: tx.total,
       subtotal: tx.subtotal,
       discount: tx.discount,
-      contactName: tx.contactName || '',
+      contactName: tx.contactName || tx.contact_name || '',
+      contact_name: tx.contactName || tx.contact_name || '',
       paymentMethod: tx.payment_method || tx.paymentMethod || 'cash',
       createdBy: tx.createdBy,
       items: typeof tx.items === 'string' ? tx.items : JSON.stringify(tx.items),
@@ -622,8 +624,11 @@ export async function fetchTransactionsFromSupabase(storeId?: string): Promise<a
         else defaultStatus = 'pending';
       }
 
+      const cName = tx.contactName || tx.contact_name || tx.customer_name || tx.contact || '';
       return {
         ...tx,
+        contactName: cName,
+        contact_name: cName,
         store_id: resolveStoreId(tx.createdBy || tx.user_id, tx.store_id),
         items: parsedItems || [],
         payment_method: pm,

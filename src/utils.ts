@@ -226,7 +226,12 @@ export function mergeTransactions(supaTx: Transaction[], localTx: Transaction[])
 
   supaTx.forEach(tx => {
     if (tx && tx.id) {
-      map.set(tx.id, tx);
+      const contact = tx.contactName || (tx as any).contact_name || '';
+      map.set(tx.id, {
+        ...tx,
+        contactName: contact,
+        contact_name: contact
+      });
     }
   });
 
@@ -242,9 +247,13 @@ export function mergeTransactions(supaTx: Transaction[], localTx: Transaction[])
       const supaPaid = existing.credit_paid_amount ?? existing.amount_paid ?? 0;
       const preferLocal = localLogCount > supaLogCount || localPaid > supaPaid;
 
+      const mergedContactName = tx.contactName || (tx as any).contact_name || existing.contactName || (existing as any).contact_name || '';
+
       map.set(tx.id, {
         ...existing,
         ...tx,
+        contactName: mergedContactName,
+        contact_name: mergedContactName,
         credit_payments: preferLocal ? (tx.credit_payments || existing.credit_payments) : (existing.credit_payments || tx.credit_payments),
         credit_paid_amount: preferLocal ? localPaid : supaPaid,
         amount_paid: preferLocal ? localPaid : supaPaid,
