@@ -67,6 +67,7 @@ export interface Transaction {
   discount: number;
   total: number;
   contactName: string; // customer name for sell, supplier name for buy/return
+  contact_name?: string;
   createdBy: string; // username of user who performed it
   invoice_no?: string;
   user_id?: string;
